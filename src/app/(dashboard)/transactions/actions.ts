@@ -504,8 +504,17 @@ export async function createCategoryRule(
 
   const primary = conditions[0];
 
-  const { error: insertError } = await supabase.from("category_rules").insert({
-    user_id: user.id,
+  const { data: existing } = await supabase
+    .from("category_rules")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("field", primary.field)
+    .eq("operator", primary.operator)
+    .ilike("value", primary.value)
+    .eq("is_active", true)
+    .limit(1);
+
+  const payload = {
     category_id: categoryId,
     field: primary.field,
     operator: primary.operator,
@@ -515,12 +524,29 @@ export async function createCategoryRule(
     set_ignored: options?.setIgnored ?? null,
     set_merchant_name: options?.setMerchantName ?? null,
     set_tags: options?.setTags ?? null,
-    priority: 0,
-    is_active: true,
-  });
+  };
 
-  if (insertError) {
-    return { success: false, error: insertError.message, applied: 0 };
+  if (existing && existing.length > 0) {
+    const { error: updateError } = await supabase
+      .from("category_rules")
+      .update(payload)
+      .eq("id", existing[0].id)
+      .eq("user_id", user.id);
+
+    if (updateError) {
+      return { success: false, error: updateError.message, applied: 0 };
+    }
+  } else {
+    const { error: insertError } = await supabase.from("category_rules").insert({
+      user_id: user.id,
+      ...payload,
+      priority: 0,
+      is_active: true,
+    });
+
+    if (insertError) {
+      return { success: false, error: insertError.message, applied: 0 };
+    }
   }
 
   const accountIds = await getUserAccountIds(supabase, user.id);
