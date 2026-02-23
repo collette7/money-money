@@ -55,9 +55,12 @@ export default async function PortfolioPage() {
     getWatchedSymbols(),
   ])
 
-  await refreshPrices()
-  await recordPortfolioSnapshot(data.totalValue, data.totalCost)
-  await syncPortfolioToNetWorth(data.totalValue)
+  // Fire-and-forget: refresh prices, record snapshot, sync net worth.
+  // These are side-effects — must NOT be awaited in the render tree
+  // because they call revalidatePath which is forbidden during render.
+  refreshPrices().catch(() => {})
+  recordPortfolioSnapshot(data.totalValue, data.totalCost).catch(() => {})
+  syncPortfolioToNetWorth(data.totalValue).catch(() => {})
 
   const pricesArray = Array.from(data.prices.entries())
   const marketData = await fetchMarketData(watchedSymbols)

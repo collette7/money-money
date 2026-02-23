@@ -117,8 +117,8 @@ export function HomeNetWorthChart({ snapshots, height = 260 }: { snapshots: Snap
   return (
     <div>
       {filteredData.length > 0 ? (
-        <div className="w-full -mx-2" style={{ height }}>
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="w-full" style={{ height }}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <AreaChart
               data={filteredData}
               margin={{ top: 4, right: 8, left: 8, bottom: 0 }}

@@ -100,10 +100,11 @@ export async function getPortfolioData(): Promise<PortfolioData> {
       const cached = priceMap.get(h.symbol);
       const price = cached?.price ?? 0;
       const prevClose = cached?.prev_close ?? price;
-      const holdingValue = h.shares * price;
+      const costBasis = h.total_cost ?? 0;
+      const holdingValue = price > 0 ? h.shares * price : costBasis;
       totalValue += holdingValue;
-      totalCost += h.total_cost ?? 0;
-      dayChange += h.shares * (price - prevClose);
+      totalCost += costBasis;
+      dayChange += price > 0 ? h.shares * (price - prevClose) : 0;
     }
   }
 

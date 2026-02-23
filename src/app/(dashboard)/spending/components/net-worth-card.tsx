@@ -38,7 +38,7 @@ export function NetWorthCard({
   snapshots,
 }: NetWorthCardProps) {
   return (
-    <Card className="p-5">
+    <Card className="p-5 min-w-0">
       <div className="flex items-start justify-between mb-1">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           NET WORTH
