@@ -37,6 +37,12 @@ export function NetWorthCard({
   netWorthDollarChange,
   snapshots,
 }: NetWorthCardProps) {
+  const today = new Date().toISOString().split("T")[0]
+  const hasToday = snapshots.some((s) => s.date === today)
+  const chartSnapshots = hasToday
+    ? snapshots
+    : [...snapshots, { date: today, net_worth: netWorth, total_assets: assets, total_liabilities: liabilities }]
+
   return (
     <Card className="p-5 min-w-0">
       <div className="flex items-start justify-between mb-1">
@@ -69,7 +75,7 @@ export function NetWorthCard({
           </span>
         )}
       </div>
-      <HomeNetWorthChart snapshots={snapshots} height={160} />
+      <HomeNetWorthChart snapshots={chartSnapshots} height={160} />
       <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
         <div>
           <p className="uppercase tracking-wider text-muted-foreground" style={{ fontSize: 10 }}>Assets</p>

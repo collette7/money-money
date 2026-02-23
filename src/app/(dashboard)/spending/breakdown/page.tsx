@@ -125,6 +125,18 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
   const netWorth = totalAssets - totalDebt
   const changeData = computeNetWorthChange(snapshots)
 
+  const today = new Date().toISOString().split("T")[0]
+  supabase.from("net_worth_snapshots").upsert(
+    {
+      user_id: user.id,
+      date: today,
+      total_assets: totalAssets,
+      total_liabilities: totalDebt,
+      net_worth: netWorth,
+    },
+    { onConflict: "user_id,date" }
+  ).then(() => {})
+
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
