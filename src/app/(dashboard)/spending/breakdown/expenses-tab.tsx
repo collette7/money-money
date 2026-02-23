@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, Receipt } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { CategoryWithHierarchy } from "./expandable-categories";
 
 const PALETTE = [
@@ -113,9 +115,18 @@ export function ExpensesTab({ categories = [] }: ExpensesTabProps) {
 
   if (totalSpent === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <p className="text-sm">No expenses this month</p>
-      </div>
+      <EmptyState
+        icon={<Receipt className="size-6" />}
+        title="No expenses this month"
+        description="Expenses will appear here once transactions are synced or imported."
+        actions={[
+          {
+            label: "Connect Account",
+            asChild: true,
+            children: <Link href="/accounts">Connect Account</Link>,
+          },
+        ]}
+      />
     );
   }
 

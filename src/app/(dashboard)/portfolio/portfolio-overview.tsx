@@ -11,9 +11,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts"
-import { RefreshCw, Plus } from "lucide-react"
+import { RefreshCw, Plus, TrendingUp } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { cn } from "@/lib/utils"
 import { refreshPrices } from "./actions"
 import type { HoldingRow, PriceCacheRow } from "./actions"
@@ -221,7 +222,18 @@ function PortfolioChart({ snapshots }: { snapshots: Snapshot[] }) {
         </div>
       ) : (
         <div className="flex h-[260px] items-center justify-center">
-          <p className="text-sm text-muted-foreground">No portfolio data yet</p>
+          <EmptyState
+            icon={<TrendingUp className="size-6" />}
+            title="No portfolio data yet"
+            description="Add holdings to start tracking your investment performance."
+            actions={[
+              {
+                label: "Add Holding",
+                asChild: true,
+                children: <Link href="/portfolio/holdings?add=true">Add Holding</Link>,
+              },
+            ]}
+          />
         </div>
       )}
 
