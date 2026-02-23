@@ -38,7 +38,7 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
   }
 
   for (const [encryptedAccessUrl, groupAccounts] of accessUrlGroups) {
-    const DEFAULT_FIRST_SYNC_DAYS = 730; // 2 years of history on first sync
+    const MAX_SIMPLEFIN_DAYS = 360;
     const fallbackDate = new Date();
     fallbackDate.setDate(fallbackDate.getDate() - 90);
 
@@ -51,15 +51,14 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
 
     let oldestSync: Date;
     if (forceFullHistory) {
-      // Pull maximum history available (5 years back)
       oldestSync = new Date();
       oldestSync.setFullYear(oldestSync.getFullYear() - 5);
     } else if (isFirstSync && initialLookbackDays) {
       oldestSync = new Date();
-      oldestSync.setDate(oldestSync.getDate() - initialLookbackDays);
+      oldestSync.setDate(oldestSync.getDate() - Math.min(initialLookbackDays, MAX_SIMPLEFIN_DAYS));
     } else if (isFirstSync) {
       oldestSync = new Date();
-      oldestSync.setDate(oldestSync.getDate() - DEFAULT_FIRST_SYNC_DAYS);
+      oldestSync.setDate(oldestSync.getDate() - MAX_SIMPLEFIN_DAYS);
     } else {
       oldestSync = groupAccounts.reduce((oldest, acc) => {
         if (!acc.last_synced) return fallbackDate;
@@ -83,33 +82,76 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
     }
 
     try {
-      const accountSet = await fetchAccounts(accessUrl, {
-        startDate: oldestSync,
-        pending: true,
-      });
+      const now = new Date();
+      const daysDiff = Math.ceil((now.getTime() - oldestSync.getTime()) / (1000 * 60 * 60 * 24));
+      const needsChunking = daysDiff > MAX_SIMPLEFIN_DAYS;
 
-      if (accountSet.errors.length > 0) {
-        for (const acc of groupAccounts) {
-          results.push({
-            accountId: acc.id,
-            transactions: 0,
-            error: accountSet.errors.join(", "),
-          });
+      const chunks: { start: Date; end: Date }[] = [];
+      if (needsChunking) {
+        let chunkEnd = new Date(now);
+        while (chunkEnd > oldestSync) {
+          const chunkStart = new Date(chunkEnd);
+          chunkStart.setDate(chunkStart.getDate() - MAX_SIMPLEFIN_DAYS);
+          if (chunkStart < oldestSync) chunkStart.setTime(oldestSync.getTime());
+          chunks.push({ start: chunkStart, end: chunkEnd });
+          chunkEnd = new Date(chunkStart);
         }
-        continue;
+      } else {
+        chunks.push({ start: oldestSync, end: now });
+      }
+
+      const accTxCounts = new Map<string, number>();
+      let lastAccountSet: Awaited<ReturnType<typeof fetchAccounts>> | null = null;
+
+      for (const chunk of chunks) {
+        const accountSet = await fetchAccounts(accessUrl, {
+          startDate: chunk.start,
+          endDate: needsChunking ? chunk.end : undefined,
+          pending: true,
+        });
+
+        if (accountSet.errors.length > 0) {
+          for (const acc of groupAccounts) {
+            results.push({
+              accountId: acc.id,
+              transactions: 0,
+              error: accountSet.errors.join(", "),
+            });
+          }
+          continue;
+        }
+
+        if (!lastAccountSet) lastAccountSet = accountSet;
+
+        for (const acc of groupAccounts) {
+          const sfAccount = accountSet.accounts.find(
+            (a) => a.id === acc.simplefin_account_id
+          );
+          if (!sfAccount) continue;
+
+          const txCount = await upsertTransactions(
+            supabase,
+            acc.id,
+            userId,
+            sfAccount.transactions ?? []
+          );
+          accTxCounts.set(acc.id, (accTxCounts.get(acc.id) ?? 0) + txCount);
+        }
       }
 
       for (const acc of groupAccounts) {
-        const sfAccount = accountSet.accounts.find(
+        const sfAccount = lastAccountSet?.accounts.find(
           (a) => a.id === acc.simplefin_account_id
         );
 
         if (!sfAccount) {
-          results.push({
-            accountId: acc.id,
-            transactions: 0,
-            error: "Account not found in SimpleFIN response",
-          });
+          if (!results.some((r) => r.accountId === acc.id)) {
+            results.push({
+              accountId: acc.id,
+              transactions: 0,
+              error: "Account not found in SimpleFIN response",
+            });
+          }
           continue;
         }
 
@@ -125,20 +167,17 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
           .update(updatePayload)
           .eq("id", acc.id);
 
-        const txCount = await upsertTransactions(
-          supabase,
-          acc.id,
-          userId,
-          sfAccount.transactions ?? []
-        );
-
-        results.push({ accountId: acc.id, transactions: txCount });
+        if (!results.some((r) => r.accountId === acc.id)) {
+          results.push({ accountId: acc.id, transactions: accTxCounts.get(acc.id) ?? 0 });
+        }
       }
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unknown sync error";
       for (const acc of groupAccounts) {
-        results.push({ accountId: acc.id, transactions: 0, error: message });
+        if (!results.some((r) => r.accountId === acc.id)) {
+          results.push({ accountId: acc.id, transactions: 0, error: message });
+        }
       }
     }
   }
