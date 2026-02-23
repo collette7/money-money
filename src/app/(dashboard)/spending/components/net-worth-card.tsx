@@ -68,7 +68,7 @@ export function NetWorthCard({
           </span>
         )}
       </div>
-      <HomeNetWorthChart snapshots={snapshots} />
+      <HomeNetWorthChart snapshots={snapshots} height={160} />
       <div className="grid grid-cols-2 gap-4 mt-5 pt-5 border-t">
         <div>
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Assets</p>

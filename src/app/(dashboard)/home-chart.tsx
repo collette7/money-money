@@ -60,7 +60,7 @@ function ChartTooltip({
   )
 }
 
-export function HomeNetWorthChart({ snapshots }: { snapshots: Snapshot[] }) {
+export function HomeNetWorthChart({ snapshots, height = 260 }: { snapshots: Snapshot[]; height?: number }) {
   const [activePeriod, setActivePeriod] = useState<PeriodType>("3M")
 
   const chartData = useMemo(() => snapshots.map((s) => ({
@@ -117,7 +117,7 @@ export function HomeNetWorthChart({ snapshots }: { snapshots: Snapshot[] }) {
   return (
     <div>
       {filteredData.length > 0 ? (
-        <div className="h-[260px] w-full -mx-2">
+        <div className="w-full -mx-2" style={{ height }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={filteredData}
@@ -177,7 +177,7 @@ export function HomeNetWorthChart({ snapshots }: { snapshots: Snapshot[] }) {
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="flex h-[260px] items-center justify-center">
+        <div className="flex items-center justify-center" style={{ height }}>
           <p className="text-sm text-muted-foreground">No data yet</p>
         </div>
       )}
