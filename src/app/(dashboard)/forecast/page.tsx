@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useForecast, compactCurrency, formatPercent } from "./use-forecast"
 import {
   Card,
@@ -16,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import {
   LineChart,
@@ -55,9 +57,18 @@ export default function ForecastPage() {
 
   if (!forecastData || !lastPoint) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">Unable to load forecast data</p>
-      </div>
+      <EmptyState
+        icon={<TrendingUp className="size-6" />}
+        title="No forecast data available"
+        description="Add accounts and transactions to generate financial projections."
+        actions={[
+          {
+            label: "Connect Account",
+            asChild: true,
+            children: <Link href="/accounts">Connect Account</Link>,
+          },
+        ]}
+      />
     )
   }
 

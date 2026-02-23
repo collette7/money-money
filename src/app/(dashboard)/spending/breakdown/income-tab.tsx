@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
+import { DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { CategoryWithHierarchy } from "./expandable-categories";
 
 const fmt = new Intl.NumberFormat("en-US", {
@@ -21,10 +24,18 @@ export function IncomeTab({ categories = [] }: IncomeTabProps) {
 
   if (sorted.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <p className="text-sm">No income categories yet</p>
-        <p className="text-xs mt-1">Add income categories in the editor to track income targets</p>
-      </div>
+      <EmptyState
+        icon={<DollarSign className="size-6" />}
+        title="No income categories yet"
+        description="Add income categories in the editor to track income targets and variance."
+        actions={[
+          {
+            label: "Edit Categories",
+            asChild: true,
+            children: <Link href="/spending/breakdown/edit">Edit Categories</Link>,
+          },
+        ]}
+      />
     );
   }
 

@@ -4,7 +4,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   BarChart3,
-  Home,
   Receipt,
   Sparkles,
   TrendingUp,
@@ -23,7 +22,6 @@ import {
 } from "@/components/ui/sidebar"
 
 const NAV_MAIN = [
-  { title: "Home", href: "/", icon: Home },
   { title: "Spending", href: "/spending/breakdown", icon: Receipt },
   { title: "Portfolio", href: "/portfolio", icon: TrendingUp },
   { title: "Forecast", href: "/forecast", icon: BarChart3 },
@@ -38,7 +36,7 @@ function AppSidebar({ userName, userEmail, ...props }: React.ComponentProps<type
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
+              <Link href="/spending/breakdown">
                 <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg text-sm font-bold">
                   M
                 </div>

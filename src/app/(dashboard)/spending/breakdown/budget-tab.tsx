@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { CategoryWithHierarchy } from "./expandable-categories";
 import { AIRebalanceButton } from "./ai-rebalance-button";
 
@@ -169,9 +171,18 @@ export function BudgetTab({ categories = [], month, year }: BudgetTabProps) {
 
   if (totalBudget === 0 && totalSpent === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <p className="text-sm">No budget set for this month</p>
-      </div>
+      <EmptyState
+        icon={<Target className="size-6" />}
+        title="No budget set"
+        description="Create budgets to track spending against limits for each category."
+        actions={[
+          {
+            label: "Set Up Budgets",
+            asChild: true,
+            children: <Link href="/spending/breakdown/edit">Set Up Budgets</Link>,
+          },
+        ]}
+      />
     );
   }
 

@@ -139,7 +139,7 @@ export async function getPortfolioSnapshots() {
 // Price refresh
 // ---------------------------------------------------------------------------
 
-export async function refreshPrices(): Promise<{ refreshed: number; cached: number }> {
+export async function ensureFreshPrices(): Promise<{ refreshed: number; cached: number }> {
   const { supabase, user } = await getUser();
 
   const { data: holdings } = await supabase
@@ -190,8 +190,13 @@ export async function refreshPrices(): Promise<{ refreshed: number; cached: numb
     );
   }
 
-  revalidatePath("/portfolio");
   return { refreshed: quotes.size, cached };
+}
+
+export async function refreshPrices(): Promise<{ refreshed: number; cached: number }> {
+  const result = await ensureFreshPrices();
+  revalidatePath("/portfolio");
+  return result;
 }
 
 // ---------------------------------------------------------------------------

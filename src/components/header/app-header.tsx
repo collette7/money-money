@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { HelpCircle, LayoutGrid, Plus, Settings } from "lucide-react"
+import { HelpCircle, Settings } from "lucide-react"
 
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
@@ -39,21 +39,9 @@ function AppHeader({ userName = "Collette Smith" }: { userName?: string }) {
         <Button
           variant="ghost"
           size="icon"
-          className="size-8 rounded-lg bg-violet-600 text-white hover:bg-violet-700"
-        >
-          <LayoutGrid className="size-4" />
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon"
           className="size-8 rounded-full bg-zinc-800 text-white hover:bg-zinc-700 dark:bg-zinc-200 dark:text-zinc-800 dark:hover:bg-zinc-300"
         >
           <span className="text-xs font-medium">{initials}</span>
-        </Button>
-
-        <Button variant="ghost" size="icon" className="size-8">
-          <Plus className="size-4" />
         </Button>
 
         <Button variant="ghost" size="icon" className="size-8">
