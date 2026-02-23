@@ -11,7 +11,7 @@ import {
   type PrefetchedData,
 } from "@/lib/categorization/engine";
 
-export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?: number, forceFullHistory?: boolean) {
+export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?: number) {
   const supabase = await createClient();
 
   const { data: accounts, error } = await supabase
@@ -50,15 +50,12 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
     const isFirstSync = (existingTxCount ?? 0) === 0;
 
     let oldestSync: Date;
-    if (forceFullHistory) {
+    if (isFirstSync && initialLookbackDays) {
       oldestSync = new Date();
-      oldestSync.setFullYear(oldestSync.getFullYear() - 5);
-    } else if (isFirstSync && initialLookbackDays) {
-      oldestSync = new Date();
-      oldestSync.setDate(oldestSync.getDate() - Math.min(initialLookbackDays, MAX_SIMPLEFIN_DAYS));
+      oldestSync.setDate(oldestSync.getDate() - initialLookbackDays);
     } else if (isFirstSync) {
       oldestSync = new Date();
-      oldestSync.setDate(oldestSync.getDate() - MAX_SIMPLEFIN_DAYS);
+      oldestSync.setFullYear(oldestSync.getFullYear() - 5);
     } else {
       oldestSync = groupAccounts.reduce((oldest, acc) => {
         if (!acc.last_synced) return fallbackDate;

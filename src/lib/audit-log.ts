@@ -8,7 +8,6 @@ export type AuditAction =
   | "settings.ai_update"
   | "account.connect"
   | "account.sync"
-  | "account.sync_full_history"
   | "transaction.import"
   | "transaction.bulk_update"
   | "transaction.categorize"

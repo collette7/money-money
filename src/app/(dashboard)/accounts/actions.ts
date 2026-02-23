@@ -200,45 +200,6 @@ export async function autoSyncIfNeeded(): Promise<{
   }
 }
 
-export async function syncFullHistory() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/auth/login");
-
-  const result = await syncSimpleFinAccounts(user.id, undefined, true);
-
-  await createAuditLog({
-    action: "account.sync_full_history",
-    metadata: {
-      accountsSynced: result.synced,
-      errors: result.errors,
-      success: result.errors.length === 0,
-    },
-  });
-
-  revalidatePath("/accounts");
-  revalidatePath("/transactions");
-  revalidatePath("/spending");
-
-  const totalTransactions = result.details
-    ? result.details.reduce((sum, d) => sum + d.transactions, 0)
-    : 0;
-  const accountCount = result.details ? result.details.length : result.synced;
-
-  return {
-    success: result.errors.length === 0,
-    accounts: accountCount,
-    transactions: totalTransactions,
-    error:
-      result.errors.length > 0
-        ? `Failed to sync: ${result.errors.join(", ")}`
-        : null,
-  };
-}
-
 export async function deleteAccount(accountId: string) {
   const supabase = await createClient();
   const {
