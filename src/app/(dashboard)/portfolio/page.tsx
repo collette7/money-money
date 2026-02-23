@@ -1,7 +1,7 @@
 import {
   getPortfolioData,
   getPortfolioSnapshots,
-  refreshPrices,
+  ensureFreshPrices,
   recordPortfolioSnapshot,
   syncPortfolioToNetWorth,
   type HoldingRow,
@@ -49,16 +49,14 @@ async function fetchMarketData(symbols: WatchedSymbol[]): Promise<MarketQuote[] 
 }
 
 export default async function PortfolioPage() {
+  await ensureFreshPrices()
+
   const [data, snapshots, watchedSymbols] = await Promise.all([
     getPortfolioData(),
     getPortfolioSnapshots(),
     getWatchedSymbols(),
   ])
 
-  // Fire-and-forget: refresh prices, record snapshot, sync net worth.
-  // These are side-effects — must NOT be awaited in the render tree
-  // because they call revalidatePath which is forbidden during render.
-  refreshPrices().catch(() => {})
   recordPortfolioSnapshot(data.totalValue, data.totalCost).catch(() => {})
   syncPortfolioToNetWorth(data.totalValue).catch(() => {})
 
