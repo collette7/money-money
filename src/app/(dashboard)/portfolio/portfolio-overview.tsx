@@ -274,7 +274,7 @@ function AssetAllocation({
         value = h.current_value ?? h.purchase_value ?? 0
       } else if (h.symbol && h.shares) {
         const price = prices.get(h.symbol)?.price ?? 0
-        value = price > 0 ? h.shares * price : (h.total_cost ?? 0)
+        value = h.shares * price
       }
 
       if (value > 0) {

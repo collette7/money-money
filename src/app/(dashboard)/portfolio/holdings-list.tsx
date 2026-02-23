@@ -146,10 +146,10 @@ function MarketHoldingRow({
   const currentPrice = price?.price ?? 0
   const prevClose = price?.prev_close ?? currentPrice
   
-  const currentValue = currentPrice > 0 ? shares * currentPrice : totalCost
+  const currentValue = shares * currentPrice
   const allTimeGain = totalCost > 0 ? ((currentValue - totalCost) / totalCost) * 100 : 0
-  const dayChange = currentPrice > 0 ? shares * (currentPrice - prevClose) : 0
-  const dayChangePct = prevClose > 0 && currentPrice > 0 ? ((currentPrice - prevClose) / prevClose) * 100 : 0
+  const dayChange = shares * (currentPrice - prevClose)
+  const dayChangePct = prevClose > 0 ? ((currentPrice - prevClose) / prevClose) * 100 : 0
   
   const isPositiveAllTime = allTimeGain >= 0
   const isPositiveDay = dayChange >= 0
