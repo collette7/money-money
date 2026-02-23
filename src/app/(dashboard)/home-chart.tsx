@@ -122,24 +122,7 @@ export function HomeNetWorthChart({
         return chartData
     }
 
-    const filtered = chartData.filter((d) => new Date(d.date) >= cutoff)
-
-    if (filtered.length === 0 && chartData.length >= 1) {
-      const anchorIdx = chartData.findIndex((d) => new Date(d.date) >= cutoff)
-      const anchor = chartData[Math.max(0, anchorIdx - 1)] ?? chartData[chartData.length - 1]
-      return [anchor]
-    }
-
-    if (filtered.length < chartData.length) {
-      const cutoffIdx = chartData.findIndex((d) => new Date(d.date) >= cutoff)
-      const anchorIdx = Math.max(0, cutoffIdx - 1)
-      const anchor = chartData[anchorIdx]
-      if (anchor && !filtered.some((d) => d.date === anchor.date)) {
-        return [anchor, ...filtered]
-      }
-    }
-
-    return filtered
+    return chartData.filter((d) => new Date(d.date) >= cutoff)
   }, [chartData, activePeriod])
 
   return (
