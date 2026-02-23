@@ -100,7 +100,7 @@ export function AssetsDebtCard({
     <Card className="rounded-[14px]">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
-          Assets & Debt
+          Net Worth
         </CardTitle>
         <Link
           href="/accounts"
