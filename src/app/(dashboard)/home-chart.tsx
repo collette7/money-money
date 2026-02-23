@@ -15,8 +15,8 @@ type Snapshot = {
   net_worth: number
 }
 
-const PERIODS = ["1W", "1M", "3M", "YTD", "ALL"] as const
-type PeriodType = (typeof PERIODS)[number]
+export const PERIODS = ["1W", "1M", "3M", "YTD", "ALL"] as const
+export type PeriodType = (typeof PERIODS)[number]
 
 const shortCurrency = (value: number) =>
   new Intl.NumberFormat("en-US", {
@@ -59,8 +59,22 @@ function ChartTooltip({
   )
 }
 
-export function HomeNetWorthChart({ snapshots, height = 260 }: { snapshots: Snapshot[]; height?: number }) {
-  const [activePeriod, setActivePeriod] = useState<PeriodType>("3M")
+export function HomeNetWorthChart({
+  snapshots,
+  height = 260,
+  activePeriod: controlledPeriod,
+  onPeriodChange,
+  hideButtons = false,
+}: {
+  snapshots: Snapshot[]
+  height?: number
+  activePeriod?: PeriodType
+  onPeriodChange?: (p: PeriodType) => void
+  hideButtons?: boolean
+}) {
+  const [internalPeriod, setInternalPeriod] = useState<PeriodType>("3M")
+  const activePeriod = controlledPeriod ?? internalPeriod
+  const setActivePeriod = onPeriodChange ?? setInternalPeriod
   const containerRef = useRef<HTMLDivElement>(null)
   const [chartWidth, setChartWidth] = useState(0)
 
@@ -196,21 +210,23 @@ export function HomeNetWorthChart({ snapshots, height = 260 }: { snapshots: Snap
         ) : null}
       </div>
 
-      <div className="flex items-center justify-center gap-1 mt-3">
-        {PERIODS.map((p) => (
-          <button
-            key={p}
-            onClick={() => setActivePeriod(p)}
-            className={
-              activePeriod === p
-                ? "rounded-full bg-foreground text-background px-3 py-1 text-xs font-medium"
-                : "rounded-full px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            }
-          >
-            {p}
-          </button>
-        ))}
-      </div>
+      {!hideButtons && (
+        <div className="flex items-center justify-center gap-1 mt-3">
+          {PERIODS.map((p) => (
+            <button
+              key={p}
+              onClick={() => setActivePeriod(p)}
+              className={
+                activePeriod === p
+                  ? "rounded-full bg-foreground text-background px-3 py-1 text-xs font-medium"
+                  : "rounded-full px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              }
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

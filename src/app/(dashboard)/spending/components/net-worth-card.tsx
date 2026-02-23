@@ -1,9 +1,10 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { HomeNetWorthChart } from "../../home-chart"
+import { HomeNetWorthChart, PERIODS, type PeriodType } from "../../home-chart"
 
 type Snapshot = {
   date: string
@@ -37,6 +38,8 @@ export function NetWorthCard({
   netWorthDollarChange,
   snapshots,
 }: NetWorthCardProps) {
+  const [period, setPeriod] = useState<PeriodType>("3M")
+
   const today = new Date().toISOString().split("T")[0]
   const hasToday = snapshots.some((s) => s.date === today)
   const chartSnapshots = hasToday
@@ -56,26 +59,49 @@ export function NetWorthCard({
           Accounts &rsaquo;
         </Link>
       </div>
-      <div className="flex items-baseline gap-3 mb-4">
-        <span className="font-bold tabular-nums tracking-tight" style={{ fontSize: 16 }}>
-          {compactCurrency(netWorth)}
-        </span>
-        {netWorthDollarChange !== null && netWorthPctChange !== null && (
-          <span
-            className={cn(
-              "font-medium tabular-nums",
-              netWorthPctChange >= 0 ? "text-emerald-600" : "text-rose-500"
-            )}
-            style={{ fontSize: 13 }}
-          >
-            {netWorthDollarChange >= 0 ? "+" : ""}
-            {compactCurrency(netWorthDollarChange)}{" "}
-            ({netWorthPctChange >= 0 ? "+" : ""}
-            {netWorthPctChange.toFixed(1)}%)
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-baseline gap-3">
+          <span className="font-bold tabular-nums tracking-tight" style={{ fontSize: 16 }}>
+            {compactCurrency(netWorth)}
           </span>
-        )}
+          {netWorthDollarChange !== null && netWorthPctChange !== null && (
+            <span
+              className={cn(
+                "font-medium tabular-nums",
+                netWorthPctChange >= 0 ? "text-emerald-600" : "text-rose-500"
+              )}
+              style={{ fontSize: 13 }}
+            >
+              {netWorthDollarChange >= 0 ? "+" : ""}
+              {compactCurrency(netWorthDollarChange)}{" "}
+              ({netWorthPctChange >= 0 ? "+" : ""}
+              {netWorthPctChange.toFixed(1)}%)
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-0.5">
+          {PERIODS.map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={
+                period === p
+                  ? "rounded-full bg-foreground text-background px-2 py-0.5 text-[11px] font-medium"
+                  : "rounded-full px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+              }
+            >
+              {p}
+            </button>
+          ))}
+        </div>
       </div>
-      <HomeNetWorthChart snapshots={chartSnapshots} height={160} />
+      <HomeNetWorthChart
+        snapshots={chartSnapshots}
+        height={160}
+        activePeriod={period}
+        onPeriodChange={setPeriod}
+        hideButtons
+      />
       <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
         <div>
           <p className="uppercase tracking-wider text-muted-foreground" style={{ fontSize: 10 }}>Assets</p>
