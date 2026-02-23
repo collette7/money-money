@@ -149,13 +149,35 @@ export function HomeNetWorthChart({
             />
             <XAxis
               dataKey="date"
-              tickFormatter={(d: string) =>
-                new Intl.DateTimeFormat("en-US", { month: "short" }).format(new Date(d))
-              }
+              ticks={(() => {
+                if (filteredData.length <= 1) return filteredData.map((d) => d.date)
+                if (activePeriod === "1W") {
+                  return filteredData.map((d) => d.date)
+                }
+                if (activePeriod === "1M") {
+                  return filteredData.filter((_, i) => i % 7 === 0 || i === filteredData.length - 1).map((d) => d.date)
+                }
+                const seen = new Set<string>()
+                return filteredData
+                  .filter((d) => {
+                    const m = d.date.slice(0, 7)
+                    if (seen.has(m)) return false
+                    seen.add(m)
+                    return true
+                  })
+                  .map((d) => d.date)
+              })()}
+              tickFormatter={(d: string) => {
+                const dt = new Date(d)
+                if (activePeriod === "1W")
+                  return new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(dt)
+                if (activePeriod === "1M")
+                  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(dt)
+                return new Intl.DateTimeFormat("en-US", { month: "short" }).format(dt)
+              }}
               tick={{ fontSize: 11, fill: "oklch(0.55 0 0)" }}
               axisLine={false}
               tickLine={false}
-              interval="preserveStartEnd"
               dy={6}
             />
             <YAxis
