@@ -68,11 +68,13 @@ async function getDashboardData() {
       .limit(4),
     supabase
       .from("transactions")
-      .select("amount, date, accounts!account_id!inner ( user_id )")
+      .select("amount, date, type, accounts!account_id!inner ( user_id )")
       .eq("accounts.user_id", user.id)
+      .eq("ignored", false)
       .gte("date", monthStart)
       .lt("date", monthEnd)
       .lt("amount", 0)
+      .or("type.eq.expense,type.is.null")
       .order("date", { ascending: true }),
     supabase
       .from("budgets")
@@ -85,9 +87,11 @@ async function getDashboardData() {
       .from("transactions")
       .select("amount, accounts!account_id!inner ( user_id )")
       .eq("accounts.user_id", user.id)
+      .eq("ignored", false)
       .gte("date", lastMonthStart)
       .lt("date", lastMonthEnd)
-      .lt("amount", 0),
+      .lt("amount", 0)
+      .or("type.eq.expense,type.is.null"),
   ])
 
   const accounts = accountsList ?? []
