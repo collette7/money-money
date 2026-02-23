@@ -11,7 +11,7 @@ import {
   type PrefetchedData,
 } from "@/lib/categorization/engine";
 
-export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?: number) {
+export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?: number, forceFullHistory?: boolean) {
   const supabase = await createClient();
 
   const { data: accounts, error } = await supabase
@@ -38,8 +38,9 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
   }
 
   for (const [encryptedAccessUrl, groupAccounts] of accessUrlGroups) {
-    const ninetyDaysAgo = new Date();
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    const DEFAULT_FIRST_SYNC_DAYS = 730; // 2 years of history on first sync
+    const fallbackDate = new Date();
+    fallbackDate.setDate(fallbackDate.getDate() - 90);
 
     const { count: existingTxCount } = await supabase
       .from("transactions")
@@ -49,14 +50,19 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
     const isFirstSync = (existingTxCount ?? 0) === 0;
 
     let oldestSync: Date;
-    if (isFirstSync && initialLookbackDays) {
+    if (forceFullHistory) {
+      // Pull maximum history available (5 years back)
+      oldestSync = new Date();
+      oldestSync.setFullYear(oldestSync.getFullYear() - 5);
+    } else if (isFirstSync && initialLookbackDays) {
       oldestSync = new Date();
       oldestSync.setDate(oldestSync.getDate() - initialLookbackDays);
     } else if (isFirstSync) {
-      oldestSync = ninetyDaysAgo;
+      oldestSync = new Date();
+      oldestSync.setDate(oldestSync.getDate() - DEFAULT_FIRST_SYNC_DAYS);
     } else {
       oldestSync = groupAccounts.reduce((oldest, acc) => {
-        if (!acc.last_synced) return ninetyDaysAgo;
+        if (!acc.last_synced) return fallbackDate;
         const syncDate = new Date(acc.last_synced);
         return syncDate < oldest ? syncDate : oldest;
       }, new Date());

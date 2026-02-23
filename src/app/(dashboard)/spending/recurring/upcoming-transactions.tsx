@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
+import { useTransition } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CalendarIcon, ListIcon, Plus } from "lucide-react"
@@ -8,6 +10,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { RecurringFilter } from "./recurring-filter"
 import { RecurringActions } from "./recurring-actions"
 import { DateStrip } from "./date-strip"
+import { AddRecurringModal } from "./add-recurring-modal"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import { format } from "date-fns"
+import { createRecurringRule } from "@/lib/recurring/actions"
 import type { RecurringFrequency } from "@/types/database"
 
 interface UpcomingRule {
@@ -70,9 +81,14 @@ export function UpcomingTransactions({
   billCount,
   subscriptionCount,
 }: UpcomingTransactionsProps) {
+  const router = useRouter()
+  const [, startTransition] = useTransition()
   const [offset, setOffset] = useState(0)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [frequencyFilter, setFrequencyFilter] = useState("all")
+  const [showAllList, setShowAllList] = useState(false)
+  const [calendarOpen, setCalendarOpen] = useState(false)
+  const [addModalOpen, setAddModalOpen] = useState(false)
   const visibleCount = 7
 
   const visibleDates = dates.slice(offset, offset + visibleCount)
@@ -90,16 +106,58 @@ export function UpcomingTransactions({
       filtered = filtered.filter((r) => allowed.includes(r.frequency))
     }
 
+    if (showAllList) {
+      return [...filtered].sort((a, b) => a.daysUntil - b.daysUntil)
+    }
+
     if (selectedDate) {
       return filtered.filter((r) => r.nextDate === selectedDate)
     }
     const visibleDateSet = new Set(visibleDates.map((d) => d.date))
     return filtered.filter((r) => visibleDateSet.has(r.nextDate))
-  }, [upcomingRules, visibleDates, selectedDate, frequencyFilter])
+  }, [upcomingRules, visibleDates, selectedDate, frequencyFilter, showAllList])
 
   const handleOffsetChange = (newOffset: number) => {
     setOffset(newOffset)
     setSelectedDate(null)
+  }
+
+  const handleCalendarSelect = (date: Date | undefined) => {
+    if (!date) return
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const selected = new Date(date)
+    selected.setHours(0, 0, 0, 0)
+    const daysDiff = Math.floor((selected.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    const newOffset = Math.max(0, Math.min(Math.floor(daysDiff / 7) * 7, dates.length - visibleCount))
+    setOffset(newOffset)
+    setSelectedDate(format(date, "yyyy-MM-dd"))
+    setCalendarOpen(false)
+  }
+
+  const handleAddRecurring = (data: {
+    merchantName: string
+    amount: number
+    frequency: string
+    nextPaymentDate: string
+    endDate: string | null
+    stopAfter: number | null
+  }) => {
+    startTransition(async () => {
+      const nextDate = new Date(data.nextPaymentDate + "T00:00:00")
+      await createRecurringRule({
+        merchantPattern: data.merchantName.toUpperCase(),
+        merchantName: data.merchantName,
+        expectedAmount: data.amount,
+        frequency: data.frequency as RecurringFrequency,
+        expectedDay: nextDate.getDate(),
+        confirmed: true,
+        source: "manual",
+        nextExpected: data.nextPaymentDate,
+      })
+      setAddModalOpen(false)
+      router.refresh()
+    })
   }
 
   return (
@@ -110,13 +168,34 @@ export function UpcomingTransactions({
         </CardTitle>
         <div className="flex items-center gap-2">
           <RecurringFilter value={frequencyFilter} onChange={setFrequencyFilter} />
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <CalendarIcon className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <CalendarIcon className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <CalendarComponent
+                mode="single"
+                onSelect={handleCalendarSelect}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+          <Button
+            variant={showAllList ? "secondary" : "ghost"}
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setShowAllList(!showAllList)}
+          >
             <ListIcon className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setAddModalOpen(true)}
+          >
             <Plus className="h-4 w-4" />
           </Button>
         </div>
@@ -208,6 +287,12 @@ export function UpcomingTransactions({
           </div>
         </div>
       </CardContent>
+
+      <AddRecurringModal
+        open={addModalOpen}
+        onOpenChange={setAddModalOpen}
+        onSave={handleAddRecurring}
+      />
     </Card>
   )
 }
