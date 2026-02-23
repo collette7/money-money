@@ -51,15 +51,16 @@ export function NetWorthCard({
         </Link>
       </div>
       <div className="flex items-baseline gap-3 mb-4">
-        <span className="text-3xl font-bold tabular-nums tracking-tight">
+        <span className="font-bold tabular-nums tracking-tight" style={{ fontSize: 16 }}>
           {compactCurrency(netWorth)}
         </span>
         {netWorthDollarChange !== null && netWorthPctChange !== null && (
           <span
             className={cn(
-              "text-sm font-medium tabular-nums",
+              "font-medium tabular-nums",
               netWorthPctChange >= 0 ? "text-emerald-600" : "text-rose-500"
             )}
+            style={{ fontSize: 13 }}
           >
             {netWorthDollarChange >= 0 ? "+" : ""}
             {compactCurrency(netWorthDollarChange)}{" "}
@@ -69,16 +70,16 @@ export function NetWorthCard({
         )}
       </div>
       <HomeNetWorthChart snapshots={snapshots} height={160} />
-      <div className="grid grid-cols-2 gap-4 mt-5 pt-5 border-t">
+      <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
         <div>
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Assets</p>
-          <p className="text-xl font-semibold tabular-nums text-emerald-600 mt-1">
+          <p className="uppercase tracking-wider text-muted-foreground" style={{ fontSize: 10 }}>Assets</p>
+          <p className="font-semibold tabular-nums text-emerald-600 mt-0.5" style={{ fontSize: 13 }}>
             {compactCurrency(assets)}
           </p>
         </div>
         <div>
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Liabilities</p>
-          <p className="text-xl font-semibold tabular-nums text-rose-500 mt-1">
+          <p className="uppercase tracking-wider text-muted-foreground" style={{ fontSize: 10 }}>Liabilities</p>
+          <p className="font-semibold tabular-nums text-rose-500 mt-0.5" style={{ fontSize: 13 }}>
             {compactCurrency(liabilities)}
           </p>
         </div>
