@@ -23,6 +23,8 @@ as $$
     and t.date < p_end_date
     and t.category_id is not null
     and c.type != 'transfer'
+    and t.ignored = false
+    and (t.status is null or t.status = 'cleared')
   group by t.category_id;
 $$;
 

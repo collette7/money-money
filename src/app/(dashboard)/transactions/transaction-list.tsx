@@ -2,12 +2,17 @@
 
 import {
   AlertCircle,
+  ArrowDown,
   ArrowLeftRight,
+  ArrowUp,
+  ArrowUpDown,
   Bot,
   CalendarIcon,
   Check,
+  ChevronsLeft,
   ChevronLeft,
   ChevronRight,
+  ChevronsRight,
   CreditCard,
   EyeOff,
   Repeat2,
@@ -155,6 +160,9 @@ export function TransactionList({
     refreshData,
     startDateValue,
     endDateValue,
+    currentSortBy,
+    currentSortDir,
+    handleSort,
   } = useTransactionList({
     transactions: initialTransactions,
     categories: initialCategories,
@@ -469,11 +477,76 @@ export function TransactionList({
                       aria-label="Select all"
                     />
                   </TableHead>
-                  <TableHead className="w-20 sm:w-24">Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="w-32 sm:w-44 pl-4 sm:pl-8 hidden sm:table-cell">Category</TableHead>
-                  <TableHead className="w-24 sm:w-32 pl-4 sm:pl-8 text-right">Amount</TableHead>
-                  <TableHead className="w-32 hidden lg:table-cell">Account</TableHead>
+                  <TableHead className="w-20 sm:w-24">
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-xs font-medium hover:text-foreground transition-colors"
+                      onClick={() => handleSort("date")}
+                    >
+                      Date
+                      {currentSortBy === "date" ? (
+                        currentSortDir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+                      ) : (
+                        <ArrowUpDown className="size-3 opacity-50" />
+                      )}
+                    </button>
+                  </TableHead>
+                  <TableHead>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-xs font-medium hover:text-foreground transition-colors"
+                      onClick={() => handleSort("description")}
+                    >
+                      Description
+                      {currentSortBy === "description" ? (
+                        currentSortDir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+                      ) : (
+                        <ArrowUpDown className="size-3 opacity-50" />
+                      )}
+                    </button>
+                  </TableHead>
+                  <TableHead className="w-32 sm:w-44 pl-4 sm:pl-8 hidden sm:table-cell">
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-xs font-medium hover:text-foreground transition-colors"
+                      onClick={() => handleSort("category")}
+                    >
+                      Category
+                      {currentSortBy === "category" ? (
+                        currentSortDir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+                      ) : (
+                        <ArrowUpDown className="size-3 opacity-50" />
+                      )}
+                    </button>
+                  </TableHead>
+                  <TableHead className="w-24 sm:w-32 pl-4 sm:pl-8 text-right">
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-xs font-medium hover:text-foreground transition-colors ml-auto"
+                      onClick={() => handleSort("amount")}
+                    >
+                      Amount
+                      {currentSortBy === "amount" ? (
+                        currentSortDir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+                      ) : (
+                        <ArrowUpDown className="size-3 opacity-50" />
+                      )}
+                    </button>
+                  </TableHead>
+                  <TableHead className="w-32 hidden lg:table-cell">
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-xs font-medium hover:text-foreground transition-colors"
+                      onClick={() => handleSort("account")}
+                    >
+                      Account
+                      {currentSortBy === "account" ? (
+                        currentSortDir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+                      ) : (
+                        <ArrowUpDown className="size-3 opacity-50" />
+                      )}
+                    </button>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -605,7 +678,17 @@ export function TransactionList({
               variant="outline"
               size="icon-sm"
               disabled={page <= 1}
+              onClick={() => updateParams({ page: "" })}
+              title="First page"
+            >
+              <ChevronsLeft className="size-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              disabled={page <= 1}
               onClick={() => updateParams({ page: String(page - 1) })}
+              title="Previous page"
             >
               <ChevronLeft className="size-4" />
             </Button>
@@ -614,8 +697,18 @@ export function TransactionList({
               size="icon-sm"
               disabled={page >= totalPages}
               onClick={() => updateParams({ page: String(page + 1) })}
+              title="Next page"
             >
               <ChevronRight className="size-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              disabled={page >= totalPages}
+              onClick={() => updateParams({ page: String(totalPages) })}
+              title="Last page"
+            >
+              <ChevronsRight className="size-4" />
             </Button>
           </div>
         </div>

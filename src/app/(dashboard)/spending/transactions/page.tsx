@@ -1,13 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { TransactionList } from "@/app/(dashboard)/transactions/transaction-list"
-import { Card } from "@/components/ui/card"
-import {
-  TrendingDown,
-  TrendingUp,
-  CalendarRange,
-  Hash,
-} from "lucide-react"
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.abs(value))
@@ -91,71 +84,26 @@ export default async function TransactionsPage() {
         </h1>
       </div>
 
-      <Card className="p-0 overflow-hidden">
-        <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-border/50">
-          <div className="p-3 sm:p-4 flex items-center gap-2.5 group hover:bg-muted/30 transition-colors">
-            <div className="size-7 rounded-md bg-slate-100 dark:bg-slate-800/60 flex items-center justify-center shrink-0">
-              <Hash className="size-3.5 text-slate-600 dark:text-slate-400" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-                Total
-              </p>
-              <p className="text-[13px] font-semibold tracking-tight mt-0.5">
-                {stats.totalCount.toLocaleString()}
-              </p>
-            </div>
-          </div>
-
-          <div className="p-3 sm:p-4 flex items-center gap-2.5 group hover:bg-muted/30 transition-colors">
-            <div className="size-7 rounded-md bg-slate-100 dark:bg-slate-800/60 flex items-center justify-center shrink-0">
-              <CalendarRange className="size-3.5 text-slate-600 dark:text-slate-400" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-                Date Range
-              </p>
-              <p className="text-[13px] font-medium mt-0.5 truncate">
-                {stats.startDate && stats.endDate ? (
-                  <>
-                    {formatDate(stats.startDate)} — {formatDate(stats.endDate)}
-                  </>
-                ) : (
-                  "—"
-                )}
-              </p>
-            </div>
-          </div>
-
-          <div className="p-3 sm:p-4 flex items-center gap-2.5 group hover:bg-rose-50/50 dark:hover:bg-rose-950/20 transition-colors">
-            <div className="size-7 rounded-md bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center shrink-0">
-              <TrendingDown className="size-3.5 text-rose-600 dark:text-rose-400" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-                Expenses
-              </p>
-              <p className="text-[13px] font-semibold tracking-tight mt-0.5 text-rose-600 dark:text-rose-400">
-                −{formatCurrency(stats.totalExpenses)}
-              </p>
-            </div>
-          </div>
-
-          <div className="p-3 sm:p-4 flex items-center gap-2.5 group hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition-colors">
-            <div className="size-7 rounded-md bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0">
-              <TrendingUp className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-                Income
-              </p>
-              <p className="text-[13px] font-semibold tracking-tight mt-0.5 text-emerald-600 dark:text-emerald-400">
-                +{formatCurrency(stats.totalIncome)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </Card>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-1 rounded-lg border px-4 py-2.5 text-[13px]">
+        <span className="text-muted-foreground">Total transactions <span className="font-semibold text-foreground">{stats.totalCount.toLocaleString()}</span></span>
+        <span className="text-muted-foreground">Date range{" "}
+          <span className="font-semibold text-foreground">
+            {stats.startDate && stats.endDate
+              ? `${formatDate(stats.startDate)} – ${formatDate(stats.endDate)}`
+              : "—"}
+          </span>
+        </span>
+        <span className="ml-auto text-muted-foreground">Total expenses{" "}
+          <span className="font-semibold text-rose-600 dark:text-rose-400">
+            −{formatCurrency(stats.totalExpenses)}
+          </span>
+        </span>
+        <span className="text-muted-foreground">Total income{" "}
+          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+            {stats.totalIncome > 0 ? "+" : ""}{formatCurrency(stats.totalIncome)}
+          </span>
+        </span>
+      </div>
 
       {/* Transaction List */}
       <TransactionList />

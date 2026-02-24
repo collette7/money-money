@@ -24,6 +24,8 @@ export async function getTransactions(filters?: {
   page?: number;
   pageSize?: number;
   view?: "all" | "review" | "excluded";
+  sortBy?: "date" | "description" | "category" | "amount" | "account";
+  sortDir?: "asc" | "desc";
 }) {
   const supabase = await createClient();
   const {
@@ -83,7 +85,29 @@ export async function getTransactions(filters?: {
     query = query.lte("date", filters.endDate);
   }
 
-   query = query.order("date", { ascending: false }).range(from, to);
+  const sortBy = filters?.sortBy ?? "date";
+  const sortDir = filters?.sortDir ?? "desc";
+  const ascending = sortDir === "asc";
+
+  // Map sort columns to actual DB columns/relations
+  if (sortBy === "category") {
+    query = query.order("name", { ascending, referencedTable: "categories" });
+  } else if (sortBy === "account") {
+    query = query.order("name", { ascending, referencedTable: "accounts" });
+  } else if (sortBy === "description") {
+    query = query.order("merchant_name", { ascending, nullsFirst: false });
+  } else if (sortBy === "amount") {
+    query = query.order("amount", { ascending });
+  } else {
+    query = query.order("date", { ascending });
+  }
+
+  // Always add secondary sort by date desc for stability (except when already sorting by date)
+  if (sortBy !== "date") {
+    query = query.order("date", { ascending: false });
+  }
+
+  query = query.range(from, to);
 
    const { data, count, error } = await query;
 

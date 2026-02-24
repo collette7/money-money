@@ -140,6 +140,8 @@ export function useTransactionList(initial?: {
             endDate,
             page: pageParam,
             view,
+            sortBy: (searchParams.get("sortBy") as any) || undefined,
+            sortDir: (searchParams.get("sortDir") as any) || undefined,
           });
           
           setTransactions(transactionData.transactions);
@@ -192,6 +194,8 @@ export function useTransactionList(initial?: {
   const currentAccountId = searchParams.get("accountId") ?? ""
   const currentStartDate = searchParams.get("startDate") ?? ""
   const currentEndDate = searchParams.get("endDate") ?? ""
+  const currentSortBy = (searchParams.get("sortBy") as "date" | "description" | "category" | "amount" | "account") ?? "date"
+  const currentSortDir = (searchParams.get("sortDir") as "asc" | "desc") ?? "desc"
 
   const hasFilters = currentSearch || currentCategoryId || currentAccountId || currentStartDate || currentEndDate
 
@@ -397,6 +401,13 @@ export function useTransactionList(initial?: {
     }
   }
 
+  function handleSort(column: "date" | "description" | "category" | "amount" | "account") {
+    const newDir = currentSortBy === column
+      ? (currentSortDir === "desc" ? "asc" : "desc")
+      : (column === "description" ? "asc" : "desc")
+    updateParams({ sortBy: column === "date" && newDir === "desc" ? "" : column, sortDir: column === "date" && newDir === "desc" ? "" : newDir, page: "" })
+  }
+
   const grouped = useMemo(() => ({
     expense: categories.filter((c) => c.type === "expense"),
     income: categories.filter((c) => c.type === "income"),
@@ -486,5 +497,8 @@ export function useTransactionList(initial?: {
     grouped,
     startDateValue,
     endDateValue,
+    currentSortBy,
+    currentSortDir,
+    handleSort,
   }
 }

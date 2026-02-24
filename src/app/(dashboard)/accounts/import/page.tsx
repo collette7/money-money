@@ -442,9 +442,11 @@ export default function ImportPage() {
       if (result.success) {
         const skipped = result.skipped ?? 0
         const skippedNoAccount = result.skippedNoAccount ?? 0
+        const resolved = result.resolvedPending ?? 0
         const parts: string[] = []
         parts.push(`Imported ${result.inserted} transactions`)
         if (skipped > 0) parts.push(`skipped ${skipped} duplicates`)
+        if (resolved > 0) parts.push(`resolved ${resolved} pending`)
         if (skippedNoAccount > 0) parts.push(`${skippedNoAccount} skipped (unmatched accounts)`)
         const msg = parts.join(", ")
         setImportPhase("complete")

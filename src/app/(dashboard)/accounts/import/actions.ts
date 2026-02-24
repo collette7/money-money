@@ -208,13 +208,57 @@ export async function importTransactions(payload: {
   // Resolve category based on mode
   const categoryMode = payload.categoryMode ?? "map";
 
+  // "keep" mode: auto-create missing categories so they appear in Edit Categories
+  if (categoryMode === "keep") {
+    const missingNames = new Map<string, string>(); // lowercase → original casing
+    for (const tx of payload.transactions) {
+      if (!tx.categoryName) continue;
+      const key = tx.categoryName.toLowerCase().trim();
+      if (!categoryByName.has(key) && !missingNames.has(key)) {
+        missingNames.set(key, tx.categoryName.trim());
+      }
+    }
+
+    if (missingNames.size > 0) {
+      // Infer category type from the first transaction that uses each category
+      const typeByName = new Map<string, string>();
+      for (const tx of payload.transactions) {
+        if (!tx.categoryName) continue;
+        const key = tx.categoryName.toLowerCase().trim();
+        if (missingNames.has(key) && !typeByName.has(key) && tx.type) {
+          const t = tx.type.toLowerCase();
+          if (t === "income") typeByName.set(key, "income");
+          else if (t === "transfer") typeByName.set(key, "transfer");
+          else typeByName.set(key, "expense");
+        }
+      }
+
+      const newCats = [...missingNames.entries()].map(([key, name]) => ({
+        user_id: user.id,
+        name,
+        type: typeByName.get(key) ?? "expense",
+      }));
+
+      const { data: created } = await supabase
+        .from("categories")
+        .insert(newCats)
+        .select("id, name, type");
+
+      if (created) {
+        for (const c of created) {
+          categoryByName.set(c.name.toLowerCase(), c);
+        }
+      }
+    }
+  }
+
   function resolveCategoryId(tx: TransactionInput): string | null {
     if (!tx.categoryName) return null;
 
     if (categoryMode === "skip") return null;
 
     if (categoryMode === "keep") {
-      // Direct match: use the CSV category name as-is against our categories
+      // Direct match — includes newly auto-created categories
       const cat = categoryByName.get(tx.categoryName.toLowerCase().trim());
       return cat?.id ?? null;
     }
@@ -366,8 +410,50 @@ export async function importTransactions(payload: {
     inserted += batch.length;
   }
 
-  // Update last_synced for affected accounts
+  // Clean up pending transactions that now have a matching cleared counterpart.
+  // Pending txns from SimpleFIN often have slightly different dates (±2 days).
   const affectedAccountIds = [...new Set(finalRows.map((r) => r.account_id))];
+  let resolvedPending = 0;
+  if (inserted > 0) {
+    for (const accId of affectedAccountIds) {
+      const { data: pendingTxns } = await supabase
+        .from("transactions")
+        .select("id, date, amount")
+        .eq("account_id", accId)
+        .eq("status", "pending");
+
+      if (pendingTxns && pendingTxns.length > 0) {
+        // Build a set of (amount, date) from newly inserted cleared rows for fast lookup
+        const clearedLookup = new Map<number, string[]>();
+        for (const r of finalRows.filter((r) => r.account_id === accId)) {
+          const key = Math.round(r.amount * 100);
+          if (!clearedLookup.has(key)) clearedLookup.set(key, []);
+          clearedLookup.get(key)!.push(r.date);
+        }
+
+        const toDelete: string[] = [];
+        for (const p of pendingTxns) {
+          const key = Math.round(p.amount * 100);
+          const matchDates = clearedLookup.get(key);
+          if (!matchDates) continue;
+          // Check if any cleared transaction is within ±2 days
+          const pDate = new Date(p.date + "T00:00:00").getTime();
+          const hasMatch = matchDates.some((d) => {
+            const cDate = new Date(d + "T00:00:00").getTime();
+            return Math.abs(cDate - pDate) <= 2 * 86400000;
+          });
+          if (hasMatch) toDelete.push(p.id);
+        }
+
+        if (toDelete.length > 0) {
+          await supabase.from("transactions").delete().in("id", toDelete);
+          resolvedPending += toDelete.length;
+        }
+      }
+    }
+  }
+
+  // Update last_synced for affected accounts
   for (const accId of affectedAccountIds) {
     await supabase
       .from("accounts")
@@ -398,6 +484,7 @@ export async function importTransactions(payload: {
     success: true,
     inserted,
     skipped: skippedDupes,
+    resolvedPending,
     skippedNoAccount: unmatchedCount,
     unmatchedAccounts: [...unmatchedAccounts],
     accountId: singleAccountId ?? affectedAccountIds[0],

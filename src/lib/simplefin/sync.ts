@@ -255,6 +255,38 @@ async function upsertTransactions(
     throw new Error(`Failed to insert transactions: ${error.message}`);
   }
 
+  // Resolve pending → cleared: when a cleared transaction arrives, delete any
+  // matching pending transaction (same account, same amount, date ±2 days).
+  // SimpleFIN assigns new IDs when transactions clear, so simplefin_id dedup misses these.
+  const newCleared = newRows.filter((r) => r.status === "cleared");
+  if (newCleared.length > 0) {
+    const { data: pendingTxns } = await supabase
+      .from("transactions")
+      .select("id, date, amount, simplefin_id")
+      .eq("account_id", accountId)
+      .eq("status", "pending");
+
+    if (pendingTxns && pendingTxns.length > 0) {
+      const toDelete: string[] = [];
+      for (const cleared of newCleared) {
+        const cAmt = Math.round(parseFloat(String(cleared.amount)) * 100);
+        const cDate = new Date(cleared.date + "T00:00:00").getTime();
+        for (const p of pendingTxns) {
+          if (toDelete.includes(p.id)) continue; // already marked
+          const pAmt = Math.round(p.amount * 100);
+          const pDate = new Date(p.date + "T00:00:00").getTime();
+          if (cAmt === pAmt && Math.abs(cDate - pDate) <= 2 * 86400000) {
+            toDelete.push(p.id);
+            break; // one pending match per cleared transaction
+          }
+        }
+      }
+      if (toDelete.length > 0) {
+        await supabase.from("transactions").delete().in("id", toDelete);
+      }
+    }
+  }
+
   if (inserted?.length) {
     await categorizeNewTransactions(supabase, userId, inserted);
 
