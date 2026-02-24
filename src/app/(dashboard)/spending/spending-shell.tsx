@@ -21,7 +21,7 @@ export function SpendingShell({
   return (
     <div className="flex-1 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
           {getGreeting()}, {firstName}
         </h1>
       </div>
@@ -40,7 +40,7 @@ function Tabs() {
 
   return (
     <div className="border-b">
-      <nav className="-mb-px flex space-x-8">
+      <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto">
         <Link
           href="/spending/breakdown"
           className={cn(

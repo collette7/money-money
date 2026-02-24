@@ -58,7 +58,7 @@ export default async function AccountsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-4">
           <span className="text-xs font-medium uppercase tracking-[1.2px] text-[#6a7282]">
             ACCOUNTS
@@ -93,8 +93,8 @@ export default async function AccountsPage() {
       </div>
 
       {hasAccounts ? (
-        <div className="rounded-lg border border-[#e5e7eb] bg-white">
-          <div className="grid grid-cols-[1fr_120px_80px] items-center border-b border-[#e5e7eb] px-6 py-3">
+        <div className="rounded-lg border border-[#e5e7eb] bg-white dark:bg-card dark:border-border overflow-x-auto">
+          <div className="grid grid-cols-[1fr_100px_70px] sm:grid-cols-[1fr_120px_80px] items-center border-b border-[#e5e7eb] dark:border-border px-4 sm:px-6 py-3 min-w-[400px]">
             <span className="text-sm font-medium text-[#101828]">Account Name</span>
             <span className="text-sm font-medium text-[#101828]">Amount</span>
             <span className="text-sm font-medium text-[#101828] text-right">Actions</span>

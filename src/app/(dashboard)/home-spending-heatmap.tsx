@@ -105,7 +105,7 @@ export function HomeSpendingHeatmap({
   const clearHover = useCallback(() => setHoveredCell(null), [])
 
   return (
-    <Card className="p-5">
+    <Card className="p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <Link
           href="/spending/breakdown"
@@ -118,8 +118,8 @@ export function HomeSpendingHeatmap({
         </span>
       </div>
 
-      <div className="flex gap-6 min-h-[200px]">
-        <div className="w-[55%] shrink-0" onMouseLeave={clearHover}>
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 min-h-0 sm:min-h-[200px]">
+        <div className="w-full sm:w-[55%] sm:shrink-0" onMouseLeave={clearHover}>
           <div className="grid grid-cols-7 gap-[3px] mb-1.5">
             {DAY_LABELS.map((label, i) => (
               <div key={i} className="text-[10px] text-muted-foreground text-center font-medium select-none">

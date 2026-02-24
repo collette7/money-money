@@ -23,7 +23,7 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="cash-flow" className="space-y-6">
-              <TabsList className="bg-transparent p-0 h-auto border-b rounded-none w-full justify-start gap-6">
+              <TabsList className="bg-transparent p-0 h-auto border-b rounded-none w-full justify-start gap-3 sm:gap-6 overflow-x-auto">
                 <TabsTrigger
                   value="cash-flow"
                   className="rounded-none border-b-2 border-transparent px-0 pb-2 data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none font-medium"
@@ -107,7 +107,7 @@ function ReportSkeleton() {
   return (
     <div className="space-y-4">
       <div className="h-[300px] bg-muted animate-pulse rounded" />
-      <div className="grid gap-4 grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="h-20 bg-muted animate-pulse rounded" />
         ))}

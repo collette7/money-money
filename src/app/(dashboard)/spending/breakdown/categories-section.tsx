@@ -25,8 +25,8 @@ export function CategoriesSection({
 }: CategoriesSectionProps) {
   return (
     <Card className="border-slate-200/60">
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between mb-4">
+      <CardContent className="px-4 sm:px-6 pt-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
           <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
             Category Breakdown
           </h2>
@@ -42,7 +42,7 @@ export function CategoriesSection({
         </div>
 
         <Tabs defaultValue="expenses">
-          <TabsList variant="line" className="w-full justify-start gap-6 border-b border-slate-200 dark:border-slate-700">
+          <TabsList variant="line" className="w-full justify-start gap-4 sm:gap-6 border-b border-slate-200 dark:border-slate-700 overflow-x-auto">
             <TabsTrigger value="expenses">Expenses</TabsTrigger>
             <TabsTrigger value="budget">Budget</TabsTrigger>
             <TabsTrigger value="income">Income</TabsTrigger>

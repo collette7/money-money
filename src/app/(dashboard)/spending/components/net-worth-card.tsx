@@ -47,7 +47,7 @@ export function NetWorthCard({
     : [...snapshots, { date: today, net_worth: netWorth, total_assets: assets, total_liabilities: liabilities }]
 
   return (
-    <Card className="p-5 min-w-0">
+    <Card className="p-4 sm:p-5 min-w-0">
       <div className="flex items-start justify-between mb-1">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           NET WORTH
@@ -59,7 +59,7 @@ export function NetWorthCard({
           Accounts &rsaquo;
         </Link>
       </div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
         <div className="flex items-baseline gap-3">
           <span className="font-bold tabular-nums tracking-tight" style={{ fontSize: 16 }}>
             {compactCurrency(netWorth)}
