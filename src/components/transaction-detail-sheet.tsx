@@ -194,6 +194,7 @@ export function TransactionDetailSheet({
                 {currency(transaction?.amount ?? 0)}
               </p>
 
+              <div className="flex flex-col items-center gap-1">
               <Popover open={catOpen} onOpenChange={setCatOpen}>
                 <PopoverTrigger asChild>
                   <button
@@ -246,6 +247,7 @@ export function TransactionDetailSheet({
                   <span className="opacity-60 text-[10px]">(R)</span>
                 </button>
               )}
+              </div>
 
               {transaction?.category_confidence != null && !transaction?.category_confirmed && (
                 <div className="flex items-center justify-center gap-2">

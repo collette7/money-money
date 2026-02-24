@@ -179,49 +179,72 @@ export function TransactionList({
        React hydration mismatches. This prop tells React to silently ignore
        attribute differences on this element during hydration. */}
     <div className="space-y-4" suppressHydrationWarning>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search transactions..."
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            className="pl-9"
-          />
-          {searchValue && (
-            <button
-              onClick={() => setSearchValue("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="size-3.5" />
-            </button>
-          )}
-        </div>
+      {someSelected && (
         <div className="flex flex-wrap items-center gap-2">
-          {someSelected && (<>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleBulkMarkReviewed}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBulkMarkReviewed}
+          >
+            <Check className="size-3.5" />
+            Mark {selected.size} as reviewed
+          </Button>
+          <Popover open={bulkCategoryOpen} onOpenChange={setBulkCategoryOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Tag className="size-3.5" />
+                Categorize {selected.size}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-0" align="end">
+              <CategoryPicker
+                categories={categories}
+                onSelect={(cat) => handleBulkCategory(cat.id)}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
+
+      <div className="flex items-center border-b border-border/50">
+        <div className="flex items-center gap-1">
+          {([
+            { value: "all" as const, label: "All" },
+            { value: "review" as const, label: "Needs Review", count: viewCounts.review },
+            { value: "excluded" as const, label: "Excluded", count: viewCounts.excluded },
+          ] as const).map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => updateParams({ view: tab.value === "all" ? "" : tab.value, page: "" })}
+              className={cn(
+                "relative px-3 py-2 text-xs font-medium transition-colors",
+                currentView === tab.value
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground/70"
+              )}
             >
-              <Check className="size-3.5" />
-              Mark {selected.size} as reviewed
-            </Button>
-            <Popover open={bulkCategoryOpen} onOpenChange={setBulkCategoryOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Tag className="size-3.5" />
-                  Categorize {selected.size}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-0" align="end">
-                <CategoryPicker
-                  categories={categories}
-                  onSelect={(cat) => handleBulkCategory(cat.id)}
-                />
-              </PopoverContent>
-            </Popover>
-          </>)}
+              <span className="flex items-center gap-1.5">
+                {tab.value === "review" && <AlertCircle className="size-3" />}
+                {tab.value === "excluded" && <EyeOff className="size-3" />}
+                {tab.label}
+                {"count" in tab && tab.count > 0 && (
+                  <span className={cn(
+                    "inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none",
+                    tab.value === "review"
+                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    {tab.count}
+                  </span>
+                )}
+              </span>
+              {currentView === tab.value && (
+                <span className="absolute inset-x-0 bottom-0 h-0.5 bg-foreground rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="ml-auto flex items-center gap-2 pb-1">
           <Button
             variant="outline"
             size="sm"
@@ -249,45 +272,6 @@ export function TransactionList({
             AI Categorize
           </Button>
         </div>
-        
-      </div>
-
-      <div className="flex items-center gap-1 border-b border-border/50">
-        {([
-          { value: "all" as const, label: "All" },
-          { value: "review" as const, label: "Needs Review", count: viewCounts.review },
-          { value: "excluded" as const, label: "Excluded", count: viewCounts.excluded },
-        ] as const).map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => updateParams({ view: tab.value === "all" ? "" : tab.value, page: "" })}
-            className={cn(
-              "relative px-3 py-2 text-xs font-medium transition-colors",
-              currentView === tab.value
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground/70"
-            )}
-          >
-            <span className="flex items-center gap-1.5">
-              {tab.value === "review" && <AlertCircle className="size-3" />}
-              {tab.value === "excluded" && <EyeOff className="size-3" />}
-              {tab.label}
-              {"count" in tab && tab.count > 0 && (
-                <span className={cn(
-                  "inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none",
-                  tab.value === "review"
-                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
-                    : "bg-muted text-muted-foreground"
-                )}>
-                  {tab.count}
-                </span>
-              )}
-            </span>
-            {currentView === tab.value && (
-              <span className="absolute inset-x-0 bottom-0 h-0.5 bg-foreground rounded-full" />
-            )}
-          </button>
-        ))}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -424,6 +408,23 @@ export function TransactionList({
             <div className="h-8 w-24 rounded-md bg-muted animate-pulse" />
           </>
         )}
+        <div className="relative ml-auto w-56">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search transactions..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            className="h-8 pl-9 text-xs"
+          />
+          {searchValue && (
+            <button
+              onClick={() => setSearchValue("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div

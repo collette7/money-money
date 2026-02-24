@@ -343,7 +343,16 @@ export async function importTransactions(payload: {
     const minDate = dates[0];
     const maxDate = dates[dates.length - 1];
 
-    // Fetch existing transactions in the date range for these accounts
+    // Expand date range by ±2 days for fuzzy matching against SimpleFIN txns
+    const padDate = (d: string, days: number) => {
+      const dt = new Date(d + "T00:00:00");
+      dt.setDate(dt.getDate() + days);
+      return dt.toISOString().split("T")[0];
+    };
+    const fuzzyMinDate = padDate(minDate, -2);
+    const fuzzyMaxDate = padDate(maxDate, 2);
+
+    // Phase 1: Exact-match dedup (same account, date, amount, description)
     const existingKeys = new Set<string>();
     for (const accId of affectedAccountIds) {
       const { data: existing } = await supabase
@@ -368,14 +377,33 @@ export async function importTransactions(payload: {
       }
     }
 
+    // Phase 2: Fuzzy dedup against SimpleFIN-synced transactions
+    // CSV descriptions differ from SimpleFIN (e.g. "Uber" vs "Uber Trip help.uber.com CA").
+    // Match by account + amount + date ±2 days where simplefin_id is set.
+    type SFTxn = { date: string; amount: number };
+    const sfTxnsByAccount = new Map<string, SFTxn[]>();
+    for (const accId of affectedAccountIds) {
+      const { data: sfExisting } = await supabase
+        .from("transactions")
+        .select("date, amount")
+        .eq("account_id", accId)
+        .not("simplefin_id", "is", null)
+        .gte("date", fuzzyMinDate)
+        .lte("date", fuzzyMaxDate);
+
+      if (sfExisting && sfExisting.length > 0) {
+        sfTxnsByAccount.set(accId, sfExisting);
+      }
+    }
+
     finalRows = rows.filter((r) => {
+      // Phase 1: exact key match
       const key = dedupKey(
         r.account_id,
         r.date,
         r.amount,
         r.original_description
       );
-      // Also check against the cleaned merchant description
       const key2 = dedupKey(
         r.account_id,
         r.date,
@@ -386,6 +414,23 @@ export async function importTransactions(payload: {
         skippedDupes++;
         return false;
       }
+
+      // Phase 2: fuzzy match against SimpleFIN transactions
+      const sfTxns = sfTxnsByAccount.get(r.account_id);
+      if (sfTxns) {
+        const csvAmt = Math.round(r.amount * 100);
+        const csvDate = new Date(r.date + "T00:00:00").getTime();
+        const hasSFMatch = sfTxns.some((sf) => {
+          const sfAmt = Math.round(sf.amount * 100);
+          const sfDate = new Date(sf.date + "T00:00:00").getTime();
+          return csvAmt === sfAmt && Math.abs(csvDate - sfDate) <= 2 * 86400000;
+        });
+        if (hasSFMatch) {
+          skippedDupes++;
+          return false;
+        }
+      }
+
       return true;
     });
   }
