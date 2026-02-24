@@ -373,7 +373,7 @@ export function PortfolioOverview({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
       <div className="space-y-5">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <span
               className={cn(
@@ -405,12 +405,12 @@ export function PortfolioOverview({
           </div>
         </div>
 
-        <Card className="p-5">
+        <Card className="p-4 sm:p-5">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
             Total balance
           </p>
-          <div className="flex items-baseline gap-3">
-            <span className="text-3xl font-bold tabular-nums tracking-tight">
+          <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
+            <span className="text-2xl sm:text-3xl font-bold tabular-nums tracking-tight">
               {formatCurrency(totalValue)}
             </span>
             {dayChange !== 0 && (
@@ -428,7 +428,7 @@ export function PortfolioOverview({
           </div>
         </Card>
 
-        <Card className="p-5">
+        <Card className="p-4 sm:p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
             Performance
           </h2>
@@ -438,7 +438,7 @@ export function PortfolioOverview({
         <AssetAllocation holdings={holdings} prices={prices} />
       </div>
 
-      <div className="hidden lg:block space-y-5">
+      <div className="lg:block space-y-5">
         <MarketWatchCard data={marketData} initialSymbols={watchedSymbols} />
       </div>
     </div>

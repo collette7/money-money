@@ -54,6 +54,7 @@ import {
 } from "@/components/ui/tooltip"
 import { CategorySelector } from "./category-selector"
 import { AccountIcon } from "@/components/account-icon"
+import { MerchantLogo } from "@/components/merchant-logo"
 import { TransactionDetailSheet } from "@/components/transaction-detail-sheet"
 import { RuleToast } from "@/components/rule-toast"
 import { RuleDialog } from "@/components/rule-dialog"
@@ -187,7 +188,7 @@ export function TransactionList({
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {someSelected && (<>
             <Button
               variant="outline"
@@ -418,7 +419,7 @@ export function TransactionList({
 
       <div
         className={cn(
-          "rounded-lg border transition-opacity",
+          "rounded-lg border transition-opacity overflow-x-auto",
           isPending && "opacity-60"
         )}
       >
@@ -460,17 +461,17 @@ export function TransactionList({
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-10">
+                  <TableHead className="w-10 hidden sm:table-cell">
                     <Checkbox
                       checked={allOnPageSelected}
                       onCheckedChange={toggleAll}
                       aria-label="Select all"
                     />
                   </TableHead>
-                  <TableHead className="w-24">Date</TableHead>
+                  <TableHead className="w-20 sm:w-24">Date</TableHead>
                   <TableHead>Description</TableHead>
-                  <TableHead className="w-44 pl-8">Category</TableHead>
-                  <TableHead className="w-32 pl-8 text-right">Amount</TableHead>
+                  <TableHead className="w-32 sm:w-44 pl-4 sm:pl-8 hidden sm:table-cell">Category</TableHead>
+                  <TableHead className="w-24 sm:w-32 pl-4 sm:pl-8 text-right">Amount</TableHead>
                   <TableHead className="w-32 hidden lg:table-cell">Account</TableHead>
                 </TableRow>
               </TableHeader>
@@ -498,7 +499,7 @@ export function TransactionList({
                         handleRowClick(tx)
                       }}
                     >
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <Checkbox
                           checked={selected.has(tx.id)}
                           onCheckedChange={() => toggleOne(tx.id)}
@@ -509,31 +510,34 @@ export function TransactionList({
                         {dateFormatter.format(new Date(tx.date + "T00:00:00"))}
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col">
-                          {hasOriginal ? (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="truncate max-w-[280px] text-sm font-medium cursor-default">
-                                  {displayName}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top">
-                                <span className="text-xs">{tx.original_description}</span>
-                              </TooltipContent>
-                            </Tooltip>
-                          ) : (
-                            <span className="truncate max-w-[280px] text-sm font-medium">
-                              {displayName}
-                            </span>
-                          )}
-                          {tx.merchant_name && tx.merchant_name !== tx.description && (
-                            <span className="truncate max-w-[280px] text-xs text-muted-foreground">
-                              {tx.description}
-                            </span>
-                          )}
+                        <div className="flex items-center gap-2.5">
+                          <MerchantLogo merchantName={tx.merchant_name || tx.description} size="sm" />
+                          <div className="flex flex-col min-w-0">
+                            {hasOriginal ? (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="truncate max-w-[280px] text-sm font-medium cursor-default">
+                                    {displayName}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  <span className="text-xs">{tx.original_description}</span>
+                                </TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              <span className="truncate max-w-[280px] text-sm font-medium">
+                                {displayName}
+                              </span>
+                            )}
+                            {tx.merchant_name && tx.merchant_name !== tx.description && (
+                              <span className="truncate max-w-[280px] text-xs text-muted-foreground">
+                                {tx.description}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell className="pl-8">
+                      <TableCell className="pl-4 sm:pl-8 hidden sm:table-cell">
                         <div data-category-selector>
                           <CategorySelector
                             transactionId={tx.id}
@@ -546,7 +550,7 @@ export function TransactionList({
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="pl-8 text-right tabular-nums">
+                      <TableCell className="pl-4 sm:pl-8 text-right tabular-nums">
                         <span
                           className={cn(
                             "text-sm font-medium",

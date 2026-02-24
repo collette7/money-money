@@ -20,7 +20,7 @@ export default async function DashboardLayout({
       <AppSidebar />
       <SidebarInset>
         <AppHeader userName={fullName} />
-        <div className="flex-1 overflow-auto p-6">{children}</div>
+        <div className="flex-1 overflow-auto p-4 md:p-6">{children}</div>
       </SidebarInset>
       <AutoSync />
     </SidebarProvider>

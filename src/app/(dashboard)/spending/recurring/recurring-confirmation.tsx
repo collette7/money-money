@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { ShoppingBag, Undo2 } from "lucide-react"
+import { Undo2 } from "lucide-react"
 import {
   confirmRecurringPattern,
   dismissRecurringPattern,
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/toast"
 import { Button } from "@/components/ui/button"
 import type { RecurringFrequency } from "@/types/database"
+import { MerchantLogo } from "@/components/merchant-logo"
 
 interface DetectedPattern {
   id: string
@@ -40,44 +41,6 @@ interface DetectedPattern {
 
 interface RecurringConfirmationProps {
   potentialRecurring: DetectedPattern[]
-}
-
-const MERCHANT_DOMAINS: Record<string, string> = {
-  "amazon": "amazon.com",
-  "amazon prime": "amazon.com",
-  "netflix": "netflix.com",
-  "spotify": "spotify.com",
-  "apple": "apple.com",
-  "google": "google.com",
-  "youtube": "youtube.com",
-  "hulu": "hulu.com",
-  "disney": "disneyplus.com",
-  "disney+": "disneyplus.com",
-  "hbo": "hbomax.com",
-  "dropbox": "dropbox.com",
-  "adobe": "adobe.com",
-  "microsoft": "microsoft.com",
-  "doordash": "doordash.com",
-  "uber": "uber.com",
-  "lyft": "lyft.com",
-  "starbucks": "starbucks.com",
-  "walmart": "walmart.com",
-  "target": "target.com",
-  "costco": "costco.com",
-}
-
-function getMerchantLogoUrl(merchantName: string): string | null {
-  const logoDevToken = process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN
-  const lower = merchantName.toLowerCase()
-  for (const [key, domain] of Object.entries(MERCHANT_DOMAINS)) {
-    if (lower.includes(key)) {
-      if (logoDevToken) {
-        return `https://img.logo.dev/${domain}?token=${logoDevToken}&size=64&format=png`
-      }
-      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`
-    }
-  }
-  return null
 }
 
 function getDueInfo(dateStr: string): { label: string; isUrgent: boolean } {
@@ -108,30 +71,6 @@ function mapFrequency(estimated: string): RecurringFrequency {
     case "yearly": return "annual"
     default: return "monthly"
   }
-}
-
-function MerchantIcon({ merchantName }: { merchantName: string }) {
-  const [imgError, setImgError] = useState(false)
-  const logoUrl = getMerchantLogoUrl(merchantName)
-
-  if (logoUrl && !imgError) {
-    return (
-      <div className="h-12 w-12 shrink-0 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
-        <img
-          src={logoUrl}
-          alt=""
-          className="h-7 w-7 object-contain"
-          onError={() => setImgError(true)}
-        />
-      </div>
-    )
-  }
-
-  return (
-    <div className="h-12 w-12 shrink-0 rounded-full bg-[#EA6B48] flex items-center justify-center">
-      <ShoppingBag className="h-5 w-5 text-white" />
-    </div>
-  )
 }
 
 export function RecurringConfirmation({ potentialRecurring }: RecurringConfirmationProps) {
@@ -230,7 +169,7 @@ export function RecurringConfirmation({ potentialRecurring }: RecurringConfirmat
                   >
                     <div className="flex items-start justify-between mb-3 gap-4">
                       <div className="flex items-center gap-3 min-w-0">
-                        <MerchantIcon merchantName={name} />
+                        <MerchantLogo merchantName={name} size="lg" />
                         <div className="min-w-0 flex-1">
                           <div className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 truncate">
                             {name}

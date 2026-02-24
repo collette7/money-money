@@ -49,7 +49,7 @@ function SettingsForm({ currentSettings, userEmail }: SettingsFormProps) {
 
   return (
     <Tabs defaultValue="ai" className="w-full">
-      <TabsList className="mb-6">
+      <TabsList className="mb-6 w-full sm:w-auto">
         <TabsTrigger value="ai" className="gap-1.5">
           <Bot className="size-3.5" />
           AI Configuration

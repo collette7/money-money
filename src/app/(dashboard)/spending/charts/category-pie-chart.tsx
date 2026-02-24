@@ -8,6 +8,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { CategoryTotal } from "../actions";
 
 const PALETTE = [
@@ -31,6 +32,7 @@ const fmt = new Intl.NumberFormat("en-US", {
 });
 
 function CategoryPieChart({ data }: { data: CategoryTotal[] }) {
+  const isMobile = useIsMobile();
   if (data.length === 0) {
     return (
       <div className="flex h-[320px] items-center justify-center text-sm text-muted-foreground">
@@ -46,7 +48,7 @@ function CategoryPieChart({ data }: { data: CategoryTotal[] }) {
   }));
 
   return (
-    <div className="h-[320px] w-full">
+    <div className="h-[280px] sm:h-[320px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -75,13 +77,13 @@ function CategoryPieChart({ data }: { data: CategoryTotal[] }) {
             }}
           />
           <Legend
-            layout="vertical"
-            verticalAlign="middle"
-            align="right"
+            layout={isMobile ? "horizontal" : "vertical"}
+            verticalAlign={isMobile ? "bottom" : "middle"}
+            align={isMobile ? "center" : "right"}
             iconType="circle"
             iconSize={8}
             formatter={(value: string) => (
-              <span style={{ fontSize: 12, color: "oklch(0.5 0 0)" }}>{value}</span>
+              <span style={{ fontSize: 11, color: "oklch(0.5 0 0)" }}>{value}</span>
             )}
           />
         </PieChart>

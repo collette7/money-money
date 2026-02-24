@@ -74,20 +74,20 @@ export default function ForecastPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Financial Forecast</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">Financial Forecast</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
             Projections based on your transaction history and spending patterns
           </p>
         </div>
         
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           <Select
             value={scenario}
             onValueChange={(value) => setScenario(value as ForecastScenario)}
           >
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[130px] sm:w-[140px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -101,7 +101,7 @@ export default function ForecastPage() {
             value={horizon.toString()}
             onValueChange={(value) => setHorizon(parseInt(value) as ForecastHorizon)}
           >
-            <SelectTrigger className="w-[120px]">
+            <SelectTrigger className="w-[110px] sm:w-[120px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -180,7 +180,7 @@ export default function ForecastPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="h-[400px] w-full p-6">
+          <div className="h-[280px] sm:h-[400px] w-full p-3 sm:p-6">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={forecastData.points}
