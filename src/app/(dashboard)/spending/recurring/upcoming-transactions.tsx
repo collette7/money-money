@@ -86,7 +86,7 @@ export function UpcomingTransactions({
   const [offset, setOffset] = useState(0)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [frequencyFilter, setFrequencyFilter] = useState("all")
-  const [showAllList, setShowAllList] = useState(false)
+  const [showAllList, setShowAllList] = useState(true)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [addModalOpen, setAddModalOpen] = useState(false)
   const visibleCount = 7

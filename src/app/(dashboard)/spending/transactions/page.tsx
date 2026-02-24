@@ -29,16 +29,21 @@ async function getTransactionStats() {
       totalIncome: 0,
     }
   }
+  const oneYearAgo = new Date()
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+  const defaultStartDate = oneYearAgo.toISOString().split("T")[0]
 
   const { count } = await supabase
     .from("transactions")
     .select("*", { count: "exact", head: true })
     .in("account_id", accountIds)
+    .gte("date", defaultStartDate)
 
   const { data: earliestDate } = await supabase
     .from("transactions")
     .select("date")
     .in("account_id", accountIds)
+    .gte("date", defaultStartDate)
     .order("date", { ascending: true })
     .limit(1)
 
@@ -46,6 +51,7 @@ async function getTransactionStats() {
     .from("transactions")
     .select("date")
     .in("account_id", accountIds)
+    .gte("date", defaultStartDate)
     .order("date", { ascending: false })
     .limit(1)
 
@@ -53,12 +59,14 @@ async function getTransactionStats() {
     .from("transactions")
     .select("amount")
     .in("account_id", accountIds)
+    .gte("date", defaultStartDate)
     .lt("amount", 0)
 
   const { data: income } = await supabase
     .from("transactions")
     .select("amount")
     .in("account_id", accountIds)
+    .gte("date", defaultStartDate)
     .gt("amount", 0)
 
   const totalExpenses = (expenses ?? []).reduce((sum, t) => sum + Math.abs(t.amount), 0)

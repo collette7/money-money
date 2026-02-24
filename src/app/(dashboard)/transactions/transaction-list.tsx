@@ -554,6 +554,7 @@ export function TransactionList({
                 {transactions.map((tx) => {
                   const isIncome = tx.amount > 0
                   const isPending = tx.status === "pending"
+                  const isTransfer = (tx.categories as { type?: string } | null)?.type === "transfer"
                   const displayName = tx.merchant_name || tx.description
                   const hasOriginal =
                     tx.original_description &&
@@ -639,6 +640,9 @@ export function TransactionList({
                           )}
                           {tx.ignored && (
                             <EyeOff className="size-3.5 text-muted-foreground/60 shrink-0" />
+                          )}
+                          {isTransfer && (
+                            <ArrowLeftRight className="size-3.5 text-muted-foreground/60 shrink-0" />
                           )}
                           <span
                             className={cn(

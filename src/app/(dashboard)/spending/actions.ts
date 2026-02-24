@@ -55,7 +55,9 @@ export async function getMonthlyTrends(months: number = 6): Promise<MonthlyTrend
     .select("amount, date, categories ( type ), accounts!account_id!inner ( user_id )")
     .eq("accounts.user_id", user.id)
     .gte("date", startDate)
-    .lt("date", endDate);
+    .lt("date", endDate)
+    .eq("ignored", false)
+    .eq("status", "cleared");
 
   const byMonth = new Map<string, { income: number; expenses: number }>();
 
@@ -102,7 +104,9 @@ export async function getCategoryBreakdown(
     )
     .eq("accounts.user_id", user.id)
     .gte("date", startDate)
-    .lt("date", endDate);
+    .lt("date", endDate)
+    .eq("ignored", false)
+    .eq("status", "cleared");
 
   const byCategory = new Map<
     string,
@@ -148,7 +152,9 @@ export async function getTopMerchants(
     .eq("accounts.user_id", user.id)
     .gte("date", startDate)
     .lt("date", endDate)
-    .lt("amount", 0);
+    .lt("amount", 0)
+    .eq("ignored", false)
+    .eq("status", "cleared");
 
   const byMerchant = new Map<string, { total: number; count: number }>();
 
@@ -188,6 +194,8 @@ export async function getDailySpending(
     .gte("date", startDate)
     .lt("date", endDate)
     .lt("amount", 0)
+    .eq("ignored", false)
+    .eq("status", "cleared")
     .order("date", { ascending: true });
 
   const byDate = new Map<string, number>();

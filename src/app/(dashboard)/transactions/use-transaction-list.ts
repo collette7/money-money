@@ -125,7 +125,8 @@ export function useTransactionList(initial?: {
         try {
           const categoryId = searchParams.get("categoryId") || undefined;
           const accountId = searchParams.get("accountId") || undefined;
-          const startDate = searchParams.get("startDate") || searchParams.get("date") || undefined;
+          const defaultStart = new Date(); defaultStart.setFullYear(defaultStart.getFullYear() - 1);
+          const startDate = searchParams.get("startDate") || searchParams.get("date") || defaultStart.toISOString().split("T")[0];
           const endDate = searchParams.get("endDate") || searchParams.get("date") || undefined;
           const pageParam = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
           const search = searchParams.get("search") || undefined;
@@ -192,12 +193,13 @@ export function useTransactionList(initial?: {
   const currentSearch = searchParams.get("search") ?? ""
   const currentCategoryId = searchParams.get("categoryId") ?? ""
   const currentAccountId = searchParams.get("accountId") ?? ""
-  const currentStartDate = searchParams.get("startDate") ?? ""
+  const defaultStartDate = useMemo(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 1); return d.toISOString().split("T")[0]; }, []);
+  const currentStartDate = searchParams.get("startDate") ?? defaultStartDate
   const currentEndDate = searchParams.get("endDate") ?? ""
   const currentSortBy = (searchParams.get("sortBy") as "date" | "description" | "category" | "amount" | "account") ?? "date"
   const currentSortDir = (searchParams.get("sortDir") as "asc" | "desc") ?? "desc"
 
-  const hasFilters = currentSearch || currentCategoryId || currentAccountId || currentStartDate || currentEndDate
+  const hasFilters = currentSearch || currentCategoryId || currentAccountId || (searchParams.get("startDate") && searchParams.get("startDate") !== defaultStartDate) || currentEndDate
 
   const allOnPageSelected = transactions.length > 0 && transactions.every((t) => selected.has(t.id))
   const someSelected = selected.size > 0
