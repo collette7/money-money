@@ -11,6 +11,7 @@ import {
   type PrefetchedData,
 } from "@/lib/categorization/engine";
 
+const LOG_PREFIX = "[SimpleFIN Sync]";
 export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?: number) {
   const supabase = await createClient();
 
@@ -24,6 +25,7 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
   if (error || !accounts?.length) {
     return { synced: 0, errors: error ? [error.message] : [] };
   }
+
 
   const results: { accountId: string; transactions: number; error?: string }[] =
     [];
@@ -39,6 +41,9 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
 
   for (const [encryptedAccessUrl, groupAccounts] of accessUrlGroups) {
     const MAX_SIMPLEFIN_DAYS = 360;
+    // Always re-fetch at least this many days to catch retroactively posted transactions.
+    // Dedup by simplefin_id makes overlapping fetches harmless.
+    const SAFETY_BUFFER_DAYS = 3;
     const fallbackDate = new Date();
     fallbackDate.setDate(fallbackDate.getDate() - 90);
 
@@ -57,11 +62,15 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
       oldestSync = new Date();
       oldestSync.setFullYear(oldestSync.getFullYear() - 5);
     } else {
-      oldestSync = groupAccounts.reduce((oldest, acc) => {
+      const rawOldestSync = groupAccounts.reduce((oldest, acc) => {
         if (!acc.last_synced) return fallbackDate;
         const syncDate = new Date(acc.last_synced);
         return syncDate < oldest ? syncDate : oldest;
       }, new Date());
+      // Apply safety buffer — go back N days before last_synced to catch
+      // transactions that posted retroactively at the institution.
+      oldestSync = new Date(rawOldestSync);
+      oldestSync.setDate(oldestSync.getDate() - SAFETY_BUFFER_DAYS);
     }
 
     let accessUrl: string;
@@ -107,6 +116,7 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
           pending: true,
         });
 
+
         if (accountSet.errors.length > 0) {
           for (const acc of groupAccounts) {
             results.push({
@@ -124,7 +134,9 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
           const sfAccount = accountSet.accounts.find(
             (a) => a.id === acc.simplefin_account_id
           );
-          if (!sfAccount) continue;
+          if (!sfAccount) {
+            continue;
+          }
 
           const txCount = await upsertTransactions(
             supabase,
@@ -155,7 +167,7 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
         const updatePayload: Record<string, unknown> = {
           balance: parseFloat(sfAccount.balance),
           last_synced: new Date().toISOString(),
-        }
+        };
         if (sfAccount.org.domain || sfAccount.org.url) {
           updatePayload.institution_domain = sfAccount.org.domain || sfAccount.org.url
         }
@@ -194,7 +206,9 @@ async function upsertTransactions(
   userId: string,
   transactions: SimpleFinTransaction[]
 ) {
-  if (transactions.length === 0) return 0;
+  if (transactions.length === 0) {
+    return 0;
+  }
 
   const rows = transactions.map((tx) => ({
     account_id: accountId,
@@ -227,7 +241,9 @@ async function upsertTransactions(
   const existingIds = new Set(existing?.map((e) => e.simplefin_id) ?? []);
   const newRows = rows.filter((r) => !existingIds.has(r.simplefin_id));
 
-  if (newRows.length === 0) return 0;
+  if (newRows.length === 0) {
+    return 0;
+  }
 
   const { error, data: inserted } = await supabase
     .from("transactions")
@@ -235,6 +251,7 @@ async function upsertTransactions(
     .select("id, merchant_name, description, amount, account_id");
 
   if (error) {
+    console.error(LOG_PREFIX, `[upsert] account=${accountId}: INSERT FAILED —`, error.message);
     throw new Error(`Failed to insert transactions: ${error.message}`);
   }
 
@@ -251,6 +268,24 @@ async function upsertTransactions(
       userId,
       inserted.map((t) => t.id)
     );
+
+    // Fire-and-forget: validate merchant logos for new transactions
+    const merchantNames = [...new Set(
+      inserted
+        .map((t) => t.merchant_name)
+        .filter((n): n is string => !!n)
+    )]
+    if (merchantNames.length > 0) {
+      import("@/lib/merchant-logo-cache").then(({ batchValidateMerchants }) => {
+        batchValidateMerchants(merchantNames).then((results) => {
+          const validCount = [...results.values()].filter((r) => r.isValid).length
+        }).catch((err) => {
+          console.error(LOG_PREFIX, "[logo-cache] Batch validation failed:", err instanceof Error ? err.message : err)
+        })
+      }).catch(() => {
+        // Import failure should not block sync
+      })
+    }
   }
 
   return newRows.length;

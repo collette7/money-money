@@ -172,6 +172,9 @@ export function useTransactionDetail(
       setIgnored(checked)
       startIgnoredTransition(async () => {
         await toggleTransactionIgnored(transaction.id, checked)
+        window.dispatchEvent(new CustomEvent("transactionIgnoredChanged", {
+          detail: { transactionId: transaction.id, ignored: checked },
+        }))
       })
     },
     [transaction]
@@ -201,6 +204,9 @@ export function useTransactionDetail(
       setRecurringFrequency(frequency)
       startRecurringTransition(async () => {
         await setTransactionRecurring(transaction.id, frequency)
+        window.dispatchEvent(new CustomEvent("transactionRecurringChanged", {
+          detail: { transactionId: transaction.id, isRecurring: !!frequency, frequency },
+        }))
       })
     },
     [transaction]

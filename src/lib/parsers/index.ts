@@ -5,6 +5,13 @@ export interface ParsedTransaction {
   amount: number;
   description: string;
   fitid?: string;
+  merchantName?: string;
+  originalDescription?: string;
+  categoryName?: string;
+  accountName?: string;
+  type?: string;
+  tags?: string[];
+  notes?: string;
 }
 
 export interface CSVParseResult {
@@ -35,6 +42,13 @@ export interface CSVColumnMapping {
   debitColumn?: number;
   creditColumn?: number;
   dateFormat: string;
+  merchantName?: number;
+  originalDescription?: number;
+  category?: number;
+  account?: number;
+  type?: number;
+  tags?: number;
+  notes?: number;
 }
 
 export function mapCSVToTransactions(
@@ -59,11 +73,42 @@ export function mapCSVToTransactions(
 
       if (isNaN(amount)) return null;
 
-      return {
+      const tx: ParsedTransaction = {
         date: normalizeDate(rawDate, mapping.dateFormat),
         amount,
         description,
       };
+
+      if (mapping.merchantName !== undefined) {
+        const val = row[mapping.merchantName]?.trim();
+        if (val) tx.merchantName = val;
+      }
+      if (mapping.originalDescription !== undefined) {
+        const val = row[mapping.originalDescription]?.trim();
+        if (val) tx.originalDescription = val;
+      }
+      if (mapping.category !== undefined) {
+        const val = row[mapping.category]?.trim();
+        if (val) tx.categoryName = val;
+      }
+      if (mapping.account !== undefined) {
+        const val = row[mapping.account]?.trim();
+        if (val) tx.accountName = val;
+      }
+      if (mapping.type !== undefined) {
+        const val = row[mapping.type]?.trim();
+        if (val) tx.type = val;
+      }
+      if (mapping.tags !== undefined) {
+        const val = row[mapping.tags]?.trim();
+        if (val) tx.tags = val.split(",").map((t) => t.trim()).filter(Boolean);
+      }
+      if (mapping.notes !== undefined) {
+        const val = row[mapping.notes]?.trim();
+        if (val) tx.notes = val;
+      }
+
+      return tx;
     })
     .filter((tx): tx is ParsedTransaction => tx !== null);
 }

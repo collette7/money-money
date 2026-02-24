@@ -10,6 +10,7 @@ import {
   ChevronRight,
   CreditCard,
   EyeOff,
+  Repeat2,
   Filter,
   Loader2,
   Search,
@@ -478,17 +479,17 @@ export function TransactionList({
               <TableBody>
                 {transactions.map((tx) => {
                   const isIncome = tx.amount > 0
+                  const isPending = tx.status === "pending"
                   const displayName = tx.merchant_name || tx.description
                   const hasOriginal =
                     tx.original_description &&
                     tx.original_description !== tx.description &&
                     tx.original_description !== tx.merchant_name
-
                   return (
                     <TableRow
                       key={tx.id}
                       data-state={selected.has(tx.id) ? "selected" : undefined}
-                      className="cursor-pointer"
+                      className={cn("cursor-pointer", isPending && "opacity-60")}
                       onClick={(e) => {
                         if (
                           (e.target as HTMLElement).closest('input[type="checkbox"]') ||
@@ -507,11 +508,18 @@ export function TransactionList({
                         />
                       </TableCell>
                       <TableCell className="text-muted-foreground text-xs tabular-nums">
-                        {dateFormatter.format(new Date(tx.date + "T00:00:00"))}
+                        <div className="flex items-center gap-1.5">
+                          {dateFormatter.format(new Date(tx.date + "T00:00:00"))}
+                          {isPending && (
+                            <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium leading-none text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                              Pending
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2.5">
-                          <MerchantLogo merchantName={tx.merchant_name || tx.description} size="sm" />
+                          <MerchantLogo merchantName={tx.merchant_name || tx.description} cachedDomain={tx.cached_logo_domain} size="sm" />
                           <div className="flex flex-col min-w-0">
                             {hasOriginal ? (
                               <Tooltip>
@@ -551,15 +559,23 @@ export function TransactionList({
                         </div>
                       </TableCell>
                       <TableCell className="pl-4 sm:pl-8 text-right tabular-nums">
-                        <span
-                          className={cn(
-                            "text-sm font-medium",
-                            isIncome && "text-emerald-600 dark:text-emerald-400"
+                        <div className="flex items-center justify-end gap-1.5">
+                          {tx.is_recurring && (
+                            <Repeat2 className="size-3.5 text-muted-foreground/60 shrink-0" />
                           )}
-                        >
-                          {isIncome && "+"}
-                          {currencyFormatter.format(Math.abs(tx.amount))}
-                        </span>
+                          {tx.ignored && (
+                            <EyeOff className="size-3.5 text-muted-foreground/60 shrink-0" />
+                          )}
+                          <span
+                            className={cn(
+                              "text-sm font-medium",
+                              isIncome && "text-emerald-600 dark:text-emerald-400"
+                            )}
+                          >
+                            {isIncome && "+"}
+                            {currencyFormatter.format(Math.abs(tx.amount))}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         <AccountIcon 

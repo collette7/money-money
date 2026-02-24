@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { learnFromOverride, bulkCategorize } from "@/lib/categorization/engine";
 import { categoryTypeEnum, notesSchema, tagsSchema, merchantNameSchema, ruleConditionInputSchema } from "@/lib/validation";
+import { normalizeMerchantName } from "@/lib/merchant-utils";
 
 async function getUserAccountIds(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<string[]> {
   const { data } = await supabase
@@ -41,7 +42,7 @@ export async function getTransactions(filters?: {
     .from("transactions")
     .select(
       `
-      id, date, amount, description, merchant_name, original_description,
+      id, date, amount, description, merchant_name, original_description, status,
       notes, tags, is_recurring, is_split, user_share_amount, categorized_by,
       category_id, account_id, ignored, review_flagged, review_flagged_reason,
       category_confirmed, category_confidence, recurring_id,
@@ -91,8 +92,38 @@ export async function getTransactions(filters?: {
      throw new Error("Failed to load data");
    }
 
+   // Batch-lookup cached logo domains for all merchant names
+   const transactions = data ?? [];
+   const merchantNames = [...new Set(
+     transactions
+       .map((t) => t.merchant_name)
+       .filter((n): n is string => !!n)
+   )];
+
+   let domainMap = new Map<string, string | null>();
+   if (merchantNames.length > 0) {
+     const normalizedNames = merchantNames.map((n) => normalizeMerchantName(n).toLowerCase()).filter(Boolean);
+     const { data: cached } = await supabase
+       .from("merchant_logo_cache")
+       .select("merchant_name, domain")
+       .eq("is_valid", true)
+       .in("merchant_name", normalizedNames);
+
+     if (cached) {
+       for (const row of cached) {
+         domainMap.set(row.merchant_name, row.domain);
+       }
+     }
+   }
+
+   const enriched = transactions.map((t) => {
+     const normalized = t.merchant_name ? normalizeMerchantName(t.merchant_name).toLowerCase() : null;
+     const cachedDomain = normalized ? (domainMap.get(normalized) ?? null) : null;
+     return { ...t, cached_logo_domain: cachedDomain };
+   });
+
    return {
-     transactions: data ?? [],
+     transactions: enriched,
      total: count ?? 0,
      page,
      pageSize,

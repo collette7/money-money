@@ -7,16 +7,18 @@ import { Store } from "lucide-react"
 
 interface MerchantLogoProps {
   merchantName: string | null | undefined
+  cachedDomain?: string | null
   size?: "sm" | "md" | "lg"
   className?: string
 }
 
 export function MerchantLogo({
   merchantName,
+  cachedDomain,
   size = "sm",
   className,
 }: MerchantLogoProps) {
-  const logoUrls = merchantName ? getMerchantLogoUrls(merchantName) : []
+  const logoUrls = merchantName ? getMerchantLogoUrls(merchantName, cachedDomain) : []
   const [urlIndex, setUrlIndex] = useState(0)
   const allFailed = urlIndex >= logoUrls.length
 

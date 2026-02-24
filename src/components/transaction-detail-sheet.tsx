@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Check, ChevronRight, Repeat, Scissors, StickyNote, EyeOff, X, Plus } from "lucide-react"
+import { ArrowLeft, Check, ChevronRight, Repeat, Repeat2, Scissors, StickyNote, EyeOff, X, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Sheet,
@@ -167,6 +167,23 @@ export function TransactionDetailSheet({
                 </span>
               )}
 
+              {(transaction?.is_recurring || transaction?.ignored) && (
+                <div className="flex items-center justify-center gap-2">
+                  {transaction?.is_recurring && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                      <Repeat2 className="size-3.5" />
+                      Recurring
+                    </span>
+                  )}
+                  {transaction?.ignored && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                      <EyeOff className="size-3.5" />
+                      Hidden
+                    </span>
+                  )}
+                </div>
+              )}
+
               <p
                 className={cn(
                   "text-4xl font-bold tabular-nums tracking-tight",
@@ -220,6 +237,16 @@ export function TransactionDetailSheet({
                 </PopoverContent>
               </Popover>
 
+              {currentCategory && !transaction?.ignored && (
+                <button
+                  onClick={() => setRuleOpen(true)}
+                  className="inline-flex items-center gap-1 rounded-full border border-dashed border-border/60 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground mx-auto"
+                >
+                  Create Rule
+                  <span className="opacity-60 text-[10px]">(R)</span>
+                </button>
+              )}
+
               {transaction?.category_confidence != null && !transaction?.category_confirmed && (
                 <div className="flex items-center justify-center gap-2">
                   <span className="text-[11px] text-muted-foreground">
@@ -237,16 +264,6 @@ export function TransactionDetailSheet({
                     </button>
                   )}
                 </div>
-              )}
-
-              {currentCategory && !transaction?.ignored && (
-                <button
-                  onClick={() => setRuleOpen(true)}
-                  className="inline-flex items-center gap-1 rounded-full border border-dashed border-border/60 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground mx-auto"
-                >
-                  Create Rule
-                  <span className="opacity-60 text-[10px]">(R)</span>
-                </button>
               )}
             </div>
 

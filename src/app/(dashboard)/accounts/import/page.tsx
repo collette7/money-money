@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
@@ -11,6 +11,9 @@ import {
   Upload,
   XCircle,
   AlertCircle,
+  ArrowRightLeft,
+  Tag,
+  Ban,
 } from "lucide-react"
 
 import { AccountIcon } from "@/components/account-icon"
@@ -52,6 +55,8 @@ import {
   type CSVParseResult,
 } from "@/lib/parsers"
 import { importTransactions, getAccounts } from "./actions"
+import type { CategoryMode } from "./actions"
+import { EXTERNAL_CATEGORY_MAP } from "@/lib/category-map"
 
 type FileType = "csv" | "ofx" | null
 type Step = "upload" | "mapping" | "account" | "importing" | "done"
@@ -70,6 +75,13 @@ const COLUMN_ROLES = [
   { value: "description", label: "Description" },
   { value: "debit", label: "Debit Amount" },
   { value: "credit", label: "Credit Amount" },
+  { value: "merchant_name", label: "Merchant Name" },
+  { value: "original_description", label: "Statement Desc" },
+  { value: "category", label: "Category" },
+  { value: "account", label: "Account" },
+  { value: "type", label: "Type" },
+  { value: "tags", label: "Tags" },
+  { value: "notes", label: "Notes" },
 ]
 
 const ACCOUNT_TYPES = [
@@ -128,6 +140,7 @@ export default function ImportPage() {
   const [progressMessage, setProgressMessage] = useState("")
 
   const [dragActive, setDragActive] = useState(false)
+  const [categoryMode, setCategoryMode] = useState<CategoryMode>("map")
 
   useEffect(() => {
     startTransition(async () => {
@@ -157,15 +170,46 @@ export default function ImportPage() {
         const autoMapping: Record<number, string> = {}
         result.headers.forEach((header, i) => {
           const h = header.toLowerCase().trim()
-          if (h.includes("date") || h.includes("posted")) autoMapping[i] = "date"
+          if (h === "date" || h === "posted date" || h === "transaction date") autoMapping[i] = "date"
           else if (h === "amount" || h === "total") autoMapping[i] = "amount"
-          else if (h.includes("description") || h.includes("memo") || h.includes("name") || h.includes("payee"))
+          else if (h === "statement description" || h === "original description" || h === "bank description")
+            autoMapping[i] = "original_description"
+          else if (h === "description" || h === "memo" || h === "name" || h === "payee")
             autoMapping[i] = "description"
+          else if (h === "merchant" || h === "merchant name") autoMapping[i] = "merchant_name"
+          else if (h === "category" || h === "category name") autoMapping[i] = "category"
+          else if (h === "account" || h === "account name") autoMapping[i] = "account"
+          else if (h === "type" || h === "transaction type") autoMapping[i] = "type"
+          else if (h === "tags" || h === "labels") autoMapping[i] = "tags"
+          else if (h === "notes" || h === "note" || h === "comments") autoMapping[i] = "notes"
           else if (h.includes("debit") || h.includes("withdrawal")) autoMapping[i] = "debit"
           else if (h.includes("credit") || h.includes("deposit")) autoMapping[i] = "credit"
           else autoMapping[i] = "skip"
         })
+
+        // If we have both "description" and "original_description", promote description to merchant_name
+        const mappingValues = Object.values(autoMapping)
+        if (mappingValues.includes("description") && mappingValues.includes("original_description")) {
+          const descIdx = Object.entries(autoMapping).find(([, v]) => v === "description")
+          const origIdx = Object.entries(autoMapping).find(([, v]) => v === "original_description")
+          if (descIdx && origIdx) {
+            autoMapping[parseInt(descIdx[0])] = "merchant_name"
+            autoMapping[parseInt(origIdx[0])] = "description"
+          }
+        }
+
         setColumnMapping(autoMapping)
+
+        // Auto-detect date format from first data row
+        const dateColIdx = Object.entries(autoMapping).find(([, v]) => v === "date")
+        if (dateColIdx && result.rows[0]) {
+          const sample = result.rows[0][parseInt(dateColIdx[0])]?.trim() ?? ""
+          if (/^\d{4}[-/]\d{2}[-/]\d{2}/.test(sample)) {
+            setDateFormat(sample.includes("-") ? "YYYY-MM-DD" : "YYYY/MM/DD")
+          } else if (/^\d{2}\/\d{2}\/\d{4}/.test(sample)) {
+            setDateFormat("MM/DD/YYYY")
+          }
+        }
         setImportPhase("mapping")
         setProgressMessage("Map columns to transaction fields")
         setImportProgress(40)
@@ -236,17 +280,20 @@ export default function ImportPage() {
 
     setError(null)
 
-    const dateCol = parseInt(
-      Object.entries(columnMapping).find(([, v]) => v === "date")?.[0] ?? "0"
-    )
-    const amountCol = parseInt(
-      Object.entries(columnMapping).find(([, v]) => v === "amount")?.[0] ?? "0"
-    )
-    const descCol = parseInt(
-      Object.entries(columnMapping).find(([, v]) => v === "description")?.[0] ?? "0"
-    )
-    const debitCol = Object.entries(columnMapping).find(([, v]) => v === "debit")
-    const creditCol = Object.entries(columnMapping).find(([, v]) => v === "credit")
+    const findCol = (role: string) =>
+      Object.entries(columnMapping).find(([, v]) => v === role)
+    const dateCol = parseInt(findCol("date")?.[0] ?? "0")
+    const amountCol = parseInt(findCol("amount")?.[0] ?? "0")
+    const descCol = parseInt(findCol("description")?.[0] ?? "0")
+    const debitCol = findCol("debit")
+    const creditCol = findCol("credit")
+    const merchantCol = findCol("merchant_name")
+    const origDescCol = findCol("original_description")
+    const categoryCol = findCol("category")
+    const accountCol = findCol("account")
+    const typeCol = findCol("type")
+    const tagsCol = findCol("tags")
+    const notesCol = findCol("notes")
 
     try {
       const transactions = mapCSVToTransactions(csvData.rows, {
@@ -256,6 +303,13 @@ export default function ImportPage() {
         debitColumn: debitCol ? parseInt(debitCol[0]) : undefined,
         creditColumn: creditCol ? parseInt(creditCol[0]) : undefined,
         dateFormat,
+        merchantName: merchantCol ? parseInt(merchantCol[0]) : undefined,
+        originalDescription: origDescCol ? parseInt(origDescCol[0]) : undefined,
+        category: categoryCol ? parseInt(categoryCol[0]) : undefined,
+        account: accountCol ? parseInt(accountCol[0]) : undefined,
+        type: typeCol ? parseInt(typeCol[0]) : undefined,
+        tags: tagsCol ? parseInt(tagsCol[0]) : undefined,
+        notes: notesCol ? parseInt(notesCol[0]) : undefined,
       })
       setParsedTransactions(transactions)
       setImportPhase("reviewing")
@@ -270,6 +324,64 @@ export default function ImportPage() {
     }
   }
 
+  const hasAccountColumn = parsedTransactions.some((tx) => tx.accountName)
+
+  // Compute unique CSV categories and their mappings for the preview
+  const categoryPreview = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const tx of parsedTransactions) {
+      if (!tx.categoryName) continue
+      const name = tx.categoryName
+      counts.set(name, (counts.get(name) ?? 0) + 1)
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({
+        csvName: name,
+        ourName: EXTERNAL_CATEGORY_MAP[name.toLowerCase().trim()] ?? null,
+        count,
+      }))
+  }, [parsedTransactions])
+
+  // Client-side account matching preview for warnings
+  const accountMatchPreview = useMemo(() => {
+    if (!hasAccountColumn) return new Map<string, string | null>()
+    const byAccount = new Map<string, number>()
+    for (const tx of parsedTransactions) {
+      const name = tx.accountName ?? "Unknown"
+      byAccount.set(name, (byAccount.get(name) ?? 0) + 1)
+    }
+
+    const matches = new Map<string, string | null>()
+    for (const csvName of byAccount.keys()) {
+      // Simple client-side match: extract last4, check institution + name keywords
+      const last4Match = csvName.match(/\((\d{4})\)\s*$/)
+      const last4 = last4Match ? last4Match[1] : null
+      const withoutLast4 = csvName.replace(/\s*\(\d{4}\)\s*$/, "").trim()
+      const dashIdx = withoutLast4.indexOf(" - ")
+      const inst = dashIdx > 0 ? withoutLast4.slice(0, dashIdx).trim().toLowerCase() : withoutLast4.toLowerCase()
+      const acctName = dashIdx > 0 ? withoutLast4.slice(dashIdx + 3).trim().toLowerCase() : withoutLast4.toLowerCase()
+
+      const match = existingAccounts.find((a) => {
+        const dbInst = (a.institution_name ?? "").toLowerCase()
+        const dbName = a.name.toLowerCase()
+        if (last4) {
+          // When we have last4, require it to be in the account name
+          return a.name.includes(last4) && (dbInst.includes(inst) || inst.includes(dbInst))
+        }
+        // No last4: fuzzy match on institution + account name keywords
+        return (
+          (dbInst.includes(inst) || inst.includes(dbInst)) &&
+          (dbName.includes(acctName) || acctName.includes(dbName) ||
+            acctName.split(/\s+/).some((w) => w.length > 3 && dbName.includes(w)))
+        )
+      })
+      matches.set(csvName, match?.name ?? null)
+    }
+    return matches
+  }, [parsedTransactions, existingAccounts, hasAccountColumn])
+
+
   const handleImport = () => {
     if (parsedTransactions.length === 0) return
 
@@ -279,12 +391,21 @@ export default function ImportPage() {
     setImportProgress(10)
 
     startTransition(async () => {
-      setProgressMessage("Creating account if needed…")
+      const isMultiAccount = hasAccountColumn
+      setProgressMessage(
+        isMultiAccount
+          ? `Routing ${parsedTransactions.length} transactions to accounts…`
+          : "Creating account if needed…"
+      )
       setImportProgress(30)
 
-      const accountId = selectedAccountId === "new" ? null : selectedAccountId
+      const accountId = isMultiAccount
+        ? null
+        : selectedAccountId === "new"
+          ? null
+          : selectedAccountId
       const newAccountData =
-        selectedAccountId === "new"
+        !isMultiAccount && selectedAccountId === "new"
           ? {
               name: newAccountName || fileName.replace(/\.\w+$/, ""),
               type: newAccountType,
@@ -292,27 +413,45 @@ export default function ImportPage() {
             }
           : null
 
-      setProgressMessage(`Importing ${parsedTransactions.length} transactions…`)
+      setProgressMessage(
+        `Importing ${parsedTransactions.length} transactions (dedup enabled)…`
+      )
       setImportProgress(50)
 
       const result = await importTransactions({
         accountId,
         newAccountData,
+        skipDuplicates: true,
+        categoryMode,
         transactions: parsedTransactions.map((tx) => ({
           date: tx.date,
           amount: tx.amount,
           description: tx.description,
+          merchantName: tx.merchantName,
+          originalDescription: tx.originalDescription,
+          categoryName: tx.categoryName,
+          accountName: tx.accountName,
+          type: tx.type,
+          tags: tx.tags,
+          notes: tx.notes,
         })),
       })
 
       setImportProgress(100)
 
       if (result.success) {
+        const skipped = result.skipped ?? 0
+        const skippedNoAccount = result.skippedNoAccount ?? 0
+        const parts: string[] = []
+        parts.push(`Imported ${result.inserted} transactions`)
+        if (skipped > 0) parts.push(`skipped ${skipped} duplicates`)
+        if (skippedNoAccount > 0) parts.push(`${skippedNoAccount} skipped (unmatched accounts)`)
+        const msg = parts.join(", ")
         setImportPhase("complete")
-        setProgressMessage(`Successfully imported ${result.inserted} transactions`)
+        setProgressMessage(msg)
         setImportResult({
           success: true,
-          message: `Successfully imported ${result.inserted} transactions`,
+          message: msg,
           count: result.inserted ?? 0,
         })
       } else {
@@ -604,87 +743,214 @@ export default function ImportPage() {
         <div className="grid gap-6 lg:grid-cols-5">
           <Card className="lg:col-span-3">
             <CardHeader>
-              <CardTitle className="text-base">Select Account</CardTitle>
+              <CardTitle className="text-base">
+                {hasAccountColumn ? "Multi-Account Import" : "Select Account"}
+              </CardTitle>
               <CardDescription>
-                Choose which account to import {parsedTransactions.length}{" "}
-                transactions into.
+                {hasAccountColumn
+                  ? `${parsedTransactions.length} transactions will be routed to accounts automatically. Duplicates will be skipped.`
+                  : `Choose which account to import ${parsedTransactions.length} transactions into.`}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Select
-                value={selectedAccountId}
-                onValueChange={setSelectedAccountId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an account" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="new">
-                    + Create new account
-                  </SelectItem>
-                  {existingAccounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>
-                      <div className="flex items-center gap-2">
-                        <AccountIcon 
-                          accountNumber={acc.name}
-                          accountType={acc.account_type}
-                          institutionName={acc.institution_name}
-                          size="sm"
-                          showNumber={true}
-                        />
-                        <span className="text-muted-foreground">
-                          {acc.institution_name}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {hasAccountColumn ? (
+                <div className="space-y-3">
+                  {(() => {
+                    const byAccount = new Map<string, number>()
+                    for (const tx of parsedTransactions) {
+                      const name = tx.accountName ?? "Unknown"
+                      byAccount.set(name, (byAccount.get(name) ?? 0) + 1)
+                    }
+                    return [...byAccount.entries()].map(([name, count]) => {
+                      const matchedName = accountMatchPreview.get(name)
+                      const isUnmatched = matchedName === null
+                      return (
+                        <div
+                          key={name}
+                          className={cn(
+                            "flex items-center justify-between rounded-lg border px-4 py-3",
+                            isUnmatched && "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30"
+                          )}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{name}</p>
+                            {matchedName && (
+                              <p className="text-xs text-muted-foreground truncate">→ {matchedName}</p>
+                            )}
+                            {isUnmatched && (
+                              <p className="text-xs text-amber-600 dark:text-amber-400">No matching account — {count} transactions will be skipped</p>
+                            )}
+                          </div>
+                          <Badge variant={isUnmatched ? "outline" : "secondary"} className={cn("shrink-0", isUnmatched && "text-amber-600 border-amber-300")}>
+                            {count} txns
+                          </Badge>
+                        </div>
+                      )
+                    })
+                  })()}
+                  <Alert>
+                    <AlertCircle className="size-4" />
+                    <AlertTitle>Dedup enabled</AlertTitle>
+                    <AlertDescription>
+                      Transactions matching existing records (same account, date, amount, and description) will be automatically skipped.
+                    </AlertDescription>
+                  </Alert>
 
-              {selectedAccountId === "new" && (
-                <div className="space-y-4 rounded-lg border p-4">
-                  <p className="text-sm font-medium">New Account Details</p>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="acc-name">Account Name</Label>
-                      <Input
-                        id="acc-name"
-                        placeholder="e.g. Chase Checking"
-                        value={newAccountName}
-                        onChange={(e) => setNewAccountName(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="acc-institution">Institution</Label>
-                      <Input
-                        id="acc-institution"
-                        placeholder="e.g. Chase"
-                        value={newAccountInstitution}
-                        onChange={(e) =>
-                          setNewAccountInstitution(e.target.value)
-                        }
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Account Type</Label>
-                      <Select
-                        value={newAccountType}
-                        onValueChange={setNewAccountType}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ACCOUNT_TYPES.map((t) => (
-                            <SelectItem key={t.value} value={t.value}>
-                              {t.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+              {/* Category Mode */}
+              {categoryPreview.length > 0 && (
+                <div className="space-y-3 rounded-lg border p-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Categories</p>
+                    <p className="text-xs text-muted-foreground">
+                      {categoryPreview.length} unique categories found in your file.
+                    </p>
                   </div>
+
+                  <div className="flex gap-1.5">
+                    {([
+                      { value: "map" as const, label: "Map to mine", icon: ArrowRightLeft },
+                      { value: "keep" as const, label: "Keep original", icon: Tag },
+                      { value: "skip" as const, label: "Skip categories", icon: Ban },
+                    ]).map(({ value, label, icon: Icon }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setCategoryMode(value)}
+                        className={cn(
+                          "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                          categoryMode === value
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        )}
+                      >
+                        <Icon className="size-3" />
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {categoryMode === "map" && (
+                    <div className="max-h-[240px] overflow-y-auto rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-xs">CSV Category</TableHead>
+                            <TableHead className="text-xs">Maps To</TableHead>
+                            <TableHead className="text-xs text-right w-16">Count</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {categoryPreview.map(({ csvName, ourName, count }) => (
+                            <TableRow key={csvName}>
+                              <TableCell className="text-xs py-1.5">{csvName}</TableCell>
+                              <TableCell className="text-xs py-1.5">
+                                {ourName ? (
+                                  <span>{ourName}</span>
+                                ) : (
+                                  <span className="text-muted-foreground italic">No match</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-xs py-1.5 text-right text-muted-foreground">{count}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+
+                  {categoryMode === "keep" && (
+                    <p className="text-xs text-muted-foreground">
+                      Categories from your CSV will be matched by exact name to your existing categories.
+                      Unmatched categories will be left uncategorized.
+                    </p>
+                  )}
+
+                  {categoryMode === "skip" && (
+                    <p className="text-xs text-muted-foreground">
+                      All transactions will be imported without categories. You can categorize them later.
+                    </p>
+                  )}
                 </div>
+              )}
+                </div>
+              ) : (
+                <>
+                  <Select
+                    value={selectedAccountId}
+                    onValueChange={setSelectedAccountId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an account" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">
+                        + Create new account
+                      </SelectItem>
+                      {existingAccounts.map((acc) => (
+                        <SelectItem key={acc.id} value={acc.id}>
+                          <div className="flex items-center gap-2">
+                            <AccountIcon
+                              accountNumber={acc.name}
+                              accountType={acc.account_type}
+                              institutionName={acc.institution_name}
+                              size="sm"
+                              showNumber={true}
+                            />
+                            <span className="text-muted-foreground">
+                              {acc.institution_name}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {selectedAccountId === "new" && (
+                    <div className="space-y-4 rounded-lg border p-4">
+                      <p className="text-sm font-medium">New Account Details</p>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="acc-name">Account Name</Label>
+                          <Input
+                            id="acc-name"
+                            placeholder="e.g. Chase Checking"
+                            value={newAccountName}
+                            onChange={(e) => setNewAccountName(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="acc-institution">Institution</Label>
+                          <Input
+                            id="acc-institution"
+                            placeholder="e.g. Chase"
+                            value={newAccountInstitution}
+                            onChange={(e) =>
+                              setNewAccountInstitution(e.target.value)
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Account Type</Label>
+                          <Select
+                            value={newAccountType}
+                            onValueChange={setNewAccountType}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ACCOUNT_TYPES.map((t) => (
+                                <SelectItem key={t.value} value={t.value}>
+                                  {t.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="flex justify-end gap-3">

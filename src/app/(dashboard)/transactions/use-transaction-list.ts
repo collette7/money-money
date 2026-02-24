@@ -25,6 +25,7 @@ export type Account = {
 export type Transaction = {
   id: string
   date: string
+  status: string | null
   amount: number
   description: string
   merchant_name: string | null
@@ -46,6 +47,7 @@ export type Transaction = {
   recurring_rules: { frequency: string } | { frequency: string }[] | null
   categories: Category | Category[] | null
   accounts: Account | Account[]
+  cached_logo_domain: string | null
 }
 
 export function resolveCategory(val: Category | Category[] | null): Category | null {
@@ -355,6 +357,30 @@ export function useTransactionList(initial?: {
       window.removeEventListener("transactionCategoryChanged", handleCategoryChange)
     }
   }, [transactions])
+
+  useEffect(() => {
+    const handleIgnoredChange = (e: Event) => {
+      const { transactionId, ignored } = (e as CustomEvent).detail
+      setTransactions(prev => prev.map(t =>
+        t.id === transactionId ? { ...t, ignored } : t
+      ))
+    }
+    window.addEventListener("transactionIgnoredChanged", handleIgnoredChange)
+    return () => window.removeEventListener("transactionIgnoredChanged", handleIgnoredChange)
+  }, [])
+
+  useEffect(() => {
+    const handleRecurringChange = (e: Event) => {
+      const { transactionId, isRecurring, frequency } = (e as CustomEvent).detail
+      setTransactions(prev => prev.map(t =>
+        t.id === transactionId
+          ? { ...t, is_recurring: isRecurring, recurring_rules: frequency ? { frequency } : null }
+          : t
+      ))
+    }
+    window.addEventListener("transactionRecurringChanged", handleRecurringChange)
+    return () => window.removeEventListener("transactionRecurringChanged", handleRecurringChange)
+  }, [])
 
   function handleRowClick(transaction: Transaction) {
     setSelectedTransactionId(transaction.id)
