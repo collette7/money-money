@@ -1,6 +1,6 @@
 # Auto-Sync on App Open
 
-Automatically syncs SimpleFin-connected accounts when the user opens the app, with a 6-hour cooldown.
+Automatically syncs SimpleFin-connected accounts when the user opens the app, with a 3-hour cooldown.
 
 ## How It Works
 
@@ -12,7 +12,7 @@ Automatically syncs SimpleFin-connected accounts when the user opens the app, wi
 ### Cooldown Logic (`autoSyncIfNeeded`)
 
 1. Fetch the most recent `last_synced` timestamp across all SimpleFin accounts
-2. If last sync was < 6 hours ago → skip (return `{ synced: false, reason: "cooldown" }`)
+2. If last sync was < 3 hours ago → skip (return `{ synced: false, reason: "cooldown" }`)
 3. If no SimpleFin accounts exist → skip (return `{ synced: false, reason: "no_accounts" }`)
 4. Otherwise → run full `syncSimpleFinAccounts()` pipeline
 
@@ -36,6 +36,6 @@ The sync triggers the complete chain:
 ## Design Decisions
 
 - **Zero UI**: No loading spinners or success toasts. Sync happens invisibly.
-- **6-hour cooldown**: Prevents excessive API calls if user refreshes frequently.
+- **3-hour cooldown**: Prevents excessive API calls if user refreshes frequently.
 - **useRef guard**: Prevents double-fire in React 19 strict mode.
 - **Fire-and-forget**: `.catch(() => {})` — sync errors are silently swallowed. User can always trigger manual sync from Accounts page.

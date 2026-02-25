@@ -13,7 +13,7 @@ Connects to bank accounts via SimpleFin for automatic transaction and balance sy
 
 ### Trigger Points
 - **Manual**: User clicks "Sync" on Accounts page
-- **Auto-sync**: On app open, with 6-hour cooldown (see [auto-sync.md](./auto-sync.md))
+- **Auto-sync**: On app open, with 3-hour cooldown (see [auto-sync.md](./auto-sync.md))
 
 ### Process
 
@@ -58,5 +58,5 @@ SimpleFin reports account types that map to the app's internal types:
 ## Constants
 
 - Default lookback: 90 days (first sync)
-- Auto-sync cooldown: 6 hours
+- Auto-sync cooldown: 3 hours
 - SimpleFin API base: configured via access URL

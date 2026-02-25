@@ -47,7 +47,7 @@
 │   │   ├── split-transaction-dialog.tsx   # Transaction splitting
 │   │   ├── category-form-dialog.tsx       # Category CRUD dialog
 │   │   ├── category-picker.tsx           # Unified category dropdown (used everywhere)
-│   │   ├── auto-sync.tsx                 # Zero-UI auto-sync on app open (6hr cooldown)
+│   │   ├── auto-sync.tsx                 # Zero-UI auto-sync on app open (3hr cooldown)
 │   │   └── account-icon.tsx               # Bank logo with fallback
 │   │
 │   ├── lib/                        # Business logic and utilities
@@ -154,4 +154,4 @@ Supabase PostgreSQL ──→ RLS policies enforce user_id = auth.uid()
 | Finnhub | HTTPS REST | API key (env var) | portfolio/page.tsx, lib/finnhub.ts |
 | Upstash Redis | HTTPS REST | Token (env var) | lib/rate-limit.ts |
 | Logo.dev | HTTPS GET | Public token (`NEXT_PUBLIC_LOGO_DEV_TOKEN`) | lib/account-utils.ts, components/account-icon.tsx |
-| SimpleFin Auto-Sync | On app open | 6-hour cooldown | components/auto-sync.tsx, accounts/actions.ts |
+| SimpleFin Auto-Sync | On app open | 3-hour cooldown | components/auto-sync.tsx, accounts/actions.ts |

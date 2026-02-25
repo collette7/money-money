@@ -42,7 +42,7 @@
 | Transfer detection | Auto-matching algorithm that pairs inter-account transfers by abs(amount), ±3 day date tolerance, and opposite signs. |
 | Confirmed recurring | A detected recurring pattern the user has approved. Stored as `recurring_rules.confirmed = true`. Appears in "Upcoming" section. |
 | Dismissed recurring | A detected recurring pattern the user has rejected. Stored as `recurring_rules.confirmed = false`. Excluded from future detection. |
-| Auto-sync | Automatic SimpleFin account sync triggered on app open. 6-hour cooldown between syncs. Zero-UI (no loading indicators). |
+| Auto-sync | Automatic SimpleFin account sync triggered on app open. 3-hour cooldown between syncs. Zero-UI (no loading indicators). |
 | CategoryPicker | Unified category selection component used across all category dropdowns. Searchable, type-grouped, hierarchical. |
 | Confidence bands | Upper/lower bounds on forecast projections. Spread widens as confidence decays over forecast horizon. |
 | Amount tolerance | For recurring matching: transaction amount must be within 15% (or $5) of expected amount to match a recurring rule. |

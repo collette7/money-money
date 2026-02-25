@@ -320,7 +320,7 @@ User opens app (any dashboard page)
 auto-sync.tsx → useEffect (fires once via useRef guard)
   → accounts/actions.ts → autoSyncIfNeeded()
       → Fetch most recent last_synced across all SimpleFin accounts
-      → If last sync < 6 hours ago → return { synced: false, reason: "cooldown" }
+      → If last sync < 3 hours ago → return { synced: false, reason: "cooldown" }
       → If no SimpleFin accounts → return { synced: false, reason: "no_accounts" }
       → Otherwise → syncSimpleFinAccounts() (full sync pipeline)
       → Return { synced: true }

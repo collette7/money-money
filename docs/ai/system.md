@@ -14,7 +14,7 @@ Money Money is a personal finance dashboard. Single-user (no multi-tenancy). Use
 6. **Goals** — Track savings goals with contribution schedules, linked accounts, progress tracking
 7. **AI Advisor** — Chat interface for financial questions, auto-categorization, budget recommendations
 8. **Transfer Detection** — Auto-detect inter-account transfers by matching abs(amount) + date within ±3 days + opposite signs across accounts
-9. **Auto-Sync** — Accounts sync automatically on app open with 6-hour cooldown between syncs
+9. **Auto-Sync** — Accounts sync automatically on app open with 3-hour cooldown between syncs
 10. **Portfolio Tracking** — Manual holdings entry + CSV import, daily snapshots, performance chart, market watch via Finnhub, net worth integration
 
 ## Architectural Style
