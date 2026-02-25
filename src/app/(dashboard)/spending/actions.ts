@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { resolveCategory } from "@/lib/transfer-filter";
+import { resolveCategory, excludeTransfersByCategory } from "@/lib/transfer-filter";
 import { monthsRangeSchema, limitSchema } from "@/lib/validation";
 import { z } from "zod";
 
@@ -50,30 +50,34 @@ export async function getMonthlyTrends(months: number = 6): Promise<MonthlyTrend
   const endY = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
   const endDate = `${endY}-${String(endM).padStart(2, "0")}-01`;
 
-  const { data: transactions } = await supabase
+  const { data: rawTx } = await supabase
     .from("transactions")
     .select("amount, date, categories ( type ), accounts!account_id!inner ( user_id )")
     .eq("accounts.user_id", user.id)
     .gte("date", startDate)
     .lt("date", endDate)
     .eq("ignored", false)
-    .eq("status", "cleared");
+    .eq("status", "cleared")
+    .limit(10000);
+
+  const transactions = excludeTransfersByCategory(rawTx ?? []);
 
   const byMonth = new Map<string, { income: number; expenses: number }>();
 
-  for (const tx of transactions ?? []) {
-    const catType = (tx.categories as unknown as { type: string } | null)?.type;
-    if (catType === "transfer") continue;
-
-    const monthKey = (tx.date as string).substring(0, 7);
-    const entry = byMonth.get(monthKey) ?? { income: 0, expenses: 0 };
-
-    if (tx.amount > 0) entry.income += tx.amount;
-    else entry.expenses += Math.abs(tx.amount);
-
-    byMonth.set(monthKey, entry);
+  for (const tx of transactions) {
+    const catType = resolveCategory(tx.categories as { type: string } | { type: string }[] | null)?.type;
+    if (catType === "income") {
+      const monthKey = tx.date.substring(0, 7);
+      const entry = byMonth.get(monthKey) ?? { income: 0, expenses: 0 };
+      entry.income += tx.amount;
+      byMonth.set(monthKey, entry);
+    } else {
+      const monthKey = tx.date.substring(0, 7);
+      const entry = byMonth.get(monthKey) ?? { income: 0, expenses: 0 };
+      if (tx.amount < 0) entry.expenses += Math.abs(tx.amount);
+      byMonth.set(monthKey, entry);
+    }
   }
-
   const results: MonthlyTrend[] = [];
   for (let i = months - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -97,26 +101,28 @@ export async function getCategoryBreakdown(
 
   if (!user) redirect("/auth/login");
 
-  const { data: transactions } = await supabase
+  const { data: rawTx } = await supabase
     .from("transactions")
     .select(
-      "amount, categories ( name, color, icon, type ), accounts!account_id!inner ( user_id )"
+      "amount, date, categories ( name, color, icon, type ), accounts!account_id!inner ( user_id )"
     )
     .eq("accounts.user_id", user.id)
     .gte("date", startDate)
     .lt("date", endDate)
     .eq("ignored", false)
-    .eq("status", "cleared");
+    .eq("status", "cleared")
+    .limit(10000);
+
+  const transactions = excludeTransfersByCategory(rawTx ?? []);
 
   const byCategory = new Map<
     string,
     { name: string; color: string | null; icon: string | null; total: number }
   >();
 
-  for (const tx of transactions ?? []) {
+  for (const tx of transactions) {
     if (tx.amount >= 0) continue;
     const cat = resolveCategory(tx.categories as unknown as { name: string; color: string | null; icon: string | null; type: string } | { name: string; color: string | null; icon: string | null; type: string }[] | null);
-    if (cat?.type === "transfer") continue;
     const key = cat?.name ?? "Uncategorized";
     const existing = byCategory.get(key) ?? {
       name: key,
@@ -146,20 +152,29 @@ export async function getTopMerchants(
 
   if (!user) redirect("/auth/login");
 
-  const { data: transactions } = await supabase
+  const { data: rawTx } = await supabase
     .from("transactions")
-    .select("amount, merchant_name, accounts!account_id!inner ( user_id )")
+    .select("amount, date, merchant_name, categories ( type ), accounts!account_id!inner ( user_id )")
     .eq("accounts.user_id", user.id)
     .gte("date", startDate)
     .lt("date", endDate)
     .lt("amount", 0)
     .eq("ignored", false)
-    .eq("status", "cleared");
+    .eq("status", "cleared")
+    .limit(10000);
+
+  const transactions = excludeTransfersByCategory(
+    (rawTx ?? []).map((t) => ({
+      amount: t.amount,
+      merchant_name: t.merchant_name as string | null,
+      categories: t.categories,
+    }))
+  );
 
   const byMerchant = new Map<string, { total: number; count: number }>();
 
-  for (const tx of transactions ?? []) {
-    const name = (tx.merchant_name as string | null) ?? "Unknown";
+  for (const tx of transactions) {
+    const name = tx.merchant_name ?? "Unknown";
     const existing = byMerchant.get(name) ?? { total: 0, count: 0 };
     existing.total += Math.abs(tx.amount);
     existing.count += 1;
@@ -187,22 +202,24 @@ export async function getDailySpending(
 
   if (!user) redirect("/auth/login");
 
-  const { data: transactions } = await supabase
+  const { data: rawTx } = await supabase
     .from("transactions")
-    .select("amount, date, accounts!account_id!inner ( user_id )")
+    .select("amount, date, categories ( type ), accounts!account_id!inner ( user_id )")
     .eq("accounts.user_id", user.id)
     .gte("date", startDate)
     .lt("date", endDate)
     .lt("amount", 0)
     .eq("ignored", false)
     .eq("status", "cleared")
-    .order("date", { ascending: true });
+    .order("date", { ascending: true })
+    .limit(10000);
+
+  const transactions = excludeTransfersByCategory(rawTx ?? []);
 
   const byDate = new Map<string, number>();
 
-  for (const tx of transactions ?? []) {
-    const date = tx.date as string;
-    byDate.set(date, (byDate.get(date) ?? 0) + Math.abs(tx.amount));
+  for (const tx of transactions) {
+    byDate.set(tx.date, (byDate.get(tx.date) ?? 0) + Math.abs(tx.amount));
   }
 
   return Array.from(byDate.entries())

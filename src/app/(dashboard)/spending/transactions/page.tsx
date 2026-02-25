@@ -17,81 +17,27 @@ async function getTransactionStats() {
   } = await supabase.auth.getUser()
   if (!user) redirect("/auth/login")
 
-  const { data: accounts } = await supabase.from("accounts").select("id").eq("user_id", user.id)
-  const accountIds = (accounts ?? []).map((a) => a.id)
-
-  if (accountIds.length === 0) {
-    return {
-      totalCount: 0,
-      startDate: null,
-      endDate: null,
-      totalExpenses: 0,
-      totalIncome: 0,
-    }
-  }
   const oneYearAgo = new Date()
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
   const defaultStartDate = oneYearAgo.toISOString().split("T")[0]
 
-  const { count } = await supabase
-    .from("transactions")
-    .select("*", { count: "exact", head: true })
-    .in("account_id", accountIds)
-    .gte("date", defaultStartDate)
-    .eq("ignored", false)
-    .eq("status", "cleared")
+  // Use SQL RPC for accurate aggregation (avoids Supabase 1000-row default limit)
+  const { data, error } = await supabase.rpc("get_transaction_stats", {
+    p_user_id: user.id,
+    p_start_date: defaultStartDate,
+  })
 
-  const { data: earliestDate } = await supabase
-    .from("transactions")
-    .select("date")
-    .in("account_id", accountIds)
-    .gte("date", defaultStartDate)
-    .eq("ignored", false)
-    .eq("status", "cleared")
-    .order("date", { ascending: true })
-    .limit(1)
+  if (error || !data || (Array.isArray(data) && data.length === 0)) {
+    return { totalCount: 0, startDate: null, endDate: null, totalExpenses: 0, totalIncome: 0 }
+  }
 
-  const { data: latestDate } = await supabase
-    .from("transactions")
-    .select("date")
-    .in("account_id", accountIds)
-    .gte("date", defaultStartDate)
-    .eq("ignored", false)
-    .eq("status", "cleared")
-    .order("date", { ascending: false })
-    .limit(1)
-
-  const { data: expenses } = await supabase
-    .from("transactions")
-    .select("amount, categories!category_id(type)")
-    .in("account_id", accountIds)
-    .gte("date", defaultStartDate)
-    .eq("ignored", false)
-    .eq("status", "cleared")
-    .lt("amount", 0)
-
-  const { data: income } = await supabase
-    .from("transactions")
-    .select("amount, categories!category_id(type)")
-    .in("account_id", accountIds)
-    .gte("date", defaultStartDate)
-    .eq("ignored", false)
-    .eq("status", "cleared")
-    .gt("amount", 0)
-
-  const totalExpenses = (expenses ?? [])
-    .filter((t) => (t.categories as unknown as { type: string } | null)?.type !== "transfer")
-    .reduce((sum, t) => sum + Math.abs(t.amount), 0)
-  const totalIncome = (income ?? [])
-    .filter((t) => (t.categories as unknown as { type: string } | null)?.type !== "transfer")
-    .reduce((sum, t) => sum + t.amount, 0)
-
+  const row = Array.isArray(data) ? data[0] : data
   return {
-    totalCount: count ?? 0,
-    startDate: earliestDate?.[0]?.date ?? null,
-    endDate: latestDate?.[0]?.date ?? null,
-    totalExpenses,
-    totalIncome,
+    totalCount: Number(row.total_count) || 0,
+    startDate: row.earliest_date ?? null,
+    endDate: row.latest_date ?? null,
+    totalExpenses: Number(row.total_expenses) || 0,
+    totalIncome: Number(row.total_income) || 0,
   }
 }
 
