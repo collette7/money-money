@@ -152,7 +152,7 @@ export async function syncAccounts() {
   };
 }
 
-const AUTO_SYNC_COOLDOWN_MS = 6 * 60 * 60 * 1000;
+const AUTO_SYNC_COOLDOWN_MS = 3 * 60 * 60 * 1000;
 
 export async function autoSyncIfNeeded(): Promise<{
   synced: boolean;
