@@ -9,7 +9,7 @@ import { createAuditLog } from "@/lib/audit-log";
 
 export async function signup(formData: FormData) {
   const supabase = await createClient();
-  const origin = (await headers()).get("origin");
+  const origin = process.env.NEXT_PUBLIC_APP_URL || (await headers()).get("origin");
 
   const result = signupSchema.safeParse({
     firstName: formData.get("firstName"),
