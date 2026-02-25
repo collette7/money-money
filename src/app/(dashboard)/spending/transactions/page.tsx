@@ -38,12 +38,16 @@ async function getTransactionStats() {
     .select("*", { count: "exact", head: true })
     .in("account_id", accountIds)
     .gte("date", defaultStartDate)
+    .eq("ignored", false)
+    .eq("status", "cleared")
 
   const { data: earliestDate } = await supabase
     .from("transactions")
     .select("date")
     .in("account_id", accountIds)
     .gte("date", defaultStartDate)
+    .eq("ignored", false)
+    .eq("status", "cleared")
     .order("date", { ascending: true })
     .limit(1)
 
@@ -52,25 +56,35 @@ async function getTransactionStats() {
     .select("date")
     .in("account_id", accountIds)
     .gte("date", defaultStartDate)
+    .eq("ignored", false)
+    .eq("status", "cleared")
     .order("date", { ascending: false })
     .limit(1)
 
   const { data: expenses } = await supabase
     .from("transactions")
-    .select("amount")
+    .select("amount, categories!category_id(type)")
     .in("account_id", accountIds)
     .gte("date", defaultStartDate)
+    .eq("ignored", false)
+    .eq("status", "cleared")
     .lt("amount", 0)
 
   const { data: income } = await supabase
     .from("transactions")
-    .select("amount")
+    .select("amount, categories!category_id(type)")
     .in("account_id", accountIds)
     .gte("date", defaultStartDate)
+    .eq("ignored", false)
+    .eq("status", "cleared")
     .gt("amount", 0)
 
-  const totalExpenses = (expenses ?? []).reduce((sum, t) => sum + Math.abs(t.amount), 0)
-  const totalIncome = (income ?? []).reduce((sum, t) => sum + t.amount, 0)
+  const totalExpenses = (expenses ?? [])
+    .filter((t) => (t.categories as unknown as { type: string } | null)?.type !== "transfer")
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0)
+  const totalIncome = (income ?? [])
+    .filter((t) => (t.categories as unknown as { type: string } | null)?.type !== "transfer")
+    .reduce((sum, t) => sum + t.amount, 0)
 
   return {
     totalCount: count ?? 0,

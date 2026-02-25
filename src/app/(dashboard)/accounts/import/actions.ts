@@ -327,6 +327,7 @@ export async function importTransactions(payload: {
       notes: tx.notes ?? null,
       is_split: false,
       categorized_by: categoryId ? "manual" : null,
+      status: "cleared",
     });
   }
 
