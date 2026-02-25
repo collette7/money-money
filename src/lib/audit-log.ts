@@ -6,6 +6,7 @@ export type AuditAction =
   | "auth.signup"
   | "auth.logout"
   | "settings.ai_update"
+  | "settings.profile_update"
   | "account.connect"
   | "account.sync"
   | "transaction.import"

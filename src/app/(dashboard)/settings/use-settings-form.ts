@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition, useEffect, useCallback } from "react"
-import { saveAISettings, signOut, clearAIApiKey } from "./actions"
+import { saveAISettings, signOut, clearAIApiKey, updateProfile } from "./actions"
 
 export interface SettingsFormProps {
   currentSettings: {
@@ -11,6 +11,8 @@ export interface SettingsFormProps {
     model: string | null
   } | null
   userEmail: string
+  firstName: string
+  lastName: string
 }
 
 export const PROVIDER_MODELS: Record<string, { value: string; label: string }[]> = {
@@ -60,7 +62,7 @@ const DEFAULT_MODELS: Record<string, string> = Object.fromEntries(
   Object.entries(PROVIDER_MODELS).map(([key, models]) => [key, models[0].value])
 )
 
-export function useSettingsForm({ currentSettings, userEmail }: SettingsFormProps) {
+export function useSettingsForm({ currentSettings, userEmail, firstName: initialFirstName, lastName: initialLastName }: SettingsFormProps) {
   const initialProvider = currentSettings?.provider ?? "openai"
   const [provider, setProvider] = useState(initialProvider)
   const [apiKey, setApiKey] = useState("")
@@ -74,6 +76,11 @@ export function useSettingsForm({ currentSettings, userEmail }: SettingsFormProp
   const [errorMessage, setErrorMessage] = useState("")
   const [isEditingApiKey, setIsEditingApiKey] = useState(!currentSettings?.hasApiKey)
   const [savedHasApiKey, setSavedHasApiKey] = useState(currentSettings?.hasApiKey || false)
+  const [firstName, setFirstName] = useState(initialFirstName)
+  const [lastName, setLastName] = useState(initialLastName)
+  const [isSavingProfile, startProfileTransition] = useTransition()
+  const [profileStatus, setProfileStatus] = useState<"idle" | "saved" | "error">("idle")
+  const [profileError, setProfileError] = useState("")
 
   const handleProviderChange = useCallback(
     (value: string) => {
@@ -109,6 +116,16 @@ export function useSettingsForm({ currentSettings, userEmail }: SettingsFormProp
       return () => clearTimeout(timer)
     }
   }, [saveStatus])
+
+  useEffect(() => {
+    if (profileStatus === "saved" || profileStatus === "error") {
+      const timer = setTimeout(() => {
+        setProfileStatus("idle")
+        setProfileError("")
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [profileStatus])
 
   const canSave = useCallback(() => {
     if (!provider || !model) return false
@@ -184,6 +201,25 @@ export function useSettingsForm({ currentSettings, userEmail }: SettingsFormProp
     setApiKey("")
   }
 
+  const handleSaveProfile = () => {
+    if (!firstName.trim()) return
+
+    const formData = new FormData()
+    formData.set("firstName", firstName)
+    formData.set("lastName", lastName)
+
+    startProfileTransition(async () => {
+      const result = await updateProfile(formData)
+      if (result?.success) {
+        setProfileStatus("saved")
+        setProfileError("")
+      } else {
+        setProfileStatus("error")
+        setProfileError(result?.error || "Failed to update name")
+      }
+    })
+  }
+
   return {
     provider,
     setProvider,
@@ -209,5 +245,13 @@ export function useSettingsForm({ currentSettings, userEmail }: SettingsFormProp
     handleSignOut,
     handleStartEditingApiKey,
     userEmail,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    isSavingProfile,
+    profileStatus,
+    profileError,
+    handleSaveProfile,
   }
 }

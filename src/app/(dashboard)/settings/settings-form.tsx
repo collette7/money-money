@@ -1,6 +1,6 @@
 "use client"
 
-import { Settings, Key, Globe, Bot, LogOut, Save, Loader2, Check, Edit2, Trash2 } from "lucide-react"
+import { Settings, Key, Globe, Bot, LogOut, Save, Loader2, Check, Edit2, Trash2, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,7 +23,7 @@ import { Separator } from "@/components/ui/separator"
 import { useSettingsForm, PROVIDER_MODELS } from "./use-settings-form"
 import type { SettingsFormProps } from "./use-settings-form"
 
-function SettingsForm({ currentSettings, userEmail }: SettingsFormProps) {
+function SettingsForm({ currentSettings, userEmail, firstName: initialFirstName, lastName: initialLastName }: SettingsFormProps) {
   const {
     provider,
     apiKey,
@@ -45,7 +45,15 @@ function SettingsForm({ currentSettings, userEmail }: SettingsFormProps) {
     handleClearApiKey,
     handleSignOut,
     handleStartEditingApiKey,
-  } = useSettingsForm({ currentSettings, userEmail })
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    isSavingProfile,
+    profileStatus,
+    profileError,
+    handleSaveProfile,
+  } = useSettingsForm({ currentSettings, userEmail, firstName: initialFirstName, lastName: initialLastName })
 
   return (
     <Tabs defaultValue="ai" className="w-full">
@@ -267,17 +275,73 @@ function SettingsForm({ currentSettings, userEmail }: SettingsFormProps) {
       <TabsContent value="account" className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Account Information</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <User className="size-4" />
+              Profile
+            </CardTitle>
             <CardDescription>
-              Your session details and account actions.
+              Your name and account details.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Jane"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Doe"
+                />
+              </div>
+            </div>
+
+            <Separator />
+
             <div className="space-y-1">
               <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
                 Email
               </p>
               <p className="text-sm">{userEmail || "Signed in"}</p>
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center gap-3">
+              <Button onClick={handleSaveProfile} disabled={isSavingProfile || !firstName.trim()}>
+                {isSavingProfile ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-4" />
+                    Save Profile
+                  </>
+                )}
+              </Button>
+              {profileStatus === "saved" && (
+                <span className="flex items-center gap-1 text-sm font-medium text-emerald-600">
+                  <Check className="size-3.5" />
+                  Profile updated!
+                </span>
+              )}
+              {profileStatus === "error" && (
+                <span className="flex items-center gap-1 text-sm font-medium text-destructive">
+                  <span className="size-3.5">×</span>
+                  {profileError}
+                </span>
+              )}
             </div>
           </CardContent>
         </Card>

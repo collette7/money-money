@@ -293,6 +293,39 @@ export async function signOut() {
   redirect("/auth/login");
 }
 
+export async function updateProfile(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const firstName = (formData.get("firstName") as string ?? "").trim();
+  const lastName = (formData.get("lastName") as string ?? "").trim();
+
+  if (!firstName) return { success: false, error: "First name is required" };
+  if (firstName.length > 50) return { success: false, error: "First name is too long" };
+  if (lastName.length > 50) return { success: false, error: "Last name is too long" };
+
+  const { error } = await supabase.auth.updateUser({
+    data: {
+      full_name: lastName ? `${firstName} ${lastName}` : firstName,
+      first_name: firstName,
+      last_name: lastName,
+    },
+  });
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  await createAuditLog({
+    action: "settings.profile_update",
+    metadata: { firstName, lastName, success: true },
+  });
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
 // ─── User Preferences (profiles.preferences JSONB) ─────────────────
 
 export type WatchedSymbol = {

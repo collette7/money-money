@@ -23,6 +23,8 @@ export default async function SettingsPage() {
     <SettingsForm
       currentSettings={settings}
       userEmail={user.email ?? ""}
+      firstName={(user.user_metadata?.first_name as string) ?? ""}
+      lastName={(user.user_metadata?.last_name as string) ?? ""}
     />
   )
 }
