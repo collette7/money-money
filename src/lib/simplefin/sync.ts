@@ -245,46 +245,82 @@ async function upsertTransactions(
     return 0;
   }
 
+  // Layer 2: Fuzzy dedup — catch same transaction with changed simplefin_id
+  // (pending→posted ID change, description update, etc.)
+  // Match: same account + same amount (cents) + date within ±2 days.
+  // When matched, update the existing row instead of inserting a duplicate.
+  const fuzzyMatchedSfIds = new Set<string>();
+
+  const newDates = newRows.map((r) => new Date(r.date + "T00:00:00").getTime());
+  const minDate = new Date(Math.min(...newDates));
+  const maxDate = new Date(Math.max(...newDates));
+  minDate.setDate(minDate.getDate() - 2);
+  maxDate.setDate(maxDate.getDate() + 2);
+
+  const { data: candidates } = await supabase
+    .from("transactions")
+    .select("id, date, amount, simplefin_id")
+    .eq("account_id", accountId)
+    .gte("date", minDate.toISOString().split("T")[0])
+    .lte("date", maxDate.toISOString().split("T")[0]);
+
+  if (candidates && candidates.length > 0) {
+    const matchedExistingIds = new Set<string>();
+
+    for (const row of newRows) {
+      const rAmt = Math.round(parseFloat(String(row.amount)) * 100);
+      const rDate = new Date(row.date + "T00:00:00").getTime();
+
+      for (const c of candidates) {
+        if (matchedExistingIds.has(c.id)) continue;
+        // Skip if same simplefin_id — already handled by Layer 1
+        if (c.simplefin_id === row.simplefin_id) continue;
+
+        const cAmt = Math.round(c.amount * 100);
+        const cDate = new Date(c.date + "T00:00:00").getTime();
+
+        if (rAmt === cAmt && Math.abs(rDate - cDate) <= 2 * 86400000) {
+          // Match — update existing row's bank-controlled fields only.
+          // Preserves user data (category, tags, recurring, review status).
+          await supabase
+            .from("transactions")
+            .update({
+              simplefin_id: row.simplefin_id,
+              description: row.description,
+              original_description: row.original_description,
+              status: row.status,
+            })
+            .eq("id", c.id);
+
+          fuzzyMatchedSfIds.add(row.simplefin_id);
+          matchedExistingIds.add(c.id);
+          break; // one match per new row
+        }
+      }
+    }
+
+    if (fuzzyMatchedSfIds.size > 0) {
+      console.log(
+        LOG_PREFIX,
+        `[upsert] account=${accountId}: fuzzy-deduped ${fuzzyMatchedSfIds.size} transaction(s)`
+      );
+    }
+  }
+
+  const trulyNewRows = newRows.filter((r) => !fuzzyMatchedSfIds.has(r.simplefin_id));
+
+  if (trulyNewRows.length === 0) {
+    return 0;
+  }
+
   const { error, data: inserted } = await supabase
     .from("transactions")
-    .insert(newRows)
+    .insert(trulyNewRows)
     .select("id, merchant_name, description, amount, account_id");
 
   if (error) {
     console.error(LOG_PREFIX, `[upsert] account=${accountId}: INSERT FAILED —`, error.message);
     throw new Error(`Failed to insert transactions: ${error.message}`);
-  }
-
-  // Resolve pending → cleared: when a cleared transaction arrives, delete any
-  // matching pending transaction (same account, same amount, date ±2 days).
-  // SimpleFIN assigns new IDs when transactions clear, so simplefin_id dedup misses these.
-  const newCleared = newRows.filter((r) => r.status === "cleared");
-  if (newCleared.length > 0) {
-    const { data: pendingTxns } = await supabase
-      .from("transactions")
-      .select("id, date, amount, simplefin_id")
-      .eq("account_id", accountId)
-      .eq("status", "pending");
-
-    if (pendingTxns && pendingTxns.length > 0) {
-      const toDelete: string[] = [];
-      for (const cleared of newCleared) {
-        const cAmt = Math.round(parseFloat(String(cleared.amount)) * 100);
-        const cDate = new Date(cleared.date + "T00:00:00").getTime();
-        for (const p of pendingTxns) {
-          if (toDelete.includes(p.id)) continue; // already marked
-          const pAmt = Math.round(p.amount * 100);
-          const pDate = new Date(p.date + "T00:00:00").getTime();
-          if (cAmt === pAmt && Math.abs(cDate - pDate) <= 2 * 86400000) {
-            toDelete.push(p.id);
-            break; // one pending match per cleared transaction
-          }
-        }
-      }
-      if (toDelete.length > 0) {
-        await supabase.from("transactions").delete().in("id", toDelete);
-      }
-    }
   }
 
   if (inserted?.length) {
@@ -320,7 +356,7 @@ async function upsertTransactions(
     }
   }
 
-  return newRows.length;
+  return trulyNewRows.length;
 }
 
 async function categorizeNewTransactions(
