@@ -285,6 +285,7 @@ export async function importTransactions(payload: {
     notes: string | null;
     is_split: boolean;
     categorized_by: string | null;
+    status: string;
   }> = [];
 
   let skippedNoAccount = 0;
