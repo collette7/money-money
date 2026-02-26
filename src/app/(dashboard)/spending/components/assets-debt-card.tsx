@@ -120,7 +120,7 @@ export function AssetsDebtCard({
               {filtered.length >= 2 ? (
                 <span className={cn(
                   "inline-flex items-center gap-0.5 text-xs font-medium",
-                  assetsChange >= 0 ? "text-emerald-600" : "text-rose-600"
+                  assetsChange >= 0 ? "text-emerald-600" : "text-orange-600"
                 )}>
                   {assetsChange >= 0 ? (
                     <TrendingUp className="size-3" />
@@ -143,7 +143,7 @@ export function AssetsDebtCard({
               {filtered.length >= 2 ? (
                 <span className={cn(
                   "inline-flex items-center gap-0.5 text-xs font-medium",
-                  debtChange <= 0 ? "text-emerald-600" : "text-rose-600"
+                  debtChange <= 0 ? "text-emerald-600" : "text-orange-600"
                 )}>
                   {debtChange <= 0 ? (
                     <TrendingDown className="size-3" />

@@ -179,7 +179,7 @@ function MarketHoldingRow({
         <div className="font-semibold tabular-nums">{formatCurrencyShort(currentValue)}</div>
         <div className={cn(
           "text-xs font-medium tabular-nums",
-          isPositiveAllTime ? "text-emerald-600" : "text-rose-500"
+          isPositiveAllTime ? "text-emerald-600" : "text-orange-500"
         )}>
           {formatPercent(allTimeGain)} all time
         </div>
@@ -188,13 +188,13 @@ function MarketHoldingRow({
       <div className="text-right shrink-0 ml-6 w-28">
         <div className={cn(
           "text-sm font-medium tabular-nums",
-          isPositiveDay ? "text-emerald-600" : "text-rose-500"
+          isPositiveDay ? "text-emerald-600" : "text-orange-500"
         )}>
           {isPositiveDay ? "+" : ""}{formatCurrencyShort(dayChange)}
         </div>
         <div className={cn(
           "text-xs tabular-nums",
-          isPositiveDay ? "text-emerald-600/70" : "text-rose-500/70"
+          isPositiveDay ? "text-emerald-600/70" : "text-orange-500/70"
         )}>
           ({formatPercent(dayChangePct)}) today
         </div>
@@ -270,7 +270,7 @@ function ManualHoldingRow({
         <div className="font-semibold tabular-nums">{formatCurrencyShort(currentValue)}</div>
         <div className={cn(
           "text-xs font-medium tabular-nums",
-          isPositive ? "text-emerald-600" : "text-rose-500"
+          isPositive ? "text-emerald-600" : "text-orange-500"
         )}>
           {formatPercent(gainPct)} since purchase
         </div>
@@ -367,13 +367,13 @@ function ClosedPositionRow({
         <span className="text-xs text-muted-foreground">Realized:</span>
         <span className={cn(
           "ml-2 font-medium tabular-nums",
-          isPositive ? "text-emerald-600" : "text-rose-500"
+          isPositive ? "text-emerald-600" : "text-orange-500"
         )}>
           {isPositive ? "+" : ""}{formatCurrencyShort(realizedGain)}
         </span>
         <span className={cn(
           "ml-1 text-xs tabular-nums",
-          isPositive ? "text-emerald-600/70" : "text-rose-500/70"
+          isPositive ? "text-emerald-600/70" : "text-orange-500/70"
         )}>
           ({formatPercent(realizedGainPct)})
         </span>

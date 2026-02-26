@@ -204,7 +204,7 @@ export function HomeSpendingHeatmap({
                     <p className="text-sm font-medium truncate">{name}</p>
                     <p className="text-[11px] text-muted-foreground">{formatDate(tx.date)}</p>
                   </div>
-                  <span className="text-sm font-semibold tabular-nums shrink-0 text-rose-500">
+                  <span className="text-sm font-semibold tabular-nums shrink-0 text-orange-500">
                     -{formatCurrency(Math.abs(tx.amount))}
                   </span>
                 </div>

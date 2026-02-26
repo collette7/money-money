@@ -78,7 +78,7 @@ export function BalanceReportView() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Liabilities</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-600" />
+            <TrendingDown className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -90,7 +90,7 @@ export function BalanceReportView() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
-            <DollarSign className={`h-4 w-4 ${summary.netWorth >= 0 ? "text-green-600" : "text-red-600"}`} />
+            <DollarSign className={`h-4 w-4 ${summary.netWorth >= 0 ? "text-green-600" : "text-orange-600"}`} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -137,13 +137,13 @@ export function BalanceReportView() {
                   <div key={account.id} className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <Icon className={`h-4 w-4 ${isPositive ? "text-green-600" : "text-red-600"}`} />
+                        <Icon className={`h-4 w-4 ${isPositive ? "text-green-600" : "text-orange-600"}`} />
                         <div>
                           <p className="font-medium">{account.name}</p>
                           <p className="text-xs text-muted-foreground">{account.institution_name}</p>
                         </div>
                       </div>
-                      <span className={`tabular-nums font-medium ${isPositive ? "text-green-600" : "text-red-600"}`}>
+                      <span className={`tabular-nums font-medium ${isPositive ? "text-green-600" : "text-orange-600"}`}>
                         ${Math.abs(account.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>

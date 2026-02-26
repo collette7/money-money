@@ -127,7 +127,7 @@ export default function ForecastPage() {
               {compactCurrency(lastPoint.netWorth)}
             </p>
             <p className="text-sm mt-1">
-              <span className={netWorthChange >= 0 ? "text-emerald-600" : "text-rose-500"}>
+              <span className={netWorthChange >= 0 ? "text-emerald-600" : "text-orange-500"}>
                 {netWorthChange >= 0 ? "+" : ""}
                 {compactCurrency(netWorthChange)} ({formatPercent(percentChange)})
               </span>

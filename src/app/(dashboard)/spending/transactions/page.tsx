@@ -62,7 +62,7 @@ export default async function TransactionsPage() {
           </span>
         </span>
         <span className="ml-auto text-muted-foreground">Total expenses{" "}
-          <span className="font-semibold text-rose-600 dark:text-rose-400">
+          <span className="font-semibold text-orange-600 dark:text-orange-400">
             −{formatCurrency(stats.totalExpenses)}
           </span>
         </span>

@@ -68,7 +68,7 @@ export function NetWorthCard({
             <span
               className={cn(
                 "font-medium tabular-nums",
-                netWorthPctChange >= 0 ? "text-emerald-600" : "text-rose-500"
+                netWorthPctChange >= 0 ? "text-emerald-600" : "text-orange-500"
               )}
               style={{ fontSize: 13 }}
             >
@@ -111,7 +111,7 @@ export function NetWorthCard({
         </div>
         <div>
           <p className="uppercase tracking-wider text-muted-foreground" style={{ fontSize: 10 }}>Liabilities</p>
-          <p className="font-semibold tabular-nums text-rose-500 mt-0.5" style={{ fontSize: 13 }}>
+          <p className="font-semibold tabular-nums text-orange-500 mt-0.5" style={{ fontSize: 13 }}>
             {compactCurrency(liabilities)}
           </p>
         </div>

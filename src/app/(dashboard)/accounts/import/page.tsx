@@ -1001,7 +1001,7 @@ export default function ImportPage() {
                     </div>
                     <span
                       className={`shrink-0 text-xs font-medium ${
-                        tx.amount < 0 ? "text-destructive" : "text-emerald-600"
+                        tx.amount < 0 ? "text-orange-600" : "text-emerald-600"
                       }`}
                     >
                       {formatCurrency(tx.amount)}

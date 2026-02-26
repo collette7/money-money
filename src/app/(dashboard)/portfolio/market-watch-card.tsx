@@ -226,7 +226,7 @@ export function MarketWatchCard({
                 <span
                   className={cn(
                     "text-xs font-medium tabular-nums w-16 text-right",
-                    positive ? "text-emerald-600" : "text-rose-500"
+                    positive ? "text-emerald-600" : "text-orange-500"
                   )}
                 >
                   {positive ? "+" : ""}

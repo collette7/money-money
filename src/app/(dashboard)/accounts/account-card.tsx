@@ -152,7 +152,7 @@ function AccountCard({ account }: { account: Account }) {
         <CardContent className="space-y-2 px-4">
           <p
             className={`text-[16px] font-semibold tracking-tight ${
-              isNegative ? "text-destructive" : ""
+              isNegative ? "text-orange-600" : ""
             }`}
           >
             {formatCurrency(account.balance, account.currency)}

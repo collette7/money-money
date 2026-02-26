@@ -56,7 +56,7 @@ export function IncomeTab({ categories = [] }: IncomeTabProps) {
             </span>
             <span className={cn(
               "text-xs font-medium",
-              variance >= 0 ? "text-emerald-600" : "text-red-600"
+              variance >= 0 ? "text-emerald-600" : "text-orange-600"
             )}>
               {variance >= 0 ? "+" : ""}{fmt.format(variance)}
             </span>
@@ -101,7 +101,7 @@ export function IncomeTab({ categories = [] }: IncomeTabProps) {
                   <span className={cn(
                     "w-24 text-right text-sm font-medium tabular-nums",
                     target > 0
-                      ? catVariance >= 0 ? "text-emerald-600" : "text-red-600"
+                      ? catVariance >= 0 ? "text-emerald-600" : "text-orange-600"
                       : "text-muted-foreground"
                   )}>
                     {target > 0

@@ -417,7 +417,7 @@ export function PortfolioOverview({
               <span
                 className={cn(
                   "text-sm font-medium tabular-nums",
-                  dayChange >= 0 ? "text-emerald-600" : "text-rose-500"
+                  dayChange >= 0 ? "text-emerald-600" : "text-orange-500"
                 )}
               >
                 {dayChange >= 0 ? "+" : ""}

@@ -100,7 +100,7 @@ export function IncomeExpenseReportView() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Average Monthly Expenses</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-600" />
+            <TrendingDown className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${avgMonthly.expenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
@@ -113,7 +113,7 @@ export function IncomeExpenseReportView() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Average Monthly Savings</CardTitle>
-            <div className={avgMonthly.net >= 0 ? "text-green-600" : "text-red-600"}>
+            <div className={avgMonthly.net >= 0 ? "text-green-600" : "text-orange-600"}>
               {avgMonthly.net >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
             </div>
           </CardHeader>
