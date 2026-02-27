@@ -229,17 +229,55 @@ async function upsertTransactions(
     category_confirmed: false,
   }));
 
+  // Layer 0: Within-batch dedup — when SimpleFIN returns both pending and
+  // cleared versions of the same transaction in one response, keep only cleared.
+  // Match: same amount (cents) + same date.
+  const batchDeduped = (() => {
+    const grouped = new Map<string, typeof rows>();
+    for (const row of rows) {
+      const key = `${Math.round(row.amount * 100)}|${row.date}`;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push(row);
+    }
+    const result: typeof rows = [];
+    let dropped = 0;
+    for (const group of grouped.values()) {
+      if (group.length <= 1) {
+        result.push(...group);
+        continue;
+      }
+      const cleared = group.filter((r) => r.status !== "pending");
+      const pending = group.filter((r) => r.status === "pending");
+      if (cleared.length > 0 && pending.length > 0) {
+        result.push(...cleared);
+        // Keep excess pending rows (more pending than cleared = some are legit)
+        const excess = pending.slice(cleared.length);
+        result.push(...excess);
+        dropped += pending.length - excess.length;
+      } else {
+        result.push(...group);
+      }
+    }
+    if (dropped > 0) {
+      console.log(
+        LOG_PREFIX,
+        `[upsert] account=${accountId}: batch-deduped ${dropped} pending txn(s) with cleared counterparts`
+      );
+    }
+    return result;
+  })();
+
   const { data: existing } = await supabase
     .from("transactions")
     .select("simplefin_id")
     .eq("account_id", accountId)
     .in(
       "simplefin_id",
-      rows.map((r) => r.simplefin_id)
+      batchDeduped.map((r) => r.simplefin_id)
     );
 
   const existingIds = new Set(existing?.map((e) => e.simplefin_id) ?? []);
-  const newRows = rows.filter((r) => !existingIds.has(r.simplefin_id));
+  const newRows = batchDeduped.filter((r) => !existingIds.has(r.simplefin_id));
 
   if (newRows.length === 0) {
     return 0;
@@ -321,6 +359,59 @@ async function upsertTransactions(
   if (error) {
     console.error(LOG_PREFIX, `[upsert] account=${accountId}: INSERT FAILED —`, error.message);
     throw new Error(`Failed to insert transactions: ${error.message}`);
+  }
+
+  // Layer 3: Post-insert pending cleanup — delete stale pending transactions
+  // when cleared counterparts were just inserted. Catches cross-sync dupes
+  // where pending was inserted in a prior sync and cleared arrives now.
+  const clearedInserted = trulyNewRows.filter((r) => r.status === "cleared");
+  if (clearedInserted.length > 0) {
+    const cDates = clearedInserted.map((r) => new Date(r.date + "T00:00:00").getTime());
+    const cMin = new Date(Math.min(...cDates));
+    cMin.setDate(cMin.getDate() - 2);
+    const cMax = new Date(Math.max(...cDates));
+    cMax.setDate(cMax.getDate() + 2);
+
+    const { data: pendingInRange } = await supabase
+      .from("transactions")
+      .select("id, amount, date, simplefin_id")
+      .eq("account_id", accountId)
+      .eq("status", "pending")
+      .gte("date", cMin.toISOString().split("T")[0])
+      .lte("date", cMax.toISOString().split("T")[0]);
+
+    if (pendingInRange && pendingInRange.length > 0) {
+      const toDelete: string[] = [];
+      const usedClearedIdx = new Set<number>();
+
+      for (const p of pendingInRange) {
+        const pAmt = Math.round(p.amount * 100);
+        const pDate = new Date(p.date + "T00:00:00").getTime();
+
+        for (let i = 0; i < clearedInserted.length; i++) {
+          if (usedClearedIdx.has(i)) continue;
+          const cAmt = Math.round(parseFloat(String(clearedInserted[i].amount)) * 100);
+          const cDate = new Date(clearedInserted[i].date + "T00:00:00").getTime();
+
+          if (pAmt === cAmt && Math.abs(pDate - cDate) <= 2 * 86400000) {
+            toDelete.push(p.id);
+            usedClearedIdx.add(i);
+            break;
+          }
+        }
+      }
+
+      if (toDelete.length > 0) {
+        await supabase
+          .from("transactions")
+          .delete()
+          .in("id", toDelete);
+        console.log(
+          LOG_PREFIX,
+          `[upsert] account=${accountId}: cleaned up ${toDelete.length} pending dupe(s) replaced by cleared counterparts`
+        );
+      }
+    }
   }
 
   if (inserted?.length) {
