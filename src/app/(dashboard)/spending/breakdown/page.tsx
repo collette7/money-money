@@ -65,6 +65,7 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
     accounts,
     netWorthSnapshots,
     recentTxns,
+    totalSpending,
   ] = await Promise.all([
     getHierarchicalBudget(month, year),
     getBudget(month, year),
@@ -89,12 +90,17 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
       .or("type.eq.expense,type.is.null")
       .order("date", { ascending: false })
       .limit(4),
+    supabase.rpc("get_total_spending", {
+      p_user_id: user.id,
+      p_start_date: startDate,
+      p_end_date: endDate,
+    }),
   ])
 
   const expenseCategories = hierarchicalData.filter(c => c.type === "expense" && !c.excluded_from_budget)
   const incomeCategories = hierarchicalData.filter(c => c.type === "income" && !c.excluded_from_budget)
 
-  const spent = expenseCategories.reduce((sum, c) => sum + c.spent_amount, 0)
+  const spent = Number(totalSpending.data || 0)
   const monthLabel = MONTH_NAMES[month - 1]
 
   const recentTransactions = (recentTxns.data ?? []).map((tx: any) => ({

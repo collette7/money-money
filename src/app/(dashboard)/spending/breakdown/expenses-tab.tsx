@@ -7,12 +7,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { CategoryWithHierarchy } from "./expandable-categories";
-
-const PALETTE = [
-  "#ef4444", "#f97316", "#84cc16", "#14b8a6", "#6366f1",
-  "#ec4899", "#eab308", "#06b6d4", "#8b5cf6", "#10b981",
-  "#f43f5e", "#0ea5e9",
-];
+import { getCategoryColor } from "@/lib/category-colors";
 
 const fmt = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -28,18 +23,16 @@ interface ExpensesTabProps {
 function ExpenseRow({
   category,
   totalSpent,
-  colorIndex,
   depth = 0,
 }: {
   category: CategoryWithHierarchy;
   totalSpent: number;
-  colorIndex: number;
   depth?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
   const hasChildren = category.children && category.children.length > 0;
   const pct = totalSpent > 0 ? (category.spent_amount / totalSpent) * 100 : 0;
-  const color = category.color || PALETTE[colorIndex % PALETTE.length];
+  const color = getCategoryColor(category);
 
   return (
     <>
@@ -93,7 +86,6 @@ function ExpenseRow({
           key={child.id}
           category={child}
           totalSpent={totalSpent}
-          colorIndex={colorIndex}
           depth={depth + 1}
         />
       ))}
@@ -110,7 +102,7 @@ export function ExpensesTab({ categories = [] }: ExpensesTabProps) {
     .map((c, i) => ({
       name: c.name,
       value: c.spent_amount,
-      color: c.color || PALETTE[i % PALETTE.length],
+      color: getCategoryColor(c),
     }));
 
   if (totalSpent === 0) {
@@ -177,7 +169,6 @@ export function ExpensesTab({ categories = [] }: ExpensesTabProps) {
             key={category.id}
             category={category}
             totalSpent={totalSpent}
-            colorIndex={i}
           />
         ))}
       </div>

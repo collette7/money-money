@@ -10,19 +10,7 @@ import {
 } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { CategoryTotal } from "../actions";
-
-const PALETTE = [
-  "oklch(0.65 0.22 250)",
-  "oklch(0.72 0.19 155)",
-  "oklch(0.75 0.18 70)",
-  "oklch(0.63 0.21 25)",
-  "oklch(0.65 0.24 305)",
-  "oklch(0.70 0.16 200)",
-  "oklch(0.78 0.14 85)",
-  "oklch(0.60 0.20 340)",
-  "oklch(0.68 0.15 125)",
-  "oklch(0.72 0.12 180)",
-];
+import { getCategoryColor } from "@/lib/category-colors";
 
 const fmt = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -44,7 +32,7 @@ function CategoryPieChart({ data }: { data: CategoryTotal[] }) {
   const chartData = data.slice(0, 10).map((item, i) => ({
     name: item.name,
     value: item.total,
-    color: item.color ?? PALETTE[i % PALETTE.length],
+    color: getCategoryColor(item),
   }));
 
   return (

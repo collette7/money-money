@@ -7,12 +7,7 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { CategoryWithHierarchy } from "./expandable-categories";
 import { AIRebalanceButton } from "./ai-rebalance-button";
-
-const PALETTE = [
-  "#ef4444", "#f97316", "#84cc16", "#14b8a6", "#6366f1",
-  "#ec4899", "#eab308", "#06b6d4", "#8b5cf6", "#10b981",
-  "#f43f5e", "#0ea5e9",
-];
+import { getCategoryColor } from "@/lib/category-colors";
 
 const fmt = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -71,11 +66,9 @@ function GaugeChart({ spent, budget }: { spent: number; budget: number }) {
 
 function BudgetRow({
   category,
-  colorIndex,
   depth = 0,
 }: {
   category: CategoryWithHierarchy;
-  colorIndex: number;
   depth?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -85,7 +78,7 @@ function BudgetRow({
   const available = limit - category.spent_amount;
   const isOver = available < 0;
   const barWidth = Math.min(pct, 100);
-  const color = category.color || PALETTE[colorIndex % PALETTE.length];
+  const color = getCategoryColor(category);
 
   return (
     <>
@@ -156,7 +149,6 @@ function BudgetRow({
         <BudgetRow
           key={child.id}
           category={child}
-          colorIndex={colorIndex}
           depth={depth + 1}
         />
       ))}
@@ -207,7 +199,6 @@ export function BudgetTab({ categories = [], month, year }: BudgetTabProps) {
           <BudgetRow
             key={category.id}
             category={category}
-            colorIndex={i}
           />
         ))}
       </div>
