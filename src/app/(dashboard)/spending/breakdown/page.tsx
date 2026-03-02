@@ -100,7 +100,23 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
   const expenseCategories = hierarchicalData.filter(c => c.type === "expense" && !c.excluded_from_budget)
   const incomeCategories = hierarchicalData.filter(c => c.type === "income" && !c.excluded_from_budget)
 
-  const spent = Number(totalSpending.data || 0)
+  let spent = 0
+  if (totalSpending.error) {
+    console.error("Error calling get_total_spending:", totalSpending.error)
+    const { data: allExpenses } = await supabase
+      .from("transactions")
+      .select("amount, accounts!inner(user_id)")
+      .eq("accounts.user_id", user.id)
+      .gte("date", startDate)
+      .lt("date", endDate)
+      .lt("amount", 0)
+      .eq("ignored", false)
+      .or("status.is.null,status.eq.cleared")
+    spent = (allExpenses ?? []).reduce((sum: number, tx: any) => sum + Math.abs(tx.amount), 0)
+  } else {
+    spent = Number(totalSpending.data ?? 0)
+  }
+  
   const monthLabel = MONTH_NAMES[month - 1]
 
   const recentTransactions = (recentTxns.data ?? []).map((tx: any) => ({
