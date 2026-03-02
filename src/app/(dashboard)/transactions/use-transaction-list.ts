@@ -126,7 +126,7 @@ export function useTransactionList(initial?: {
           const categoryId = searchParams.get("categoryId") || undefined;
           const accountId = searchParams.get("accountId") || undefined;
           const defaultStart = new Date(); defaultStart.setFullYear(defaultStart.getFullYear() - 1);
-          const startDate = searchParams.get("startDate") || searchParams.get("date") || defaultStart.toISOString().split("T")[0];
+          const startDate = searchParams.get("startDate") || searchParams.get("date") || `${defaultStart.getFullYear()}-${String(defaultStart.getMonth() + 1).padStart(2, "0")}-${String(defaultStart.getDate()).padStart(2, "0")}`;
           const endDate = searchParams.get("endDate") || searchParams.get("date") || undefined;
           const pageParam = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
           const search = searchParams.get("search") || undefined;
@@ -193,7 +193,7 @@ export function useTransactionList(initial?: {
   const currentSearch = searchParams.get("search") ?? ""
   const currentCategoryId = searchParams.get("categoryId") ?? ""
   const currentAccountId = searchParams.get("accountId") ?? ""
-  const defaultStartDate = useMemo(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 1); return d.toISOString().split("T")[0]; }, []);
+  const defaultStartDate = useMemo(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }, []);
   const currentStartDate = searchParams.get("startDate") ?? defaultStartDate
   const currentEndDate = searchParams.get("endDate") ?? ""
   const currentSortBy = (searchParams.get("sortBy") as "date" | "description" | "category" | "amount" | "account") ?? "date"
@@ -410,11 +410,21 @@ export function useTransactionList(initial?: {
     updateParams({ sortBy: column === "date" && newDir === "desc" ? "" : column, sortDir: column === "date" && newDir === "desc" ? "" : newDir, page: "" })
   }
 
-  const grouped = useMemo(() => ({
-    expense: categories.filter((c) => c.type === "expense"),
-    income: categories.filter((c) => c.type === "income"),
-    transfer: categories.filter((c) => c.type === "transfer"),
-  }), [categories])
+  const grouped = useMemo(() => {
+    const organize = (type: string) => {
+      const ofType = categories.filter((c) => c.type === type);
+      const parents = ofType.filter((c) => !c.parent_id);
+      return parents.map((p) => ({
+        ...p,
+        children: ofType.filter((c) => c.parent_id === p.id),
+      }));
+    };
+    return {
+      expense: organize("expense"),
+      income: organize("income"),
+      transfer: organize("transfer"),
+    };
+  }, [categories]);
 
   const startDateValue = currentStartDate ? new Date(currentStartDate + "T00:00:00") : undefined
   const endDateValue = currentEndDate ? new Date(currentEndDate + "T00:00:00") : undefined

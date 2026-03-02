@@ -1,4 +1,5 @@
 "use client"
+import React from "react"
 
 import {
   AlertCircle,
@@ -40,7 +41,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
@@ -319,15 +322,63 @@ export function TransactionList({
                   <span className="inline-block size-2 rounded-full bg-slate-300" />
                   Uncategorized
                 </SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    <span
-                      className="inline-block size-2 rounded-full"
-                      style={{ backgroundColor: cat.color || "#94a3b8" }}
-                    />
-                    {cat.name}
-                  </SelectItem>
-                ))}
+                {grouped.expense.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel>Expense</SelectLabel>
+                    {grouped.expense.map((cat) => (
+                      <React.Fragment key={cat.id}>
+                        <SelectItem value={cat.id}>
+                          <span className="inline-block size-2 rounded-full" style={{ backgroundColor: cat.color || "#94a3b8" }} />
+                          {cat.name}
+                        </SelectItem>
+                        {cat.children.map((child) => (
+                          <SelectItem key={child.id} value={child.id} className="pl-8">
+                            <span className="inline-block size-1.5 rounded-full" style={{ backgroundColor: child.color || cat.color || "#94a3b8" }} />
+                            {child.name}
+                          </SelectItem>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </SelectGroup>
+                )}
+                {grouped.income.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel>Income</SelectLabel>
+                    {grouped.income.map((cat) => (
+                      <React.Fragment key={cat.id}>
+                        <SelectItem value={cat.id}>
+                          <span className="inline-block size-2 rounded-full" style={{ backgroundColor: cat.color || "#94a3b8" }} />
+                          {cat.name}
+                        </SelectItem>
+                        {cat.children.map((child) => (
+                          <SelectItem key={child.id} value={child.id} className="pl-8">
+                            <span className="inline-block size-1.5 rounded-full" style={{ backgroundColor: child.color || cat.color || "#94a3b8" }} />
+                            {child.name}
+                          </SelectItem>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </SelectGroup>
+                )}
+                {grouped.transfer.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel>Transfer</SelectLabel>
+                    {grouped.transfer.map((cat) => (
+                      <React.Fragment key={cat.id}>
+                        <SelectItem value={cat.id}>
+                          <span className="inline-block size-2 rounded-full" style={{ backgroundColor: cat.color || "#94a3b8" }} />
+                          {cat.name}
+                        </SelectItem>
+                        {cat.children.map((child) => (
+                          <SelectItem key={child.id} value={child.id} className="pl-8">
+                            <span className="inline-block size-1.5 rounded-full" style={{ backgroundColor: child.color || cat.color || "#94a3b8" }} />
+                            {child.name}
+                          </SelectItem>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </SelectGroup>
+                )}
               </SelectContent>
             </Select>
 
