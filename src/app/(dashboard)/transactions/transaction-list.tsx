@@ -175,6 +175,21 @@ export function TransactionList({
     totalPages: initialTotalPages,
   })
 
+  const grouped = {
+    expense: categories.filter(c => c.type === "expense" && !c.parent_id).map(parent => ({
+      ...parent,
+      children: categories.filter(c => c.parent_id === parent.id),
+    })),
+    income: categories.filter(c => c.type === "income" && !c.parent_id).map(parent => ({
+      ...parent,
+      children: categories.filter(c => c.parent_id === parent.id),
+    })),
+    transfer: categories.filter(c => c.type === "transfer" && !c.parent_id).map(parent => ({
+      ...parent,
+      children: categories.filter(c => c.parent_id === parent.id),
+    })),
+  }
+
   return (
     <>
     {/* suppressHydrationWarning: Browser extensions like Proton Pass inject
