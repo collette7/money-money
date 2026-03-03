@@ -48,8 +48,9 @@ export function matchTransactionToRule(
 export function computeNextExpected(
   lastDate: string,
   frequency: RecurringFrequency,
-  expectedDay?: number | null
-): string {
+  expectedDay?: number | null,
+  endDate?: string | null
+): string | null {
   const d = new Date(lastDate);
 
   switch (frequency) {
@@ -72,7 +73,14 @@ export function computeNextExpected(
       break;
   }
 
-  return d.toISOString().split("T")[0];
+  const nextDateStr = d.toISOString().split("T")[0];
+  
+  // Check if next expected date exceeds the end date
+  if (endDate && nextDateStr > endDate) {
+    return null;
+  }
+
+  return nextDateStr;
 }
 
 function daysInMonth(d: Date): number {

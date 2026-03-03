@@ -27,7 +27,7 @@ export default async function RecurringPage() {
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
-  const upcomingRules = confirmedRules
+  const processedRules = confirmedRules
     .map((rule) => {
       let nextDate = rule.next_expected
         ? new Date(rule.next_expected + "T00:00:00")
@@ -40,8 +40,10 @@ export default async function RecurringPage() {
         const nextStr = computeNextExpected(
           base,
           rule.frequency as RecurringFrequency,
-          rule.expected_day
+          rule.expected_day,
+          rule.end_date
         )
+        if (!nextStr) return null
         nextDate = new Date(nextStr + "T00:00:00")
       }
 
@@ -70,6 +72,9 @@ export default async function RecurringPage() {
         stop_after: rule.stop_after,
       }
     })
+    
+  const upcomingRules = processedRules
+    .filter((r) => r !== null)
     .filter((r) => r.daysUntil >= 0 && r.daysUntil <= 35)
     .sort((a, b) => a.daysUntil - b.daysUntil)
 

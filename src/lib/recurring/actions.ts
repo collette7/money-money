@@ -38,6 +38,8 @@ export async function createRecurringRule(input: {
   source?: RecurringSource;
   nextExpected?: string | null;
   occurrenceCount?: number;
+  endDate?: string | null;
+  stopAfter?: number | null;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -63,6 +65,8 @@ export async function createRecurringRule(input: {
       source: input.source ?? "manual",
       next_expected: input.nextExpected ?? null,
       occurrence_count: input.occurrenceCount ?? 0,
+      end_date: input.endDate ?? null,
+      stop_after: input.stopAfter ?? null,
       is_active: true,
     })
     .select("id")
@@ -352,12 +356,15 @@ export async function getConfirmedRecurringRules() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
+  const today = new Date().toISOString().split('T')[0];
+  
   const { data } = await supabase
     .from("recurring_rules")
     .select("*, categories(id, name, icon, color, type)")
     .eq("user_id", user.id)
     .eq("confirmed", true)
     .eq("is_active", true)
+    .or(`end_date.is.null,end_date.gte.${today}`)
     .order("next_expected");
 
   return data ?? [];
@@ -382,21 +389,24 @@ export async function getUpcomingBills() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
+  const today = new Date().toISOString().split('T')[0];
+  
   const { data: rules } = await supabase
     .from("recurring_rules")
     .select("*, categories(id, name, icon, color)")
     .eq("user_id", user.id)
     .eq("is_active", true)
     .not("next_expected", "is", null)
+    .or(`end_date.is.null,end_date.gte.${today}`)
     .order("next_expected");
 
-  const today = new Date();
+  const todayDate = new Date();
   const thirtyDaysOut = new Date();
   thirtyDaysOut.setDate(thirtyDaysOut.getDate() + 30);
 
   return (rules ?? []).filter((r) => {
     if (!r.next_expected) return false;
     const d = new Date(r.next_expected);
-    return d >= today && d <= thirtyDaysOut;
+    return d >= todayDate && d <= thirtyDaysOut;
   });
 }
