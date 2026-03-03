@@ -17,7 +17,6 @@ type Props = {
     description: string
     date: string
     amount: number
-    cached_domain?: string | null
   }[]
 }
 
@@ -184,7 +183,6 @@ export function HomeSpendingHeatmap({
                 <div key={tx.id} className="flex items-center gap-2.5">
                   <MerchantLogo 
                     merchantName={name}
-                    cachedDomain={tx.cached_domain}
                     size="md"
                   />
                   <div className="flex-1 min-w-0">

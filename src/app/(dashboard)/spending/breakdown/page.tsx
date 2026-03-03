@@ -87,8 +87,7 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
         description,
         date,
         amount,
-        accounts!account_id!inner ( user_id ),
-        merchant_logo_cache ( domain )
+        accounts!account_id!inner ( user_id )
       `)
       .eq("accounts.user_id", user.id)
       .eq("ignored", false)
@@ -127,13 +126,16 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
   
   const monthLabel = MONTH_NAMES[month - 1]
 
+  if (recentTxns.error) {
+    console.error("Error fetching recent transactions:", recentTxns.error)
+  }
+  
   const recentTransactions = (recentTxns.data ?? []).map((tx: any) => ({
     id: tx.id,
     merchant_name: tx.merchant_name,
     description: tx.description,
     date: tx.date,
     amount: tx.amount,
-    cached_domain: tx.merchant_logo_cache?.domain || null,
   }))
 
   const assetTypes = ["checking", "savings", "investment"]
