@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { learnFromOverride, bulkCategorize } from "@/lib/categorization/engine";
 import { categoryTypeEnum, notesSchema, tagsSchema, merchantNameSchema, ruleConditionInputSchema } from "@/lib/validation";
 import { normalizeMerchantName } from "@/lib/merchant-utils";
+import { computeNextExpected } from "@/lib/recurring/matcher";
+import type { RecurringFrequency } from "@/types/database";
 
 async function getUserAccountIds(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<string[]> {
   const { data } = await supabase
@@ -421,6 +423,8 @@ export async function setTransactionRecurring(
       .eq("id", ruleId);
   } else {
     const txDay = new Date(tx.date + "T00:00:00").getDate();
+    const nextExpected = computeNextExpected(tx.date, frequency as RecurringFrequency, txDay);
+    
     const { data: newRule, error: insertError } = await supabase
       .from("recurring_rules")
       .insert({
@@ -430,6 +434,7 @@ export async function setTransactionRecurring(
         expected_amount: Math.abs(tx.amount),
         frequency,
         expected_day: txDay,
+        next_expected: nextExpected,
         confirmed: true,
         source: "manual",
         is_active: true,
