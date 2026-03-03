@@ -11,12 +11,7 @@ import { RecurringFilter } from "./recurring-filter"
 import { RecurringActions } from "./recurring-actions"
 import { DateStrip } from "./date-strip"
 import { AddRecurringModal } from "./add-recurring-modal"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+
 import { format } from "date-fns"
 import { createRecurringRule } from "@/lib/recurring/actions"
 import type { RecurringFrequency } from "@/types/database"
@@ -86,8 +81,8 @@ export function UpcomingTransactions({
   const [offset, setOffset] = useState(0)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [frequencyFilter, setFrequencyFilter] = useState("all")
-  const [showAllList, setShowAllList] = useState(true)
-  const [calendarOpen, setCalendarOpen] = useState(false)
+  const [showAllList, setShowAllList] = useState(false)
+
   const [addModalOpen, setAddModalOpen] = useState(false)
   const visibleCount = 7
 
@@ -132,7 +127,6 @@ export function UpcomingTransactions({
     const newOffset = Math.max(0, Math.min(Math.floor(daysDiff / 7) * 7, dates.length - visibleCount))
     setOffset(newOffset)
     setSelectedDate(format(date, "yyyy-MM-dd"))
-    setCalendarOpen(false)
   }
 
   const handleAddRecurring = (data: {
@@ -168,28 +162,26 @@ export function UpcomingTransactions({
         </CardTitle>
         <div className="flex items-center gap-2">
           <RecurringFilter value={frequencyFilter} onChange={setFrequencyFilter} />
-          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <CalendarIcon className="h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <CalendarComponent
-                mode="single"
-                onSelect={handleCalendarSelect}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-          <Button
-            variant={showAllList ? "secondary" : "ghost"}
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setShowAllList(!showAllList)}
-          >
-            <ListIcon className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
+            <Button
+              variant={!showAllList ? "secondary" : "ghost"}
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => setShowAllList(false)}
+              title="Calendar view"
+            >
+              <CalendarIcon className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant={showAllList ? "secondary" : "ghost"}
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => setShowAllList(true)}
+              title="List view"
+            >
+              <ListIcon className="h-3.5 w-3.5" />
+            </Button>
+          </div>
           <Button
             variant="ghost"
             size="icon"
