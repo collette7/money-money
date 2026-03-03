@@ -73,10 +73,12 @@ export default async function RecurringPage() {
       }
     })
     
-  const upcomingRules = processedRules
+  const allRules = processedRules
     .filter((r) => r !== null)
-    .filter((r) => r.daysUntil >= 0 && r.daysUntil <= 35)
+    .filter((r) => r.daysUntil >= 0)
     .sort((a, b) => a.daysUntil - b.daysUntil)
+    
+  const upcomingRules = allRules.filter((r) => r.daysUntil <= 35)
 
   const billRules = upcomingRules.filter(
     (r) => r.category?.type !== "income"
@@ -109,6 +111,7 @@ export default async function RecurringPage() {
       <div className="space-y-6">
         <UpcomingTransactions
           upcomingRules={upcomingRules}
+          allRules={allRules}
           dates={upcomingDates}
           monthlyExpenses={monthlyExpenses}
           yearlyTotal={yearlyTotal}

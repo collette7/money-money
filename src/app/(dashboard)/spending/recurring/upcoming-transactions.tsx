@@ -46,6 +46,7 @@ interface DateEntry {
 
 interface UpcomingTransactionsProps {
   upcomingRules: UpcomingRule[]
+  allRules?: UpcomingRule[]
   dates: DateEntry[]
   monthlyExpenses: number
   yearlyTotal: number
@@ -69,8 +70,9 @@ const currency = new Intl.NumberFormat("en-US", {
 })
 
 export function UpcomingTransactions({
-  upcomingRules = [],
-  dates = [],
+  upcomingRules,
+  allRules,
+  dates,
   monthlyExpenses,
   yearlyTotal,
   billCount,
@@ -89,7 +91,8 @@ export function UpcomingTransactions({
   const visibleDates = dates.slice(offset, offset + visibleCount)
 
   const filteredRules = useMemo(() => {
-    let filtered = upcomingRules
+    const baseRules = showAllList && allRules ? allRules : upcomingRules
+    let filtered = baseRules
 
     if (frequencyFilter !== "all") {
       const freqMap: Record<string, RecurringFrequency[]> = {
@@ -110,7 +113,7 @@ export function UpcomingTransactions({
     }
     const visibleDateSet = new Set(visibleDates.map((d) => d.date))
     return filtered.filter((r) => visibleDateSet.has(r.nextDate))
-  }, [upcomingRules, visibleDates, selectedDate, frequencyFilter, showAllList])
+  }, [upcomingRules, allRules, visibleDates, selectedDate, frequencyFilter, showAllList])
 
   const handleOffsetChange = (newOffset: number) => {
     setOffset(newOffset)
