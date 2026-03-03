@@ -5,6 +5,7 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Card } from "@/components/ui/card"
 import { ChevronRight } from "lucide-react"
+import { MerchantLogo } from "@/components/merchant-logo"
 
 type Props = {
   monthLabel: string
@@ -16,6 +17,7 @@ type Props = {
     description: string
     date: string
     amount: number
+    cached_domain?: string | null
   }[]
 }
 
@@ -51,18 +53,7 @@ function getIntensityIndex(total: number, maxSpend: number): number {
   return 4
 }
 
-const AVATAR_COLORS = [
-  "bg-rose-500", "bg-orange-500", "bg-amber-500", "bg-emerald-500",
-  "bg-teal-500", "bg-cyan-500", "bg-sky-500", "bg-blue-500",
-  "bg-indigo-500", "bg-violet-500", "bg-purple-500", "bg-fuchsia-500",
-  "bg-pink-500",
-]
 
-function avatarColorFor(name: string) {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
-}
 
 type CellData = { day: number | null; total: number; dateStr: string | null }
 
@@ -189,17 +180,13 @@ export function HomeSpendingHeatmap({
             )}
             {recentTransactions.slice(0, 4).map((tx) => {
               const name = tx.merchant_name || tx.description
-              const initial = name.charAt(0).toUpperCase()
               return (
                 <div key={tx.id} className="flex items-center gap-2.5">
-                  <div
-                    className={cn(
-                      "size-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0",
-                      avatarColorFor(name)
-                    )}
-                  >
-                    {initial}
-                  </div>
+                  <MerchantLogo 
+                    merchantName={name}
+                    cachedDomain={tx.cached_domain}
+                    size="md"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{name}</p>
                     <p className="text-[11px] text-muted-foreground">{formatDate(tx.date)}</p>

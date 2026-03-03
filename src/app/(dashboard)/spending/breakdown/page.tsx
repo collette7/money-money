@@ -81,7 +81,15 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
       .order("date", { ascending: true }),
     supabase
       .from("transactions")
-      .select("id, merchant_name, description, date, amount, accounts!account_id!inner ( user_id )")
+      .select(`
+        id,
+        merchant_name,
+        description,
+        date,
+        amount,
+        accounts!account_id!inner ( user_id ),
+        merchant_logo_cache ( domain )
+      `)
       .eq("accounts.user_id", user.id)
       .eq("ignored", false)
       .gte("date", startDate)
@@ -125,6 +133,7 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
     description: tx.description,
     date: tx.date,
     amount: tx.amount,
+    cached_domain: tx.merchant_logo_cache?.domain || null,
   }))
 
   const assetTypes = ["checking", "savings", "investment"]
