@@ -194,14 +194,16 @@ export function UpcomingTransactions({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <DateStrip
-            dates={dates}
-            visibleCount={visibleCount}
-            offset={offset}
-            onOffsetChange={handleOffsetChange}
-            selectedDate={selectedDate}
-            onSelectDate={(date) => setSelectedDate(date || null)}
-          />
+          {!showAllList && (
+            <DateStrip
+              dates={dates}
+              visibleCount={visibleCount}
+              offset={offset}
+              onOffsetChange={handleOffsetChange}
+              selectedDate={selectedDate}
+              onSelectDate={(date) => setSelectedDate(date || null)}
+            />
+          )}
 
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-1.5">
