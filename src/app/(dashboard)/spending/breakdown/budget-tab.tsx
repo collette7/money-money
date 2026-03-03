@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Target } from "lucide-react";
+import { ChevronRight, Target, Plus, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
 import type { CategoryWithHierarchy } from "./expandable-categories";
 import { AIRebalanceButton } from "./ai-rebalance-button";
 import { getCategoryColor } from "@/lib/category-colors";
+import { BudgetCreateDialog } from "@/components/budget-create-dialog";
+import { BudgetEditPopover } from "@/components/budget-edit-popover";
 
 const fmt = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -66,9 +69,13 @@ function GaugeChart({ spent, budget }: { spent: number; budget: number }) {
 
 function BudgetRow({
   category,
+  month,
+  year,
   depth = 0,
 }: {
   category: CategoryWithHierarchy;
+  month: number;
+  year: number;
   depth?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -133,9 +140,19 @@ function BudgetRow({
           </div>
         </div>
 
-        <span className="w-20 text-right text-sm text-muted-foreground tabular-nums">
-          {fmt.format(limit)}
-        </span>
+        <div className="w-20 flex items-center justify-end gap-1">
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {fmt.format(limit)}
+          </span>
+          <BudgetEditPopover
+            categoryId={category.id}
+            categoryName={category.name}
+            currentLimit={category.budget_amount}
+            month={month}
+            year={year}
+            onUpdated={() => window.location.reload()}
+          />
+        </div>
 
         <span className={cn(
           "w-20 text-right text-sm font-medium tabular-nums",
@@ -149,6 +166,8 @@ function BudgetRow({
         <BudgetRow
           key={child.id}
           category={child}
+          month={month}
+          year={year}
           depth={depth + 1}
         />
       ))}
@@ -157,36 +176,57 @@ function BudgetRow({
 }
 
 export function BudgetTab({ categories = [], month, year }: BudgetTabProps) {
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const sorted = [...categories].sort((a, b) => b.spent_amount - a.spent_amount);
   const totalSpent = sorted.reduce((sum, c) => sum + c.spent_amount, 0);
   const totalBudget = sorted.reduce((sum, c) => sum + c.effective_limit, 0);
 
   if (totalBudget === 0 && totalSpent === 0) {
     return (
-      <EmptyState
-        icon={<Target className="size-6" />}
-        title="No budget set"
-        description="Create budgets to track spending against limits for each category."
-        actions={[
-          {
-            label: "Set Up Budgets",
-            asChild: true,
-            children: <Link href="/spending/breakdown/edit">Set Up Budgets</Link>,
-          },
-        ]}
-      />
+      <>
+        <EmptyState
+          icon={<Target className="size-6" />}
+          title="No budget set"
+          description="Create budgets to track spending against limits for each category."
+          actions={[
+            {
+              label: "Create Budget",
+              onClick: () => setCreateDialogOpen(true),
+            },
+          ]}
+        />
+        <BudgetCreateDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          month={month}
+          year={year}
+          onCreated={() => {
+            setCreateDialogOpen(false)
+            window.location.reload()
+          }}
+        />
+      </>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <GaugeChart spent={totalSpent} budget={totalBudget} />
+    <>
+      <div className="space-y-6">
+        <GaugeChart spent={totalSpent} budget={totalBudget} />
 
-      <div className="flex justify-end">
-        <AIRebalanceButton month={month} year={year} />
-      </div>
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCreateDialogOpen(true)}
+          >
+            <Settings className="size-4 mr-2" />
+            Budget Settings
+          </Button>
+          <AIRebalanceButton month={month} year={year} />
+        </div>
 
-      <div className="space-y-0">
+        <div className="space-y-0">
         <div className="flex items-center gap-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
           <div className="w-4" />
           <div className="flex-1">Category</div>
@@ -199,9 +239,23 @@ export function BudgetTab({ categories = [], month, year }: BudgetTabProps) {
           <BudgetRow
             key={category.id}
             category={category}
+            month={month}
+            year={year}
           />
         ))}
+        </div>
       </div>
-    </div>
+      
+      <BudgetCreateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        month={month}
+        year={year}
+        onCreated={() => {
+          setCreateDialogOpen(false)
+          window.location.reload()
+        }}
+      />
+    </>
   );
 }
