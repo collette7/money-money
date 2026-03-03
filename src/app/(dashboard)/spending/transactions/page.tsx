@@ -21,11 +21,39 @@ async function getTransactionStats() {
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
   const defaultStartDate = oneYearAgo.toISOString().split("T")[0]
 
-  // Use SQL RPC for accurate aggregation (avoids Supabase 1000-row default limit)
   const { data, error } = await supabase.rpc("get_transaction_stats", {
     p_user_id: user.id,
     p_start_date: defaultStartDate,
   })
+
+  if (error && error.message?.includes("does not exist")) {
+    const { data: transactions } = await supabase
+      .from("transactions")
+      .select("id, date, amount, accounts!inner(user_id)")
+      .eq("accounts.user_id", user.id)
+      .gte("date", defaultStartDate)
+      .order("date", { ascending: true })
+    
+    if (!transactions || transactions.length === 0) {
+      return { totalCount: 0, startDate: null, endDate: null, totalExpenses: 0, totalIncome: 0 }
+    }
+    
+    const totalExpenses = transactions
+      .filter(t => t.amount < 0)
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0)
+    
+    const totalIncome = transactions
+      .filter(t => t.amount > 0)
+      .reduce((sum, t) => sum + t.amount, 0)
+    
+    return {
+      totalCount: transactions.length,
+      startDate: transactions[0].date,
+      endDate: transactions[transactions.length - 1].date,
+      totalExpenses,
+      totalIncome,
+    }
+  }
 
   if (error || !data || (Array.isArray(data) && data.length === 0)) {
     return { totalCount: 0, startDate: null, endDate: null, totalExpenses: 0, totalIncome: 0 }

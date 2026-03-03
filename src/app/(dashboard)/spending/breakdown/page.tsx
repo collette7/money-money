@@ -65,7 +65,7 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
     accounts,
     netWorthSnapshots,
     recentTxns,
-    totalSpending,
+    allExpenses,
   ] = await Promise.all([
     getHierarchicalBudget(month, year),
     getBudget(month, year),
@@ -90,31 +90,31 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
       .or("type.eq.expense,type.is.null")
       .order("date", { ascending: false })
       .limit(4),
-    supabase.rpc("get_total_spending", {
-      p_user_id: user.id,
-      p_start_date: startDate,
-      p_end_date: endDate,
-    }),
-  ])
-
-  const expenseCategories = hierarchicalData.filter(c => c.type === "expense" && !c.excluded_from_budget)
-  const incomeCategories = hierarchicalData.filter(c => c.type === "income" && !c.excluded_from_budget)
-
-  let spent = 0
-  if (totalSpending.error) {
-    console.error("Error calling get_total_spending:", totalSpending.error)
-    const { data: allExpenses } = await supabase
+    supabase
       .from("transactions")
-      .select("amount, accounts!inner(user_id)")
+      .select("amount, categories!inner(type), accounts!inner(user_id)")
       .eq("accounts.user_id", user.id)
       .gte("date", startDate)
       .lt("date", endDate)
       .lt("amount", 0)
       .eq("ignored", false)
-      .or("status.is.null,status.eq.cleared")
-    spent = (allExpenses ?? []).reduce((sum: number, tx: any) => sum + Math.abs(tx.amount), 0)
-  } else {
-    spent = Number(totalSpending.data ?? 0)
+      .or("status.is.null,status.eq.cleared"),
+  ])
+
+  const expenseCategories = hierarchicalData.filter(c => c.type === "expense" && !c.excluded_from_budget)
+  const incomeCategories = hierarchicalData.filter(c => c.type === "income" && !c.excluded_from_budget)
+
+  // Calculate total spending from direct query, excluding transfers
+  let spent = 0
+  if (allExpenses.data) {
+    spent = (allExpenses.data ?? []).reduce((sum: number, tx: any) => {
+      // Exclude transfers (where category type = 'transfer')
+      const categoryType = tx.categories?.type
+      if (categoryType === "transfer") {
+        return sum
+      }
+      return sum + Math.abs(tx.amount)
+    }, 0)
   }
   
   const monthLabel = MONTH_NAMES[month - 1]
