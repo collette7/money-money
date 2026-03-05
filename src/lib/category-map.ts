@@ -10,7 +10,7 @@ export const EXTERNAL_CATEGORY_MAP: Record<string, string> = {
   "auto & transport": "Transportation",
   transportation: "Transportation",
   shopping: "Shopping & Indulgence",
-  entertainment: "Entertainment & Going Out",
+  entertainment: "Nightlife",
   "travel & vacation": "Travel & Experiences",
   travel: "Travel & Experiences",
   healthcare: "Healthcare & Insurance",
