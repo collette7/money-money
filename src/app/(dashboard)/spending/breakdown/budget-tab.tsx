@@ -44,6 +44,8 @@ interface BudgetTabProps {
   tagsByCategory?: Record<string, string[]>;
   allTags?: string[];
   comparisonData?: BudgetComparisonData;
+  fixedExpensesTotal?: number;
+  estimatedIncome?: number;
 }
 
 function GaugeChart({ spent, budget }: { spent: number; budget: number }) {
@@ -232,7 +234,7 @@ function BudgetRow({
   );
 }
 
-export function BudgetTab({ categories = [], month, year, budgetId, budgetMode, paceData, totalBudgetLimit, tagsByCategory = {}, allTags = [], comparisonData }: BudgetTabProps) {
+export function BudgetTab({ categories = [], month, year, budgetId, budgetMode, paceData, totalBudgetLimit, tagsByCategory = {}, allTags = [], comparisonData, fixedExpensesTotal = 0, estimatedIncome = 0 }: BudgetTabProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [advisorOpen, setAdvisorOpen] = useState(false);
   const [comparisonOpen, setComparisonOpen] = useState(false);
@@ -299,6 +301,34 @@ export function BudgetTab({ categories = [], month, year, budgetId, budgetMode, 
     <>
       <div className="space-y-6">
         <GaugeChart spent={totalSpent} budget={totalBudget} />
+
+        {estimatedIncome > 0 && fixedExpensesTotal > 0 && (
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-3">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-4">
+                <div>
+                  <span className="text-muted-foreground">Income</span>
+                  <span className="ml-1.5 font-semibold tabular-nums">{fmt.format(estimatedIncome)}</span>
+                </div>
+                <span className="text-muted-foreground">→</span>
+                <div>
+                  <span className="text-muted-foreground">Fixed</span>
+                  <span className="ml-1.5 font-semibold tabular-nums text-red-500">{fmt.format(fixedExpensesTotal)}</span>
+                </div>
+                <span className="text-muted-foreground">→</span>
+                <div>
+                  <span className="text-muted-foreground">Available</span>
+                  <span className={cn(
+                    "ml-1.5 font-semibold tabular-nums",
+                    estimatedIncome - fixedExpensesTotal > 0 ? "text-emerald-600" : "text-red-500"
+                  )}>
+                    {fmt.format(estimatedIncome - fixedExpensesTotal)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {paceData && paceData.totalBudget > 0 && (
           <PaceStatusBanner data={paceData} />

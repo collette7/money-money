@@ -24,6 +24,8 @@ interface CategoriesSectionProps {
   tagsByCategory?: Record<string, string[]>;
   allTags?: string[];
   comparisonData?: BudgetComparisonData;
+  fixedExpensesTotal?: number;
+  estimatedIncome?: number;
 }
 
 export function CategoriesSection({
@@ -38,6 +40,8 @@ export function CategoriesSection({
   tagsByCategory,
   allTags,
   comparisonData,
+  fixedExpensesTotal,
+  estimatedIncome,
 }: CategoriesSectionProps) {
   return (
     <Card className="border-slate-200/60">
@@ -69,7 +73,7 @@ export function CategoriesSection({
           </TabsContent>
 
           <TabsContent value="budget" className="mt-4">
-            <BudgetTab categories={expenseCategories} month={month} year={year} budgetId={budgetId} budgetMode={budgetMode} paceData={paceData} totalBudgetLimit={totalBudgetLimit} tagsByCategory={tagsByCategory} allTags={allTags} comparisonData={comparisonData} />
+            <BudgetTab categories={expenseCategories} month={month} year={year} budgetId={budgetId} budgetMode={budgetMode} paceData={paceData} totalBudgetLimit={totalBudgetLimit} tagsByCategory={tagsByCategory} allTags={allTags} comparisonData={comparisonData} fixedExpensesTotal={fixedExpensesTotal} estimatedIncome={estimatedIncome} />
           </TabsContent>
 
           <TabsContent value="income" className="mt-4">

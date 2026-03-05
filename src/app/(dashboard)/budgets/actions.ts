@@ -598,6 +598,70 @@ export async function getHierarchicalBudget(month: number, year: number) {
 }
 
 // ---------------------------------------------------------------------------
+// Fixed Expenses Summary
+// ---------------------------------------------------------------------------
+
+export type FixedExpensesSummary = {
+  totalMonthly: number;
+  count: number;
+  items: Array<{ name: string; monthlyAmount: number; frequency: string }>;
+};
+
+export async function getFixedExpensesSummary(): Promise<FixedExpensesSummary> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const { data: rules } = await supabase
+    .from("recurring_rules")
+    .select("merchant_name, merchant_pattern, expected_amount, frequency, categories!left(type)")
+    .eq("user_id", user.id)
+    .eq("confirmed", true);
+
+  const confirmed = (rules ?? []).filter((r) => {
+    const cat = r.categories as unknown as { type: string } | null;
+    return cat?.type !== "income";
+  });
+
+  const items: FixedExpensesSummary["items"] = [];
+  let totalMonthly = 0;
+
+  for (const r of confirmed) {
+    const amount = Math.abs(Number(r.expected_amount) || 0);
+    let monthly: number;
+    const freq = r.frequency as string;
+    switch (freq) {
+      case "weekly":
+        monthly = amount * 52 / 12;
+        break;
+      case "biweekly":
+        monthly = amount * 26 / 12;
+        break;
+      case "quarterly":
+        monthly = amount / 3;
+        break;
+      case "annual":
+        monthly = amount / 12;
+        break;
+      default:
+        monthly = amount;
+    }
+    totalMonthly += monthly;
+    items.push({
+      name: r.merchant_name ?? r.merchant_pattern,
+      monthlyAmount: monthly,
+      frequency: freq,
+    });
+  }
+
+  items.sort((a, b) => b.monthlyAmount - a.monthlyAmount);
+
+  return { totalMonthly, count: items.length, items };
+}
+
+// ---------------------------------------------------------------------------
 // Budget Comparison (month-over-month)
 // ---------------------------------------------------------------------------
 

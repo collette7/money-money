@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getHierarchicalBudget, getSpendingSummary, getBudget, getDailyBudgetPace, getTagsForMonth, getBudgetComparison } from "../../budgets/actions"
+import { getHierarchicalBudget, getSpendingSummary, getBudget, getDailyBudgetPace, getTagsForMonth, getBudgetComparison, getFixedExpensesSummary, getMonthlyIncomeEstimate } from "../../budgets/actions"
 import { getDailySpending } from "../actions"
 import { HomeSpendingHeatmap } from "../../home-spending-heatmap"
 import { NetWorthCard } from "../components/net-worth-card"
@@ -68,6 +68,8 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
     allExpenses,
     tagsData,
     comparisonData,
+    fixedExpenses,
+    incomeEstimate,
   ] = await Promise.all([
     getHierarchicalBudget(month, year),
     getBudget(month, year),
@@ -110,6 +112,8 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
       .or("status.is.null,status.eq.cleared"),
     getTagsForMonth(month, year),
     getBudgetComparison(month, year),
+    getFixedExpensesSummary(),
+    getMonthlyIncomeEstimate(),
   ])
 
   let paceData: Awaited<ReturnType<typeof getDailyBudgetPace>> | undefined;
@@ -212,6 +216,8 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
         tagsByCategory={tagsData.tagsByCategory}
         allTags={tagsData.allTags}
         comparisonData={comparisonData}
+        fixedExpensesTotal={fixedExpenses.totalMonthly}
+        estimatedIncome={incomeEstimate.average}
       />
     </div>
   )
