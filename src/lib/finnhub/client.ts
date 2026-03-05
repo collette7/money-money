@@ -1,7 +1,7 @@
 const BASE_URL = "https://finnhub.io/api/v1";
 
 function getApiKey(): string {
-  const key = process.env.FINNHUB_API_KEY;
+  const key = process.env.FINNHUB_API_KEY?.trim();
   if (!key) throw new Error("FINNHUB_API_KEY not configured");
   return key;
 }

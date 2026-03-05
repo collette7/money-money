@@ -19,7 +19,7 @@ type Snapshot = {
 }
 
 async function fetchMarketData(symbols: WatchedSymbol[]): Promise<MarketQuote[] | null> {
-  const apiKey = process.env.FINNHUB_API_KEY
+  const apiKey = process.env.FINNHUB_API_KEY?.trim()
   if (!apiKey || symbols.length === 0) return null
 
   try {
