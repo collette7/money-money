@@ -1,3 +1,7 @@
 UPDATE public.categories
-SET name = 'Nightlife', emoji = '🍸'
+SET name = 'Entertainment & Nightlife', emoji = '🍸'
 WHERE name = 'Entertainment & Going Out';
+
+UPDATE public.categories
+SET name = 'Entertainment & Nightlife', emoji = '🍸'
+WHERE name = 'Nightlife';
