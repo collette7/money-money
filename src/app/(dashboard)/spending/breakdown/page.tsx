@@ -70,13 +70,15 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
     comparisonData,
     fixedExpenses,
     incomeEstimate,
+    openHoldings,
+    priceCache,
   ] = await Promise.all([
     getHierarchicalBudget(month, year),
     getBudget(month, year),
     getDailySpending(startDate, endDate),
     supabase
       .from("accounts")
-      .select("balance, account_type")
+      .select("balance, account_type, name")
       .eq("user_id", user.id),
     supabase
       .from("net_worth_snapshots")
@@ -114,6 +116,12 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
     getBudgetComparison(month, year),
     getFixedExpensesSummary(),
     getMonthlyIncomeEstimate(),
+    supabase
+      .from("holdings")
+      .select("is_manual, symbol, shares, current_value, purchase_value")
+      .eq("user_id", user.id)
+      .is("sale_date", null),
+    supabase.from("price_cache").select("symbol, price"),
   ])
 
   let paceData: Awaited<ReturnType<typeof getDailyBudgetPace>> | undefined;
@@ -156,9 +164,28 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
   const assetTypes = ["checking", "savings", "investment"]
   const liabilityTypes = ["credit", "loan"]
 
-  const totalAssets = (accounts.data ?? [])
-    .filter(a => assetTypes.includes(a.account_type))
+  const priceMap = new Map<string, number>()
+  for (const p of priceCache.data ?? []) {
+    priceMap.set(p.symbol, p.price)
+  }
+
+  let holdingsValue = 0
+  for (const h of openHoldings.data ?? []) {
+    if (h.is_manual) {
+      holdingsValue += (h.current_value as number) ?? (h.purchase_value as number) ?? 0
+    } else if (h.symbol && h.shares) {
+      holdingsValue += (h.shares as number) * (priceMap.get(h.symbol) ?? 0)
+    }
+  }
+
+  const isPortfolioSyncAccount = (a: { account_type: string; name: string }) =>
+    a.account_type === "investment" && a.name === "Portfolio"
+
+  const accountAssets = (accounts.data ?? [])
+    .filter(a => assetTypes.includes(a.account_type) && !isPortfolioSyncAccount(a))
     .reduce((sum, a) => sum + (a.balance || 0), 0)
+
+  const totalAssets = accountAssets + holdingsValue
 
   const totalDebt = (accounts.data ?? [])
     .filter(a => liabilityTypes.includes(a.account_type))

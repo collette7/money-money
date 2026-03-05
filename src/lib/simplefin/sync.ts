@@ -552,19 +552,47 @@ async function createNetWorthSnapshot(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string
 ) {
-  const { data: accounts } = await supabase
-    .from("accounts")
-    .select("account_type, balance")
-    .eq("user_id", userId);
+  const [{ data: accounts }, { data: holdings }, { data: prices }] = await Promise.all([
+    supabase
+      .from("accounts")
+      .select("account_type, balance, sync_method, name")
+      .eq("user_id", userId),
+    supabase
+      .from("holdings")
+      .select("is_manual, symbol, shares, current_value, purchase_value")
+      .eq("user_id", userId)
+      .is("sale_date", null),
+    supabase.from("price_cache").select("symbol, price"),
+  ]);
 
   if (!accounts?.length) return;
+
+  const priceMap = new Map<string, number>();
+  for (const p of prices ?? []) {
+    priceMap.set(p.symbol, p.price);
+  }
+
+  let holdingsValue = 0;
+  for (const h of holdings ?? []) {
+    if (h.is_manual) {
+      holdingsValue += (h.current_value as number) ?? (h.purchase_value as number) ?? 0;
+    } else if (h.symbol && h.shares) {
+      const price = priceMap.get(h.symbol) ?? 0;
+      holdingsValue += (h.shares as number) * price;
+    }
+  }
+
+  const isPortfolioSyncAccount = (a: { account_type: string; sync_method: string | null; name: string }) =>
+    a.account_type === "investment" && a.sync_method === "manual" && a.name === "Portfolio";
 
   const assetTypes = ["checking", "savings", "investment"];
   const liabilityTypes = ["credit", "loan"];
 
-  const totalAssets = accounts
-    .filter((a) => assetTypes.includes(a.account_type))
+  const accountAssets = accounts
+    .filter((a) => assetTypes.includes(a.account_type) && !isPortfolioSyncAccount(a))
     .reduce((sum, a) => sum + (a.balance ?? 0), 0);
+
+  const totalAssets = accountAssets + holdingsValue;
 
   const totalLiabilities = accounts
     .filter((a) => liabilityTypes.includes(a.account_type))
