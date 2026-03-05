@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Sensitive } from "@/components/sensitive"
 
 interface Merchant {
   merchant_name: string
@@ -67,10 +68,10 @@ export function TopMerchantsTable({ merchants }: TopMerchantsTableProps) {
               {m.count}
             </TableCell>
             <TableCell className="text-right font-medium tabular-nums">
-              {new Intl.NumberFormat("en-US", {
+              <Sensitive>{new Intl.NumberFormat("en-US", {
                 style: "currency",
                 currency: "USD"
-              }).format(m.total)}
+              }).format(m.total)}</Sensitive>
             </TableCell>
           </TableRow>
         ))}

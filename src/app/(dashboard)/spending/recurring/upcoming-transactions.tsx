@@ -11,6 +11,7 @@ import { RecurringFilter } from "./recurring-filter"
 import { RecurringActions } from "./recurring-actions"
 import { DateStrip } from "./date-strip"
 import { AddRecurringModal } from "./add-recurring-modal"
+import { Sensitive } from "@/components/sensitive"
 
 import { format } from "date-fns"
 import { createRecurringRule } from "@/lib/recurring/actions"
@@ -213,12 +214,12 @@ export function UpcomingTransactions({
               <span className="text-muted-foreground">Bills</span>
               <span className="font-semibold tabular-nums">{billCount}</span>
               <span className="text-muted-foreground">•</span>
-              <span className="font-semibold tabular-nums">{currency.format(monthlyExpenses)}/mo</span>
+              <span className="font-semibold tabular-nums"><Sensitive>{currency.format(monthlyExpenses)}</Sensitive>/mo</span>
             </div>
             <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-1.5">
               <span className="text-muted-foreground">Total</span>
-              <span className="font-semibold tabular-nums">{currency.format(yearlyTotal)}/yr</span>
+              <span className="font-semibold tabular-nums"><Sensitive>{currency.format(yearlyTotal)}</Sensitive>/yr</span>
             </div>
           </div>
 
@@ -261,7 +262,7 @@ export function UpcomingTransactions({
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="font-medium tabular-nums">
-                      ${rule.expected_amount.toFixed(2)}
+                      <Sensitive>${rule.expected_amount.toFixed(2)}</Sensitive>
                     </span>
                     <RecurringActions
                       ruleId={rule.id}

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useForecast, compactCurrency, formatPercent } from "./use-forecast"
+import { Sensitive } from "@/components/sensitive"
 import {
   Card,
   CardContent,
@@ -124,12 +125,14 @@ export default function ForecastPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold tabular-nums">
-              {compactCurrency(lastPoint.netWorth)}
+              <Sensitive>{compactCurrency(lastPoint.netWorth)}</Sensitive>
             </p>
             <p className="text-sm mt-1">
               <span className={netWorthChange >= 0 ? "text-emerald-600" : "text-orange-500"}>
-                {netWorthChange >= 0 ? "+" : ""}
-                {compactCurrency(netWorthChange)} ({formatPercent(percentChange)})
+                <Sensitive>
+                  {netWorthChange >= 0 ? "+" : ""}
+                  {compactCurrency(netWorthChange)} ({formatPercent(percentChange)})
+                </Sensitive>
               </span>
             </p>
           </CardContent>
@@ -142,14 +145,14 @@ export default function ForecastPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold tabular-nums">
-              {compactCurrency(
+              <Sensitive>{compactCurrency(
                 forecastData.assumptions.avgMonthlyIncome - 
                 forecastData.assumptions.avgMonthlyExpenses
-              )}
+              )}</Sensitive>
             </p>
             <div className="text-xs text-muted-foreground mt-2 space-y-1">
-              <p>Income: {compactCurrency(forecastData.assumptions.avgMonthlyIncome)}</p>
-              <p>Expenses: {compactCurrency(forecastData.assumptions.avgMonthlyExpenses)}</p>
+              <p>Income: <Sensitive>{compactCurrency(forecastData.assumptions.avgMonthlyIncome)}</Sensitive></p>
+              <p>Expenses: <Sensitive>{compactCurrency(forecastData.assumptions.avgMonthlyExpenses)}</Sensitive></p>
             </div>
           </CardContent>
         </Card>
@@ -262,25 +265,25 @@ export default function ForecastPage() {
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Average Monthly Income</span>
               <span className="text-sm font-medium tabular-nums">
-                {compactCurrency(forecastData.assumptions.avgMonthlyIncome)}
+                <Sensitive>{compactCurrency(forecastData.assumptions.avgMonthlyIncome)}</Sensitive>
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Average Monthly Expenses</span>
               <span className="text-sm font-medium tabular-nums">
-                {compactCurrency(forecastData.assumptions.avgMonthlyExpenses)}
+                <Sensitive>{compactCurrency(forecastData.assumptions.avgMonthlyExpenses)}</Sensitive>
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Recurring Income</span>
               <span className="text-sm font-medium tabular-nums">
-                {compactCurrency(forecastData.assumptions.recurringIncome)}
+                <Sensitive>{compactCurrency(forecastData.assumptions.recurringIncome)}</Sensitive>
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Recurring Expenses</span>
               <span className="text-sm font-medium tabular-nums">
-                {compactCurrency(forecastData.assumptions.recurringExpenses)}
+                <Sensitive>{compactCurrency(forecastData.assumptions.recurringExpenses)}</Sensitive>
               </span>
             </div>
           </CardContent>

@@ -22,6 +22,7 @@ import {
 import { AccountIcon } from "@/components/account-icon"
 import { extractAccountLastFour } from "@/lib/account-utils"
 import { deleteAccount } from "./actions"
+import { Sensitive } from "@/components/sensitive"
 
 function stripTrailingAccountNumber(name: string): string {
   const lastFour = extractAccountLastFour(name)
@@ -166,7 +167,7 @@ function InstitutionGroup({ institutionName, institutionDomain, accounts }: Inst
               </div>
               
               <div className="text-sm text-[#101828]">
-                {formatCurrency(account.balance, account.currency)}
+                <Sensitive>{formatCurrency(account.balance, account.currency)}</Sensitive>
               </div>
               
               <div className="flex items-center justify-end gap-2">

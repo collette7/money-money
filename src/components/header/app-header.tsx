@@ -2,11 +2,12 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { HelpCircle, Settings } from "lucide-react"
+import { Eye, EyeOff, HelpCircle, Settings } from "lucide-react"
 
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
+import { useAppStore } from "@/lib/stores/app-store"
 
 const PAGE_TITLES: Record<string, string> = {
   "/": "Home",
@@ -27,6 +28,8 @@ function AppHeader({ userName = "Collette Smith" }: { userName?: string }) {
   const pathname = usePathname()
   const pageTitle = PAGE_TITLES[pathname] ?? "Home"
   const initials = userName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+  const privacyMode = useAppStore((s) => s.privacyMode)
+  const togglePrivacyMode = useAppStore((s) => s.togglePrivacyMode)
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
@@ -42,6 +45,16 @@ function AppHeader({ userName = "Collette Smith" }: { userName?: string }) {
           className="size-8 rounded-full bg-zinc-800 text-white hover:bg-zinc-700 dark:bg-zinc-200 dark:text-zinc-800 dark:hover:bg-zinc-300"
         >
           <span className="text-xs font-medium">{initials}</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8"
+          onClick={togglePrivacyMode}
+          aria-label={privacyMode ? "Show amounts" : "Hide amounts"}
+        >
+          {privacyMode ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         </Button>
 
         <Button variant="ghost" size="icon" className="size-8">

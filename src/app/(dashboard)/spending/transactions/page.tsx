@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { TransactionList } from "@/app/(dashboard)/transactions/transaction-list"
+import { Sensitive } from "@/components/sensitive"
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.abs(value))
@@ -91,12 +92,12 @@ export default async function TransactionsPage() {
         </span>
         <span className="ml-auto text-muted-foreground">Total expenses{" "}
           <span className="font-semibold text-orange-600 dark:text-orange-400">
-            −{formatCurrency(stats.totalExpenses)}
+            <Sensitive>−{formatCurrency(stats.totalExpenses)}</Sensitive>
           </span>
         </span>
         <span className="text-muted-foreground">Total income{" "}
           <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-            {stats.totalIncome > 0 ? "+" : ""}{formatCurrency(stats.totalIncome)}
+            <Sensitive>{stats.totalIncome > 0 ? "+" : ""}{formatCurrency(stats.totalIncome)}</Sensitive>
           </span>
         </span>
       </div>

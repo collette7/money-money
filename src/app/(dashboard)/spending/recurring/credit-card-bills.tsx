@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Pencil, Check, X } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Sensitive } from "@/components/sensitive"
 import { AccountIcon } from "@/components/account-icon"
 import { updatePaymentDueDay } from "@/app/(dashboard)/accounts/actions"
 
@@ -119,7 +120,7 @@ function CreditCardRow({ account }: { account: CreditAccount }) {
         <div className="flex justify-between">
           <span className="text-muted-foreground">Current balance</span>
           <span className="font-medium tabular-nums">
-            {currency.format(Math.abs(account.balance))}
+            <Sensitive>{currency.format(Math.abs(account.balance))}</Sensitive>
           </span>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { ChevronRight, ChevronDown, Eye, EyeOff, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Sensitive } from "@/components/sensitive";
 import { toggleCategoryExclusion, toggleCategoryRollover } from "@/app/(dashboard)/budgets/category-actions";
 import {
   Tooltip,
@@ -153,8 +154,7 @@ function CategoryRow({
                 ? "text-emerald-600 dark:text-emerald-400"
                 : "text-red-500 dark:text-red-400"
             )}>
-              {category.rollover_amount > 0 ? "+" : ""}
-              ${Math.abs(category.rollover_amount).toLocaleString("en-US", { maximumFractionDigits: 0 })} rollover
+              <Sensitive>{category.rollover_amount > 0 ? "+" : ""}${Math.abs(category.rollover_amount).toLocaleString("en-US", { maximumFractionDigits: 0 })}</Sensitive> rollover
             </span>
           )}
         </span>
@@ -163,7 +163,7 @@ function CategoryRow({
           "w-24 text-right font-medium tabular-nums",
           isOverBudget ? "text-red-600 dark:text-red-400" : ""
         )}>
-          ${category.spent_amount.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+          <Sensitive>${category.spent_amount.toLocaleString("en-US", { maximumFractionDigits: 0 })}</Sensitive>
         </span>
 
         <div className="w-32">
@@ -171,7 +171,7 @@ function CategoryRow({
         </div>
 
         <span className="w-24 text-right text-slate-500 dark:text-slate-400 tabular-nums">
-          ${limit.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+          <Sensitive>${limit.toLocaleString("en-US", { maximumFractionDigits: 0 })}</Sensitive>
         </span>
 
         {showRolloverToggle && (

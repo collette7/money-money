@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Sensitive } from "@/components/sensitive";
 
 const fmt = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -116,7 +117,7 @@ export function AssetsDebtCard({
             <span className="size-2.5 rounded-full bg-blue-500" />
             <div>
               <p className="text-xs text-muted-foreground">Assets</p>
-              <p className="text-lg font-bold tabular-nums">{fmt.format(totalAssets)}</p>
+              <p className="text-lg font-bold tabular-nums"><Sensitive>{fmt.format(totalAssets)}</Sensitive></p>
               {filtered.length >= 2 ? (
                 <span className={cn(
                   "inline-flex items-center gap-0.5 text-xs font-medium",
@@ -139,7 +140,7 @@ export function AssetsDebtCard({
             <span className="size-2.5 rounded-full bg-orange-500" />
             <div>
               <p className="text-xs text-muted-foreground">Debt</p>
-              <p className="text-lg font-bold tabular-nums">{fmt.format(totalDebt)}</p>
+              <p className="text-lg font-bold tabular-nums"><Sensitive>{fmt.format(totalDebt)}</Sensitive></p>
               {filtered.length >= 2 ? (
                 <span className={cn(
                   "inline-flex items-center gap-0.5 text-xs font-medium",

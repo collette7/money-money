@@ -34,6 +34,7 @@ import {
 } from "@/components/use-split-transaction-dialog"
 
 import type { TransactionForSheet } from "@/components/transaction-detail-sheet"
+import { Sensitive } from "@/components/sensitive"
 
 type Category = {
   id: string
@@ -129,7 +130,7 @@ export function SplitTransactionDialog({
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold tabular-nums tracking-tight">
-                    {currency(totalAmount)}
+                    <Sensitive>{currency(totalAmount)}</Sensitive>
                   </p>
                   {transaction?.categories && (
                     <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
@@ -199,7 +200,7 @@ export function SplitTransactionDialog({
                     isOverBudget && "text-red-500"
                   )}
                 >
-                  {currency(splitsTotal)}
+                  <Sensitive>{currency(splitsTotal)}</Sensitive>
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -207,7 +208,7 @@ export function SplitTransactionDialog({
                   Your share
                 </span>
                 <span className="text-sm font-semibold tabular-nums">
-                  {currency(userShare)}
+                  <Sensitive>{currency(userShare)}</Sensitive>
                 </span>
               </div>
               {isOverBudget && (

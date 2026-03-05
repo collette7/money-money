@@ -33,6 +33,7 @@ import {
   type Goal,
   type Contribution,
 } from "./use-goal-card"
+import { Sensitive } from "@/components/sensitive"
 
 function GoalCard({ goal }: { goal: Goal }) {
   const {
@@ -94,9 +95,9 @@ function GoalCard({ goal }: { goal: Goal }) {
           <div className="flex items-baseline justify-between text-sm">
             <span className="text-muted-foreground">
               <span className="text-foreground font-semibold tabular-nums">
-                {currency(goal.current_amount)}
+                <Sensitive>{currency(goal.current_amount)}</Sensitive>
               </span>{" "}
-              of {currency(goal.target_amount)}
+              of <Sensitive>{currency(goal.target_amount)}</Sensitive>
             </span>
           </div>
 
@@ -120,7 +121,7 @@ function GoalCard({ goal }: { goal: Goal }) {
             {goal.contribution_amount && goal.contribution_amount > 0 && (
               <span className="flex items-center gap-1">
                 <Clock className="size-3" />
-                {currency(goal.contribution_amount)}
+                <Sensitive>{currency(goal.contribution_amount)}</Sensitive>
                 {frequencyLabel(goal.contribution_frequency)}
               </span>
             )}
@@ -142,8 +143,8 @@ function GoalCard({ goal }: { goal: Goal }) {
               {goal.name}
             </DialogTitle>
             <DialogDescription>
-              {currency(goal.current_amount)} of{" "}
-              {currency(goal.target_amount)} saved ({Math.round(pct)}%)
+              <Sensitive>{currency(goal.current_amount)}</Sensitive> of{" "}
+              <Sensitive>{currency(goal.target_amount)}</Sensitive> saved ({Math.round(pct)}%)
             </DialogDescription>
           </DialogHeader>
 
@@ -216,7 +217,7 @@ function GoalCard({ goal }: { goal: Goal }) {
                       >
                         <div>
                           <p className="font-medium tabular-nums">
-                            +{currency(c.amount)}
+                            <Sensitive>+{currency(c.amount)}</Sensitive>
                           </p>
                           <p className="text-muted-foreground text-xs">
                             {formatDate(c.date)}

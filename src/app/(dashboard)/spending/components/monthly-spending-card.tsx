@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Sensitive } from "@/components/sensitive";
 
 const fmt = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -67,16 +68,16 @@ export function MonthlySpendingCard({
         {hasBudget ? (
           <div className="text-center py-4">
             <p className="text-3xl font-bold tabular-nums tracking-tight">
-              {fmt.format(Math.max(0, remaining))} left
+              <Sensitive>{fmt.format(Math.max(0, remaining))}</Sensitive> left
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              {fmt.format(spent)} spent of {fmt.format(totalBudget)} budgeted
+              <Sensitive>{fmt.format(spent)}</Sensitive> spent of <Sensitive>{fmt.format(totalBudget)}</Sensitive> budgeted
             </p>
           </div>
         ) : (
           <div className="text-center py-4">
             <p className="text-3xl font-bold tabular-nums tracking-tight">
-              {fmt.format(spent)}
+              <Sensitive>{fmt.format(spent)}</Sensitive>
             </p>
             <p className="text-sm text-muted-foreground mt-1">spent this month</p>
             <Link

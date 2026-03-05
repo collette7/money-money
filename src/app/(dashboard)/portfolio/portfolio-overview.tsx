@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { cn } from "@/lib/utils"
+import { Sensitive } from "@/components/sensitive"
 import { refreshPrices } from "./actions"
 import type { HoldingRow, PriceCacheRow } from "./actions"
 import type { MarketStatus } from "@/lib/finnhub/client"
@@ -314,7 +315,7 @@ function AssetAllocation({
                 <span className="font-medium capitalize">{type.replace("_", " ")}</span>
               </div>
               <div className="flex items-center gap-3 tabular-nums">
-                <span className="font-medium">{compactCurrency(value)}</span>
+                <span className="font-medium"><Sensitive>{compactCurrency(value)}</Sensitive></span>
                 <span className="text-muted-foreground w-12 text-right">
                   {pct.toFixed(1)}%
                 </span>
@@ -411,7 +412,7 @@ export function PortfolioOverview({
           </p>
           <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
             <span className="text-2xl sm:text-3xl font-bold tabular-nums tracking-tight">
-              {formatCurrency(totalValue)}
+              <Sensitive>{formatCurrency(totalValue)}</Sensitive>
             </span>
             {dayChange !== 0 && (
               <span
@@ -420,9 +421,11 @@ export function PortfolioOverview({
                   dayChange >= 0 ? "text-emerald-600" : "text-orange-500"
                 )}
               >
-                {dayChange >= 0 ? "+" : ""}
-                {compactCurrency(dayChange)} ({dayChangePct >= 0 ? "+" : ""}
-                {dayChangePct.toFixed(2)}%) today
+                <Sensitive>
+                  {dayChange >= 0 ? "+" : ""}
+                  {compactCurrency(dayChange)} ({dayChangePct >= 0 ? "+" : ""}
+                  {dayChangePct.toFixed(2)}%) today
+                </Sensitive>
               </span>
             )}
           </div>

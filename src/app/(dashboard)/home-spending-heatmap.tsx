@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { Card } from "@/components/ui/card"
 import { ChevronRight } from "lucide-react"
 import { MerchantLogo } from "@/components/merchant-logo"
+import { Sensitive } from "@/components/sensitive"
 
 type Props = {
   monthLabel: string
@@ -104,7 +105,7 @@ export function HomeSpendingHeatmap({
           Spent in {monthLabel} &rsaquo;
         </Link>
         <span className="text-lg font-bold tabular-nums">
-          {formatCurrency(totalSpent)}
+          <Sensitive>{formatCurrency(totalSpent)}</Sensitive>
         </span>
       </div>
 
@@ -147,7 +148,7 @@ export function HomeSpendingHeatmap({
 
           {hoveredCell && hoveredCell.total > 0 ? (
             <div className="mt-2 text-xs text-muted-foreground tabular-nums">
-              {formatDate(hoveredCell.dateStr!)}: <span className="font-semibold text-foreground">{formatCurrency(hoveredCell.total)}</span>
+              {formatDate(hoveredCell.dateStr!)}: <span className="font-semibold text-foreground"><Sensitive>{formatCurrency(hoveredCell.total)}</Sensitive></span>
             </div>
           ) : (
             <div className="mt-2 flex items-center gap-1.5 text-[10px] text-muted-foreground">
@@ -190,7 +191,7 @@ export function HomeSpendingHeatmap({
                     <p className="text-[11px] text-muted-foreground">{formatDate(tx.date)}</p>
                   </div>
                   <span className="text-sm font-semibold tabular-nums shrink-0 text-orange-500">
-                    -{formatCurrency(Math.abs(tx.amount))}
+                    <Sensitive>-{formatCurrency(Math.abs(tx.amount))}</Sensitive>
                   </span>
                 </div>
               )

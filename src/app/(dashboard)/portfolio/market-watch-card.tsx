@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { X, Pencil, Search, Check, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { Sensitive } from "@/components/sensitive"
 import {
   updateWatchedSymbols,
   searchSymbols,
@@ -221,7 +222,7 @@ export function MarketWatchCard({
               <div key={market.symbol} className="flex items-center justify-between">
                 <span className="text-sm font-medium w-20 shrink-0">{market.name}</span>
                 <span className="text-sm tabular-nums flex-1 text-right">
-                  {formatPrice(market.price)}
+                  <Sensitive>{formatPrice(market.price)}</Sensitive>
                 </span>
                 <span
                   className={cn(
@@ -229,8 +230,10 @@ export function MarketWatchCard({
                     positive ? "text-emerald-600" : "text-orange-500"
                   )}
                 >
-                  {positive ? "+" : ""}
-                  {market.changePct.toFixed(2)}%
+                  <Sensitive>
+                    {positive ? "+" : ""}
+                    {market.changePct.toFixed(2)}%
+                  </Sensitive>
                 </span>
               </div>
             )

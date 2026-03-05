@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronRight, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TransactionDetailSheet } from "@/components/transaction-detail-sheet";
+import { Sensitive } from "@/components/sensitive";
 
 const currency = (value: number) =>
   new Intl.NumberFormat("en-US", {
@@ -120,8 +121,7 @@ export function TransactionsToReviewCard({
                           tx.amount >= 0 ? "text-emerald-600" : "text-foreground"
                         }`}
                       >
-                        {tx.amount >= 0 ? "+" : ""}
-                        {currency(tx.amount)}
+                        <Sensitive>{tx.amount >= 0 ? "+" : ""}{currency(tx.amount)}</Sensitive>
                       </span>
                     </div>
                   ))}

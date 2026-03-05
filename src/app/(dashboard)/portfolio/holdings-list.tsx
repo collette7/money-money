@@ -16,6 +16,7 @@ import {
   AlertTriangle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Sensitive } from "@/components/sensitive"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -176,12 +177,12 @@ function MarketHoldingRow({
       </div>
       
       <div className="text-right shrink-0 ml-4">
-        <div className="font-semibold tabular-nums">{formatCurrencyShort(currentValue)}</div>
+        <div className="font-semibold tabular-nums"><Sensitive>{formatCurrencyShort(currentValue)}</Sensitive></div>
         <div className={cn(
           "text-xs font-medium tabular-nums",
           isPositiveAllTime ? "text-emerald-600" : "text-orange-500"
         )}>
-          {formatPercent(allTimeGain)} all time
+          <Sensitive>{formatPercent(allTimeGain)}</Sensitive> all time
         </div>
       </div>
       
@@ -190,13 +191,13 @@ function MarketHoldingRow({
           "text-sm font-medium tabular-nums",
           isPositiveDay ? "text-emerald-600" : "text-orange-500"
         )}>
-          {isPositiveDay ? "+" : ""}{formatCurrencyShort(dayChange)}
+          <Sensitive>{isPositiveDay ? "+" : ""}{formatCurrencyShort(dayChange)}</Sensitive>
         </div>
         <div className={cn(
           "text-xs tabular-nums",
           isPositiveDay ? "text-emerald-600/70" : "text-orange-500/70"
         )}>
-          ({formatPercent(dayChangePct)}) today
+          <Sensitive>({formatPercent(dayChangePct)})</Sensitive> today
         </div>
       </div>
       
@@ -259,7 +260,7 @@ function ManualHoldingRow({
         <div className="min-w-0">
           <div className="font-medium text-sm truncate">{holding.name}</div>
           <div className="text-xs text-muted-foreground mt-0.5">
-            Purchased {formatCurrencyShort(purchaseValue)}
+            Purchased <Sensitive>{formatCurrencyShort(purchaseValue)}</Sensitive>
             <span className="mx-1.5">·</span>
             Updated {formatDate(holding.current_value_updated_at ?? holding.purchase_date)}
           </div>
@@ -267,12 +268,12 @@ function ManualHoldingRow({
       </div>
       
       <div className="text-right shrink-0 ml-4">
-        <div className="font-semibold tabular-nums">{formatCurrencyShort(currentValue)}</div>
+        <div className="font-semibold tabular-nums"><Sensitive>{formatCurrencyShort(currentValue)}</Sensitive></div>
         <div className={cn(
           "text-xs font-medium tabular-nums",
           isPositive ? "text-emerald-600" : "text-orange-500"
         )}>
-          {formatPercent(gainPct)} since purchase
+          <Sensitive>{formatPercent(gainPct)}</Sensitive> since purchase
         </div>
       </div>
       
@@ -369,13 +370,13 @@ function ClosedPositionRow({
           "ml-2 font-medium tabular-nums",
           isPositive ? "text-emerald-600" : "text-orange-500"
         )}>
-          {isPositive ? "+" : ""}{formatCurrencyShort(realizedGain)}
+          <Sensitive>{isPositive ? "+" : ""}{formatCurrencyShort(realizedGain)}</Sensitive>
         </span>
         <span className={cn(
           "ml-1 text-xs tabular-nums",
           isPositive ? "text-emerald-600/70" : "text-orange-500/70"
         )}>
-          ({formatPercent(realizedGainPct)})
+          <Sensitive>({formatPercent(realizedGainPct)})</Sensitive>
         </span>
       </div>
     </div>

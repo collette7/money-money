@@ -40,6 +40,7 @@ import { deleteAccount } from "./actions"
 import { AccountIcon } from "@/components/account-icon"
 import { extractAccountLastFour } from "@/lib/account-utils"
 import { SyncButton } from "./sync-button"
+import { Sensitive } from "@/components/sensitive"
 
 const ACCOUNT_TYPE_CONFIG: Record<
   string,
@@ -155,7 +156,7 @@ function AccountCard({ account }: { account: Account }) {
               isNegative ? "text-orange-600" : ""
             }`}
           >
-            {formatCurrency(account.balance, account.currency)}
+            <Sensitive>{formatCurrency(account.balance, account.currency)}</Sensitive>
           </p>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">

@@ -23,6 +23,7 @@ import { SplitTransactionDialog } from "@/components/split-transaction-dialog"
 import { CategoryFormDialog } from "@/components/category-form-dialog"
 import { MerchantDetailSheet } from "@/components/merchant-detail-sheet"
 import { useTransactionDetail } from "./use-transaction-detail"
+import { Sensitive } from "@/components/sensitive"
 
 export type TransactionForSheet = {
   id: string
@@ -190,8 +191,7 @@ export function TransactionDetailSheet({
                   isIncome ? "text-emerald-600" : "text-foreground"
                 )}
               >
-                {isIncome ? "+" : ""}
-                {currency(transaction?.amount ?? 0)}
+                <Sensitive>{isIncome ? "+" : ""}{currency(transaction?.amount ?? 0)}</Sensitive>
               </p>
 
               <div className="flex flex-col items-center gap-1">

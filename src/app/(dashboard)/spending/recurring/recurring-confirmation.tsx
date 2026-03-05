@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button"
 import type { RecurringFrequency } from "@/types/database"
 import { MerchantLogo } from "@/components/merchant-logo"
+import { Sensitive } from "@/components/sensitive"
 
 interface DetectedPattern {
   id: string
@@ -187,7 +188,7 @@ export function RecurringConfirmation({ potentialRecurring }: RecurringConfirmat
                       </div>
                       <div className="flex-shrink-0">
                         <span className="text-[13px] font-bold tabular-nums text-gray-900 dark:text-gray-100">
-                          ${Math.abs(pattern.pattern.avg_amount).toFixed(2)}
+                          <Sensitive>${Math.abs(pattern.pattern.avg_amount).toFixed(2)}</Sensitive>
                         </span>
                       </div>
                     </div>

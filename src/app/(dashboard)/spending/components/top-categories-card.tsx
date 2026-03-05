@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Sensitive } from "@/components/sensitive";
 
 const compactCurrency = (value: number) =>
   new Intl.NumberFormat("en-US", {
@@ -63,9 +64,9 @@ function CategoryRow({ cat, depth = 0 }: { cat: HierarchicalCategory; depth?: nu
           </span>
         </div>
         <span className="text-xs text-muted-foreground tabular-nums shrink-0 ml-2">
-          {compactCurrency(cat.total)}
+          <Sensitive>{compactCurrency(cat.total)}</Sensitive>
           {cat.budget > 0 && (
-            <span className="text-muted-foreground/60"> / {compactCurrency(cat.budget)}</span>
+            <span className="text-muted-foreground/60"> / <Sensitive>{compactCurrency(cat.budget)}</Sensitive></span>
           )}
         </span>
       </div>

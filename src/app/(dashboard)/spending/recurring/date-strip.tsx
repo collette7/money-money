@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Sensitive } from "@/components/sensitive"
 
 interface DateEntry {
   date: string
@@ -53,7 +54,7 @@ export function DateStrip({ dates, visibleCount = 7, offset, onOffsetChange, sel
               <span className="text-base font-semibold leading-tight mt-0.5">{day.dayNum}</span>
               {day.total > 0 && (
                 <span className="text-[10px] font-medium text-primary leading-none mt-0.5">
-                  ${day.total.toFixed(0)}
+                  <Sensitive>${day.total.toFixed(0)}</Sensitive>
                 </span>
               )}
             </div>

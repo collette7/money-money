@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useMerchantDetailSheet, currency, shortCurrency } from "./use-merchant-detail-sheet"
+import { Sensitive } from "@/components/sensitive"
 
 interface MerchantDetailSheetProps {
   open: boolean
@@ -101,7 +102,7 @@ export function MerchantDetailSheet({
                       return (
                         <div key={m.key} className="flex flex-col items-center gap-1 flex-1">
                           <span className="text-[11px] font-medium tabular-nums">
-                            {shortCurrency(m.total)}
+                            <Sensitive>{shortCurrency(m.total)}</Sensitive>
                           </span>
                           <div
                             className={`w-full max-w-[48px] rounded-md ${isCurrent ? "bg-foreground" : "bg-muted"}`}
@@ -115,12 +116,12 @@ export function MerchantDetailSheet({
                 )}
 
                 <div className="flex gap-2">
-                  {[
-                    { label: "This month", value: `${thisMonthCount}x` },
-                    { label: "Avg. spent", value: currency(avgSpent) },
-                    { label: "2025 total", value: currency(total2025) },
-                    { label: "2026 total", value: currency(total2026) },
-                  ].map((stat) => (
+                  {([
+                    { label: "This month", value: `${thisMonthCount}x`, sensitive: false },
+                    { label: "Avg. spent", value: currency(avgSpent), sensitive: true },
+                    { label: "2025 total", value: currency(total2025), sensitive: true },
+                    { label: "2026 total", value: currency(total2026), sensitive: true },
+                  ] as const).map((stat) => (
                     <div
                       key={stat.label}
                       className="flex-1 rounded-lg border px-2.5 py-2 text-center"
@@ -128,7 +129,7 @@ export function MerchantDetailSheet({
                       <div className="text-[10px] text-muted-foreground leading-tight">
                         {stat.label}
                       </div>
-                      <div className="text-sm font-semibold mt-0.5">{stat.value}</div>
+                      <div className="text-sm font-semibold mt-0.5">{stat.sensitive ? <Sensitive>{stat.value}</Sensitive> : stat.value}</div>
                     </div>
                   ))}
                 </div>
@@ -177,7 +178,7 @@ export function MerchantDetailSheet({
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
                               <span className="text-sm font-medium tabular-nums">
-                                {currency(tx.amount)}
+                                <Sensitive>{currency(tx.amount)}</Sensitive>
                               </span>
                               <span className="size-1.5 rounded-full bg-blue-500" />
                             </div>

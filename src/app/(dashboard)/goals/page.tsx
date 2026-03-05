@@ -2,6 +2,7 @@ import { PiggyBank, Target } from "lucide-react"
 import { EmptyState } from "@/components/ui/empty-state"
 import { getGoals } from "./actions"
 import { GoalCard } from "./goal-card"
+import { Sensitive } from "@/components/sensitive"
 import { CreateGoalDialog } from "./create-goal-dialog"
 
 const currency = (value: number) =>
@@ -42,7 +43,7 @@ export default async function GoalsPage() {
           <div className="mb-3 flex items-baseline justify-between">
             <p className="text-sm font-medium">Overall Progress</p>
             <p className="text-muted-foreground text-sm tabular-nums">
-              {currency(totalSaved)} of {currency(totalTarget)} (
+              <Sensitive>{currency(totalSaved)}</Sensitive> of <Sensitive>{currency(totalTarget)}</Sensitive> (
               {Math.round(overallPct)}%)
             </p>
           </div>

@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { Sensitive } from "@/components/sensitive"
 import { HomeNetWorthChart, PERIODS, type PeriodType } from "../../home-chart"
 
 type Snapshot = {
@@ -62,7 +63,7 @@ export function NetWorthCard({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
         <div className="flex items-baseline gap-3">
           <span className="font-bold tabular-nums tracking-tight" style={{ fontSize: 16 }}>
-            {compactCurrency(netWorth)}
+            <Sensitive>{compactCurrency(netWorth)}</Sensitive>
           </span>
           {netWorthDollarChange !== null && netWorthPctChange !== null && (
             <span
@@ -72,8 +73,7 @@ export function NetWorthCard({
               )}
               style={{ fontSize: 13 }}
             >
-              {netWorthDollarChange >= 0 ? "+" : ""}
-              {compactCurrency(netWorthDollarChange)}{" "}
+              <Sensitive>{netWorthDollarChange >= 0 ? "+" : ""}{compactCurrency(netWorthDollarChange)}</Sensitive>{" "}
               ({netWorthPctChange >= 0 ? "+" : ""}
               {netWorthPctChange.toFixed(1)}%)
             </span>
@@ -106,13 +106,13 @@ export function NetWorthCard({
         <div>
           <p className="uppercase tracking-wider text-muted-foreground" style={{ fontSize: 10 }}>Assets</p>
           <p className="font-semibold tabular-nums text-emerald-600 mt-0.5" style={{ fontSize: 13 }}>
-            {compactCurrency(assets)}
+            <Sensitive>{compactCurrency(assets)}</Sensitive>
           </p>
         </div>
         <div>
           <p className="uppercase tracking-wider text-muted-foreground" style={{ fontSize: 10 }}>Liabilities</p>
           <p className="font-semibold tabular-nums text-orange-500 mt-0.5" style={{ fontSize: 13 }}>
-            {compactCurrency(liabilities)}
+            <Sensitive>{compactCurrency(liabilities)}</Sensitive>
           </p>
         </div>
       </div>

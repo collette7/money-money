@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
 import { useState, useTransition, useEffect } from "react"
+import { Sensitive } from "@/components/sensitive"
 
 const COLORS = [
   "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8",
@@ -169,7 +170,7 @@ export function CategoryReportView() {
                         <span className="font-medium">{item.name}</span>
                       </div>
                       <span className="tabular-nums">
-                        ${item.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <Sensitive>${item.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Sensitive>
                       </span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -188,7 +189,7 @@ export function CategoryReportView() {
             <div className="mt-6 pt-4 border-t">
               <div className="flex justify-between font-medium">
                 <span>Total</span>
-                <span>${totalSpending.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span><Sensitive>${totalSpending.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Sensitive></span>
               </div>
             </div>
           </CardContent>
