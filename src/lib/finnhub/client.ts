@@ -1,4 +1,5 @@
 import type { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 const BASE_URL = "https://finnhub.io/api/v1";
 
@@ -178,9 +179,10 @@ export async function refreshStaleQuotes(
 
   const quotes = await getBatchQuotes(staleSymbols);
   const fetchedAt = new Date().toISOString();
+  const serviceClient = createServiceClient();
 
   for (const [symbol, quote] of quotes) {
-    await supabase.from("price_cache").upsert(
+    await serviceClient.from("price_cache").upsert(
       {
         symbol,
         price: quote.price,
