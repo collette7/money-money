@@ -1,3 +1,5 @@
+import type { createClient } from "@/lib/supabase/server";
+
 const BASE_URL = "https://finnhub.io/api/v1";
 
 function getApiKey(): string {
@@ -137,3 +139,58 @@ export const MANUAL_HOLDING_TYPES = new Set([
 ]);
 
 export const STALE_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
+
+export async function refreshStaleQuotes(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+): Promise<{ refreshed: number; cached: number }> {
+  const { data: holdings } = await supabase
+    .from("holdings")
+    .select("symbol")
+    .eq("user_id", userId)
+    .eq("is_manual", false)
+    .is("sale_date", null)
+    .not("symbol", "is", null);
+
+  if (!holdings || holdings.length === 0) return { refreshed: 0, cached: 0 };
+
+  const symbols = [...new Set(holdings.map((h) => h.symbol as string))];
+
+  const { data: cachedPrices } = await supabase
+    .from("price_cache")
+    .select("symbol, fetched_at")
+    .in("symbol", symbols);
+
+  const now = Date.now();
+  const staleSymbols: string[] = [];
+  let cached = 0;
+
+  for (const sym of symbols) {
+    const entry = cachedPrices?.find((p) => p.symbol === sym);
+    if (entry && now - new Date(entry.fetched_at).getTime() < STALE_THRESHOLD_MS) {
+      cached++;
+    } else {
+      staleSymbols.push(sym);
+    }
+  }
+
+  if (staleSymbols.length === 0) return { refreshed: 0, cached };
+
+  const quotes = await getBatchQuotes(staleSymbols);
+  const fetchedAt = new Date().toISOString();
+
+  for (const [symbol, quote] of quotes) {
+    await supabase.from("price_cache").upsert(
+      {
+        symbol,
+        price: quote.price,
+        prev_close: quote.prevClose,
+        change_pct: quote.changePct,
+        fetched_at: fetchedAt,
+      },
+      { onConflict: "symbol" }
+    );
+  }
+
+  return { refreshed: quotes.size, cached };
+}

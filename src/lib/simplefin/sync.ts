@@ -191,6 +191,14 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
     }
   }
 
+  // Refresh stale stock/ETF/crypto prices before snapshotting net worth
+  try {
+    const { refreshStaleQuotes } = await import("@/lib/finnhub/client");
+    await refreshStaleQuotes(supabase, userId);
+  } catch (err) {
+    console.error(LOG_PREFIX, "Price refresh failed (non-blocking):", err instanceof Error ? err.message : err);
+  }
+
   await createNetWorthSnapshot(supabase, userId);
 
   return {
