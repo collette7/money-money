@@ -9,7 +9,7 @@
 │   │   ├── layout.tsx              # Root: fonts, Providers wrapper
 │   │   ├── globals.css             # Design tokens, Tailwind theme, dark mode
 │   │   ├── auth/                   # Public auth pages (login, signup, confirm, callback)
-│   │   ├── api/                    # REST endpoints (only budgets/route.ts active)
+│   │   ├── api/                    # REST endpoints
 │   │   └── (dashboard)/            # Protected route group
 │   │       ├── layout.tsx          # Shell: SidebarProvider > AppSidebar + AppHeader + content
 │   │       ├── page.tsx            # Home dashboard (server component, inline queries)
@@ -34,7 +34,7 @@
 │   │       │   └── holdings/       # Holdings list with add/edit/CSV import
 │   │       ├── settings/           # AI config, notifications, profile
 │   │       │   └── rules/         # Rules management page (CRUD for category_rules)
-│   │       └── budgets/            # Budget server actions (getBudget, getHierarchicalBudget, createBudget, rebalance)
+│   │       └── budgets/            # Budget CRUD (actions.ts), rebalance + AI suggestions (rebalance-actions.ts), category management (category-actions.ts)
 │   │
 │   ├── components/                 # Shared React components
 │   │   ├── ui/                     # shadcn/ui primitives (29 files) — DO NOT hand-edit, use shadcn CLI
@@ -129,7 +129,6 @@ Supabase PostgreSQL ──→ RLS policies enforce user_id = auth.uid()
 | Root Layout | `src/app/layout.tsx` | Fonts, QueryClientProvider |
 | Dashboard Layout | `src/app/(dashboard)/layout.tsx` | Sidebar + header shell, auth check |
 | Spending Layout | `src/app/(dashboard)/spending/layout.tsx` | Tab navigation for spending section |
-| API Route | `src/app/api/budgets/route.ts` | GET budget data (used by advisor) |
 | Auth Callback | `src/app/auth/callback/route.ts` | OAuth callback handler |
 | SimpleFin Callback | `src/app/api/simplefin/callback/route.ts` | SimpleFin setup completion |
 

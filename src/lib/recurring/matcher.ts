@@ -1,4 +1,5 @@
 import type { RecurringFrequency } from "@/types/database";
+import { merchantGroupKey } from "@/lib/merchant-utils";
 
 export interface RecurringRuleMatch {
   ruleId: string;
@@ -25,13 +26,16 @@ export function matchTransactionToRule(
 ): RecurringRuleMatch | null {
   if (tx.recurringId) return null;
 
-  const txMerchant = (tx.merchantName ?? tx.description).toLowerCase().trim();
-  if (!txMerchant) return null;
+  const rawMerchant = tx.merchantName ?? tx.description;
+  if (!rawMerchant) return null;
+
+  const txKey = merchantGroupKey(rawMerchant);
+  if (!txKey) return null;
 
   for (const rule of rules) {
-    const pattern = rule.merchantPattern.toLowerCase().trim();
+    const ruleKey = merchantGroupKey(rule.merchantPattern);
 
-    if (txMerchant.includes(pattern) || pattern.includes(txMerchant)) {
+    if (txKey === ruleKey || txKey.includes(ruleKey) || ruleKey.includes(txKey)) {
       if (rule.expectedAmount !== null) {
         const amountDiff = Math.abs(Math.abs(tx.amount) - Math.abs(rule.expectedAmount));
         const tolerance = Math.abs(rule.expectedAmount) * 0.15;

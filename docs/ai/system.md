@@ -9,7 +9,7 @@ Money Money is a personal finance dashboard. Single-user (no multi-tenancy). Use
 1. **Account Connection** — User provides SimpleFin setup token → app exchanges for access URL → syncs accounts and transactions on demand
 2. **Transaction Management** — View, search, filter, categorize (manual, rule-based, AI-assisted), split, tag, hide
 3. **Spending Analysis** — Monthly trends, category breakdown, top merchants, daily heatmap, recurring detection
-4. **Budgeting** — Set monthly category budgets, view actuals vs limits, AI-generated 50/30/20 recommendations, rebalance suggestions
+4. **Budgeting** — Set monthly category budgets with three modes (independent, pooled, strict pooled). View actuals vs limits with rollover tracking. Algorithmic rebalance (goal pressure, NW sensitivity, mid-month drift alerts) and AI-generated budget recommendations. Budget periods: weekly, monthly, annual.
 5. **Forecasting** — Scenario-based net worth projection (conservative/realistic/optimistic) with confidence bands, transfer-aware expense filtering, time-series growth analysis
 6. **Goals** — Track savings goals with contribution schedules, linked accounts, progress tracking
 7. **AI Advisor** — Chat interface for financial questions, auto-categorization, budget recommendations

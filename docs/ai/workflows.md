@@ -217,7 +217,7 @@ accounts/import/actions.ts → importTransactions({ accountId, newAccountData, t
 ```
 User clicks Rebalance on /spending/breakdown
   ↓
-budgets/actions.ts → getRebalanceSuggestions(month, year)
+budgets/rebalance-actions.ts → getRebalanceSuggestions(month, year)
   → Fetch 12 months of transactions + spending
   → Filter out transfer-type transactions; income tracked separately for avgMonthlyIncome
   → Only expense spending feeds into rebalancing weights
@@ -350,7 +350,63 @@ User adds holding:
   ↓
 User imports CSV:
   → Client-side CSV parse
-  → portfolio/actions.ts → importHoldings(holdings[])
-      → Batch insert into portfolio_holdings
-      → Snapshot + net worth sync
+   → portfolio/actions.ts → importHoldings(holdings[])
+       → Batch insert into portfolio_holdings
+       → Snapshot + net worth sync
+```
+
+## 17. AI Budget Recommendation
+
+```
+User clicks "AI Suggestions" on /spending/breakdown
+  ↓
+budgets/rebalance-actions.ts → aiBudgetRecommendation()
+  → Fetch 3 months of expense transactions
+  → Fetch income transactions (exclude transfers)
+  → Calculate monthly income average
+  → Build per-category spending averages (across months seen)
+  → Fetch all user categories
+  → lib/ai/prompts.ts → buildBudgetPrompt(income, categoryAverages, categories)
+  → Send to user's AI provider with BUDGET_SYSTEM prompt
+  → Parse JSON response: { items, totalBudget, savingsTarget, summary }
+  ↓
+RebalanceButton (ai mode) dialog shows:
+  - Total budget + savings target summary
+  - Per-category recommendations with reasoning
+  - "Apply All" button
+  ↓
+budgets/rebalance-actions.ts → applyBudgetRecommendations(items, month, year)
+  → Upsert budget + budget_items for each category
+  → revalidatePath("/spending/breakdown")
+```
+
+## 18. Budget Mode Switching
+
+```
+User selects mode from BudgetModeSelector on /spending/breakdown
+  ↓
+budgets/actions.ts → updateBudgetMode(budgetId, mode)
+  → Validate mode against BUDGET_MODES
+  → Update budgets.mode
+  → revalidatePath("/spending/breakdown")
+  ↓
+Page re-renders → getHierarchicalBudget() now includes:
+  - Pooled slack per parent (if pooled/strict_pooled)
+  - Slack propagated to children
+```
+
+## 19. Rollover Application
+
+```
+User triggers rollover for current month
+  ↓
+budgets/actions.ts → applyRollover(month, year)
+  → Fetch budget for month/year
+  → Call RPC calculate_rollover(user_id, month, year)
+  → For each category with rollover: update budget_items.rollover_amount
+  → revalidatePath("/spending/breakdown")
+  ↓
+Budget display shows:
+  - effective_limit = limit_amount + rollover_amount
+  - Rollover badge on categories with non-zero rollover
 ```

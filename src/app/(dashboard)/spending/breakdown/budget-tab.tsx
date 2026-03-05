@@ -1,16 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
-import { ChevronRight, Target, Plus, Settings } from "lucide-react";
+import { ChevronRight, ChevronDown, Target, Plus, Settings, Info, MessageSquare, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { CategoryWithHierarchy } from "./expandable-categories";
-import { AIRebalanceButton } from "./ai-rebalance-button";
+import { RebalanceButton } from "../../budgets/rebalance-button";
 import { getCategoryColor } from "@/lib/category-colors";
-import { BudgetCreateDialog } from "@/components/budget-create-dialog";
+import { BudgetWizard } from "@/components/budget-wizard";
 import { BudgetEditPopover } from "@/components/budget-edit-popover";
+import { BudgetModeSelector } from "./budget-mode-selector";
+import { BudgetAdvisorSheet } from "./budget-advisor-sheet";
+import { SpendingPaceChart, PaceStatusBanner } from "./spending-pace-chart";
+import { BudgetComparisonChart } from "./budget-comparison-chart";
+import { updateTotalBudgetLimit } from "@/app/(dashboard)/budgets/actions";
+import type { BudgetPaceData, BudgetComparisonData } from "@/app/(dashboard)/budgets/actions";
+import type { BudgetMode } from "@/types/database";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const fmt = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -23,6 +37,13 @@ interface BudgetTabProps {
   categories: CategoryWithHierarchy[];
   month: number;
   year: number;
+  budgetId?: string;
+  budgetMode?: BudgetMode;
+  paceData?: BudgetPaceData;
+  totalBudgetLimit?: number | null;
+  tagsByCategory?: Record<string, string[]>;
+  allTags?: string[];
+  comparisonData?: BudgetComparisonData;
 }
 
 function GaugeChart({ spent, budget }: { spent: number; budget: number }) {
@@ -67,16 +88,41 @@ function GaugeChart({ spent, budget }: { spent: number; budget: number }) {
   );
 }
 
+function TagBadges({ tags }: { tags: string[] }) {
+  if (tags.length === 0) return null;
+  const visible = tags.slice(0, 3);
+  const overflow = tags.length - 3;
+  return (
+    <span className="inline-flex items-center gap-1 ml-1.5 flex-shrink-0">
+      {visible.map((tag) => (
+        <span
+          key={tag}
+          className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-xs rounded-full px-2 py-0.5 whitespace-nowrap"
+        >
+          {tag}
+        </span>
+      ))}
+      {overflow > 0 && (
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
+          +{overflow}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function BudgetRow({
   category,
   month,
   year,
   depth = 0,
+  tagsByCategory,
 }: {
   category: CategoryWithHierarchy;
   month: number;
   year: number;
   depth?: number;
+  tagsByCategory?: Record<string, string[]>;
 }) {
   const [expanded, setExpanded] = useState(false);
   const hasChildren = category.children && category.children.length > 0;
@@ -89,9 +135,16 @@ function BudgetRow({
 
   return (
     <>
-      <button
-        type="button"
+      <div
+        role={hasChildren ? "button" : undefined}
+        tabIndex={hasChildren ? 0 : undefined}
         onClick={() => hasChildren && setExpanded(!expanded)}
+        onKeyDown={(e) => {
+          if (hasChildren && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault()
+            setExpanded(!expanded)
+          }
+        }}
         className={cn(
           "w-full flex items-center gap-3 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0 text-left",
           hasChildren && "cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50",
@@ -120,6 +173,9 @@ function BudgetRow({
             {category.emoji && <span className="mr-1">{category.emoji}</span>}
             {category.name}
           </span>
+          {tagsByCategory && tagsByCategory[category.id] && (
+            <TagBadges tags={tagsByCategory[category.id]} />
+          )}
         </div>
 
         <div className="w-48 flex items-center gap-2">
@@ -160,26 +216,56 @@ function BudgetRow({
         )}>
           {isOver ? "-" : ""}{fmt.format(Math.abs(available))}
         </span>
-      </button>
+      </div>
 
-      {hasChildren && expanded && category.children!.map((child, ci) => (
+      {hasChildren && expanded && category.children!.map((child) => (
         <BudgetRow
           key={child.id}
           category={child}
           month={month}
           year={year}
           depth={depth + 1}
+          tagsByCategory={tagsByCategory}
         />
       ))}
     </>
   );
 }
 
-export function BudgetTab({ categories = [], month, year }: BudgetTabProps) {
+export function BudgetTab({ categories = [], month, year, budgetId, budgetMode, paceData, totalBudgetLimit, tagsByCategory = {}, allTags = [], comparisonData }: BudgetTabProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [advisorOpen, setAdvisorOpen] = useState(false);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [limitValue, setLimitValue] = useState<string>(
+    totalBudgetLimit != null ? String(totalBudgetLimit) : ""
+  );
+  const limitInputRef = useRef<HTMLInputElement>(null);
+
+  function categoryHasTag(cat: CategoryWithHierarchy, tag: string): boolean {
+    if (tagsByCategory[cat.id]?.includes(tag)) return true;
+    if (cat.children) {
+      return cat.children.some((child) => categoryHasTag(child, tag));
+    }
+    return false;
+  }
+
   const sorted = [...categories].sort((a, b) => b.spent_amount - a.spent_amount);
+  const filtered = activeTag
+    ? sorted.filter((cat) => categoryHasTag(cat, activeTag))
+    : sorted;
   const totalSpent = sorted.reduce((sum, c) => sum + c.spent_amount, 0);
   const totalBudget = sorted.reduce((sum, c) => sum + c.effective_limit, 0);
+
+  function handleLimitSubmit() {
+    if (!budgetId) return;
+    const parsed = limitValue.trim() === "" ? null : parseFloat(limitValue);
+    if (parsed !== null && isNaN(parsed)) return;
+    startTransition(async () => {
+      await updateTotalBudgetLimit(budgetId, parsed);
+    });
+  }
 
   if (totalBudget === 0 && totalSpent === 0) {
     return (
@@ -195,7 +281,7 @@ export function BudgetTab({ categories = [], month, year }: BudgetTabProps) {
             },
           ]}
         />
-        <BudgetCreateDialog
+        <BudgetWizard
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
           month={month}
@@ -214,19 +300,127 @@ export function BudgetTab({ categories = [], month, year }: BudgetTabProps) {
       <div className="space-y-6">
         <GaugeChart spent={totalSpent} budget={totalBudget} />
 
-        <div className="flex justify-between">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCreateDialogOpen(true)}
-          >
-            <Settings className="size-4 mr-2" />
-            Budget Settings
-          </Button>
-          <AIRebalanceButton month={month} year={year} />
+        {paceData && paceData.totalBudget > 0 && (
+          <PaceStatusBanner data={paceData} />
+        )}
+
+        {paceData && paceData.points.length > 0 && (
+          <SpendingPaceChart
+            data={paceData.points}
+            daysInMonth={paceData.daysInMonth}
+            currentDay={paceData.currentDay}
+          />
+        )}
+
+        {comparisonData && comparisonData.categories.length > 0 && (
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => setComparisonOpen(!comparisonOpen)}
+              className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+            >
+              <BarChart3 className="size-4 text-muted-foreground" />
+              Month Comparison
+              {comparisonOpen ? (
+                <ChevronDown className="ml-auto size-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="ml-auto size-4 text-muted-foreground" />
+              )}
+            </button>
+            {comparisonOpen && (
+              <div className="px-4 pb-4">
+                <BudgetComparisonChart {...comparisonData} />
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              <Settings className="size-4 mr-2" />
+              Budget Settings
+            </Button>
+            {budgetId && budgetMode && (
+              <BudgetModeSelector budgetId={budgetId} currentMode={budgetMode} />
+            )}
+            {budgetId && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+                  Total Budget
+                </span>
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                    $
+                  </span>
+                  <Input
+                    ref={limitInputRef}
+                    type="number"
+                    value={limitValue}
+                    onChange={(e) => setLimitValue(e.target.value)}
+                    onBlur={handleLimitSubmit}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleLimitSubmit();
+                        limitInputRef.current?.blur();
+                      }
+                    }}
+                    disabled={isPending}
+                    placeholder="No limit"
+                    className="w-32 h-8 text-sm pl-5 tabular-nums"
+                  />
+                </div>
+                <TooltipProvider delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="size-3.5 text-muted-foreground cursor-help flex-shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[220px]">
+                      <p className="text-xs">
+                        Sets a maximum total budget. The rebalance engine will keep suggestions within this limit.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setAdvisorOpen(true)}>
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Ask AI
+            </Button>
+            <RebalanceButton month={month} year={year} />
+          </div>
         </div>
 
         <div className="space-y-0">
+        {allTags.length > 0 && (
+          <div className="flex items-center gap-2 py-2 overflow-x-auto flex-nowrap">
+            <span className="text-xs font-medium text-muted-foreground whitespace-nowrap flex-shrink-0">Tags</span>
+            {allTags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                className={cn(
+                  "text-xs rounded-full px-2.5 py-1 whitespace-nowrap transition-colors flex-shrink-0",
+                  activeTag === tag
+                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                )}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center gap-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
           <div className="w-4" />
           <div className="flex-1">Category</div>
@@ -235,18 +429,19 @@ export function BudgetTab({ categories = [], month, year }: BudgetTabProps) {
           <div className="w-20 text-right">Available</div>
         </div>
 
-        {sorted.map((category, i) => (
+        {filtered.map((category) => (
           <BudgetRow
             key={category.id}
             category={category}
             month={month}
             year={year}
+            tagsByCategory={tagsByCategory}
           />
         ))}
         </div>
       </div>
       
-      <BudgetCreateDialog
+      <BudgetWizard
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         month={month}
@@ -255,6 +450,13 @@ export function BudgetTab({ categories = [], month, year }: BudgetTabProps) {
           setCreateDialogOpen(false)
           window.location.reload()
         }}
+      />
+
+      <BudgetAdvisorSheet
+        open={advisorOpen}
+        onOpenChange={setAdvisorOpen}
+        month={month}
+        year={year}
       />
     </>
   );

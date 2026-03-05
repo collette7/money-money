@@ -244,3 +244,93 @@ export function getMerchantLogoUrl(merchantName: string): string | null {
   const urls = getMerchantLogoUrls(merchantName)
   return urls[0] ?? null
 }
+
+// Sorted longest-first so "uber eats" matches before "uber", "amazon prime" before "amazon", etc.
+// Must stay in sync with merchant_aliases seed data in the SQL migration.
+const CANONICAL_MERCHANTS: [string, string][] = [
+  ["amazon prime", "Amazon Prime"],
+  ["amazon web services", "AWS"],
+  ["apple music", "Apple Music"],
+  ["apple tv", "Apple TV+"],
+  ["best buy", "Best Buy"],
+  ["cash app", "Cash App"],
+  ["chick-fil", "Chick-fil-A"],
+  ["planet fitness", "Planet Fitness"],
+  ["prime video", "Prime Video"],
+  ["state farm", "State Farm"],
+  ["t-mobile", "T-Mobile"],
+  ["trader joe", "Trader Joe's"],
+  ["uber eat", "Uber Eats"],
+  ["whole foods", "Whole Foods"],
+  ["netflix", "Netflix"],
+  ["spotify", "Spotify"],
+  ["hulu", "Hulu"],
+  ["disney", "Disney+"],
+  ["hbo", "HBO Max"],
+  ["peacock", "Peacock"],
+  ["paramount", "Paramount+"],
+  ["youtube", "YouTube"],
+  ["audible", "Audible"],
+  ["adobe", "Adobe"],
+  ["microsoft", "Microsoft"],
+  ["google", "Google"],
+  ["icloud", "iCloud"],
+  ["dropbox", "Dropbox"],
+  ["openai", "OpenAI"],
+  ["chatgpt", "OpenAI"],
+  ["notion", "Notion"],
+  ["slack", "Slack"],
+  ["zoom", "Zoom"],
+  ["github", "GitHub"],
+  ["amazon", "Amazon"],
+  ["walmart", "Walmart"],
+  ["target", "Target"],
+  ["costco", "Costco"],
+  ["bestbuy", "Best Buy"],
+  ["ebay", "eBay"],
+  ["etsy", "Etsy"],
+  ["doordash", "DoorDash"],
+  ["ubereats", "Uber Eats"],
+  ["grubhub", "Grubhub"],
+  ["instacart", "Instacart"],
+  ["starbucks", "Starbucks"],
+  ["chipotle", "Chipotle"],
+  ["mcdonald", "McDonald's"],
+  ["dunkin", "Dunkin'"],
+  ["wholefds", "Whole Foods"],
+  ["kroger", "Kroger"],
+  ["safeway", "Safeway"],
+  ["aldi", "Aldi"],
+  ["publix", "Publix"],
+  ["uber", "Uber"],
+  ["lyft", "Lyft"],
+  ["comcast", "Xfinity"],
+  ["xfinity", "Xfinity"],
+  ["verizon", "Verizon"],
+  ["tmobile", "T-Mobile"],
+  ["spectrum", "Spectrum"],
+  ["peloton", "Peloton"],
+  ["venmo", "Venmo"],
+  ["paypal", "PayPal"],
+  ["zelle", "Zelle"],
+  ["cashapp", "Cash App"],
+  ["geico", "GEICO"],
+  ["progressive", "Progressive"],
+]
+
+export function resolveCanonicalMerchant(rawName: string): string {
+  const normalized = normalizeMerchantName(rawName)
+  const lower = normalized.toLowerCase()
+
+  for (const [pattern, canonical] of CANONICAL_MERCHANTS) {
+    if (lower.includes(pattern)) {
+      return canonical
+    }
+  }
+
+  return normalized
+}
+
+export function merchantGroupKey(rawName: string): string {
+  return resolveCanonicalMerchant(rawName).toLowerCase()
+}

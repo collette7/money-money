@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getHierarchicalBudget, getSpendingSummary, getBudget } from "../../budgets/actions"
+import { getHierarchicalBudget, getSpendingSummary, getBudget, getDailyBudgetPace, getTagsForMonth, getBudgetComparison } from "../../budgets/actions"
 import { getDailySpending } from "../actions"
 import { HomeSpendingHeatmap } from "../../home-spending-heatmap"
 import { NetWorthCard } from "../components/net-worth-card"
@@ -66,6 +66,8 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
     netWorthSnapshots,
     recentTxns,
     allExpenses,
+    tagsData,
+    comparisonData,
   ] = await Promise.all([
     getHierarchicalBudget(month, year),
     getBudget(month, year),
@@ -99,14 +101,23 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
       .limit(4),
     supabase
       .from("transactions")
-      .select("amount, categories!inner(type), accounts!inner(user_id)")
+      .select("amount, categories(type), accounts!account_id!inner(user_id)")
       .eq("accounts.user_id", user.id)
       .gte("date", startDate)
       .lt("date", endDate)
       .lt("amount", 0)
       .eq("ignored", false)
       .or("status.is.null,status.eq.cleared"),
+    getTagsForMonth(month, year),
+    getBudgetComparison(month, year),
   ])
+
+  let paceData: Awaited<ReturnType<typeof getDailyBudgetPace>> | undefined;
+  try {
+    paceData = await getDailyBudgetPace(month, year);
+  } catch {
+    paceData = undefined;
+  }
 
   const expenseCategories = hierarchicalData.filter(c => c.type === "expense" && !c.excluded_from_budget)
   const incomeCategories = hierarchicalData.filter(c => c.type === "income" && !c.excluded_from_budget)
@@ -194,6 +205,13 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
         incomeCategories={incomeCategories}
         month={month}
         year={year}
+        budgetId={budget?.id}
+        budgetMode={budget?.mode}
+        paceData={paceData}
+        totalBudgetLimit={budget?.total_budget_limit}
+        tagsByCategory={tagsData.tagsByCategory}
+        allTags={tagsData.allTags}
+        comparisonData={comparisonData}
       />
     </div>
   )

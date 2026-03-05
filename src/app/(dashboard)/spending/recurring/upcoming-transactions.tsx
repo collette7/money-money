@@ -6,7 +6,7 @@ import { useTransition } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CalendarIcon, ListIcon, Plus } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { MerchantLogo } from "@/components/merchant-logo"
 import { RecurringFilter } from "./recurring-filter"
 import { RecurringActions } from "./recurring-actions"
 import { DateStrip } from "./date-strip"
@@ -237,11 +237,7 @@ export function UpcomingTransactions({
                   className="flex items-center justify-between p-3 rounded-lg border"
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        {rule.merchant_name[0] ?? "?"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <MerchantLogo merchantName={rule.merchant_name} size="sm" />
                     <div>
                       <div className="font-medium text-sm">
                         {rule.merchant_name}

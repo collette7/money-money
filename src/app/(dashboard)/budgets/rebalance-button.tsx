@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   ArrowDown,
   ArrowUp,
+  ChevronDown,
   Loader2,
   Scale,
   Sparkles,
@@ -23,6 +24,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
@@ -32,8 +39,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { getRebalanceSuggestions, applyBudgetRecommendations } from "./actions"
-import { aiBudgetRecommendation } from "../advisor/actions"
+import { getRebalanceSuggestions, applyBudgetRecommendations, aiBudgetRecommendation } from "./rebalance-actions"
 import type { RebalanceResult, RebalanceSuggestion, DriftAlert, SlackInfo } from "@/lib/rebalance/engine"
 
 interface EditableSuggestion extends RebalanceSuggestion {
@@ -182,33 +188,46 @@ export function RebalanceButton({
 
   return (
     <>
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center">
         <Button
           variant="outline"
           size="sm"
           onClick={handleRebalance}
           disabled={isLoading || isLoadingAI}
+          className="rounded-r-none border-r-0"
         >
           {isLoading ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : isLoadingAI ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
             <Scale className="size-3.5" />
           )}
           Rebalance
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleAI}
-          disabled={isLoading || isLoadingAI}
-        >
-          {isLoadingAI ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <Sparkles className="size-3.5" />
-          )}
-          AI Suggestions
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isLoading || isLoadingAI}
+              className="rounded-l-none px-1.5"
+            >
+              <ChevronDown className="size-3.5" />
+              <span className="sr-only">More rebalance options</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleRebalance} disabled={isLoading || isLoadingAI}>
+              <Scale className="size-4" />
+              Rebalance Budget
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleAI} disabled={isLoading || isLoadingAI}>
+              <Sparkles className="size-4" />
+              AI Suggestions
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       {error && (
         <p className="text-xs text-rose-600 dark:text-rose-400">{error}</p>

@@ -384,6 +384,51 @@ export async function getDismissedMerchantPatterns() {
   return new Set((data ?? []).map(r => r.merchant_pattern.toLowerCase()));
 }
 
+export type RecurringTrendPoint = {
+  month: string;
+  label: string;
+  total: number;
+};
+
+export async function getRecurringSpendingTrend(): Promise<RecurringTrendPoint[]> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const now = new Date();
+  const rangeStart = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const startDate = `${rangeStart.getFullYear()}-${String(rangeStart.getMonth() + 1).padStart(2, "0")}-01`;
+  const endM = now.getMonth() === 11 ? 1 : now.getMonth() + 2;
+  const endY = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+  const endDate = `${endY}-${String(endM).padStart(2, "0")}-01`;
+
+  const { data: rawTx } = await supabase
+    .from("transactions")
+    .select("amount, date, accounts!account_id!inner ( user_id )")
+    .eq("accounts.user_id", user.id)
+    .eq("is_recurring", true)
+    .gte("date", startDate)
+    .lt("date", endDate)
+    .eq("ignored", false)
+    .limit(10000);
+
+  const byMonth = new Map<string, number>();
+  for (const tx of rawTx ?? []) {
+    const monthKey = tx.date.substring(0, 7);
+    byMonth.set(monthKey, (byMonth.get(monthKey) ?? 0) + Math.abs(tx.amount));
+  }
+
+  const results: RecurringTrendPoint[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = new Intl.DateTimeFormat("en-US", { month: "short" }).format(d);
+    results.push({ month: key, label, total: byMonth.get(key) ?? 0 });
+  }
+
+  return results;
+}
+
 export async function getUpcomingBills() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

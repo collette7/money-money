@@ -29,7 +29,7 @@ import { CategoryWithHierarchy } from "./expandable-categories";
 import {
   updateCategories,
   deleteCategory,
-} from "@/app/(dashboard)/budgets/actions";
+} from "@/app/(dashboard)/budgets/category-actions";
 import { createCategory } from "@/app/(dashboard)/transactions/actions";
 
 interface EditableCategory extends CategoryWithHierarchy {

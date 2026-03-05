@@ -112,6 +112,11 @@ export interface TransactionSplit {
 }
 
 export type BudgetMode = "independent" | "pooled" | "strict_pooled";
+export const BUDGET_MODES: { value: BudgetMode; label: string; description: string }[] = [
+  { value: "independent", label: "Independent", description: "Each category has its own fixed limit. Simple and predictable." },
+  { value: "pooled", label: "Flexible Pooled", description: "Parent categories share unused budget with their children. More flexibility." },
+  { value: "strict_pooled", label: "Strict Pooled", description: "Like flexible, but children cannot exceed parent limits. Maximum control." },
+];
 export type BudgetPeriod = "weekly" | "monthly" | "annual";
 
 export interface Budget {
@@ -121,6 +126,7 @@ export interface Budget {
   year: number;
   mode: BudgetMode;
   period: BudgetPeriod;
+  total_budget_limit: number | null;
   created_at: string;
 }
 

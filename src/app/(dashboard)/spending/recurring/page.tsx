@@ -4,7 +4,8 @@ import { RecurringConfirmation } from "./recurring-confirmation"
 import { UpcomingTransactions } from "./upcoming-transactions"
 import { CreditCardBills } from "./credit-card-bills"
 import { getDetectedRecurringPatterns } from "../actions"
-import { getConfirmedRecurringRules } from "@/lib/recurring/actions"
+import { getConfirmedRecurringRules, getRecurringSpendingTrend } from "@/lib/recurring/actions"
+import { RecurringTrendChart } from "./recurring-trend-chart"
 import { computeNextExpected } from "@/lib/recurring/matcher"
 import type { RecurringFrequency } from "@/types/database"
 
@@ -13,7 +14,7 @@ export default async function RecurringPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/auth/login")
 
-  const [confirmedRules, potentialRecurring, creditAccounts] = await Promise.all([
+  const [confirmedRules, potentialRecurring, creditAccounts, trendData] = await Promise.all([
     getConfirmedRecurringRules(),
     getDetectedRecurringPatterns(user.id),
     supabase
@@ -22,6 +23,7 @@ export default async function RecurringPage() {
       .eq("user_id", user.id)
       .eq("account_type", "credit")
       .order("institution_name"),
+    getRecurringSpendingTrend(),
   ])
 
   const now = new Date()
@@ -83,10 +85,27 @@ export default async function RecurringPage() {
   const billRules = upcomingRules.filter(
     (r) => r.category?.type !== "income"
   )
-  const monthlyExpenses = billRules.reduce(
-    (sum, r) => sum + Math.abs(r.expected_amount),
-    0
-  )
+  
+  // Calculate true monthly cost based on unique bills and their frequencies
+  const uniqueBills = new Map<string, typeof billRules[0]>()
+  for (const rule of allRules.filter(r => r.category?.type !== "income")) {
+    if (!uniqueBills.has(rule.id)) {
+      uniqueBills.set(rule.id, rule)
+    }
+  }
+  
+  const monthlyExpenses = Array.from(uniqueBills.values()).reduce((sum, r) => {
+    const amount = Math.abs(r.expected_amount)
+    switch (r.frequency) {
+      case 'weekly': return sum + (amount * 52 / 12)
+      case 'biweekly': return sum + (amount * 26 / 12)
+      case 'monthly': return sum + amount
+      case 'quarterly': return sum + (amount / 3)
+      case 'annual': return sum + (amount / 12)
+      default: return sum + amount
+    }
+  }, 0)
+  
   const yearlyTotal = monthlyExpenses * 12
 
   const upcomingDates = []
@@ -106,8 +125,12 @@ export default async function RecurringPage() {
     })
   }
 
+  const showTrend = trendData.filter((d) => d.total > 0).length >= 2
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,560px)_340px]">
+    <div className="space-y-6">
+      {showTrend && <RecurringTrendChart data={trendData} />}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,560px)_340px]">
       <div className="space-y-6">
         <UpcomingTransactions
           upcomingRules={upcomingRules}
@@ -130,6 +153,7 @@ export default async function RecurringPage() {
           balance: a.balance,
           payment_due_day: a.payment_due_day,
         }))} />
+      </div>
       </div>
     </div>
   )

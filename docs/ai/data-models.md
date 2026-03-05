@@ -301,13 +301,13 @@ See `src/types/database.ts` and `supabase/migrations/00001_initial_schema.sql` f
 
 | Function | Params | Returns | Used By |
 |----------|--------|---------|---------|
-| get_category_spending | p_user_id, p_start_date, p_end_date | {category_id, total}[] | getBudget(), getHierarchicalBudget() |
+| get_category_spending | p_user_id, p_start_date, p_end_date | {category_id, total}[] | getBudget(), getHierarchicalBudget(), getRebalanceSuggestions() |
 | get_net_worth_history | p_user_id, p_months (default 12) | {snapshot_date, total_assets, total_liabilities, net_worth}[] | Available but unused |
 | detect_recurring_transactions | p_user_id, p_min_occurrences (default 3) | {merchant_name, avg_amount, occurrences, avg_interval_days, last_date, estimated_frequency}[] | getDetectedRecurringPatterns() |
-| calculate_rollover | p_user_id, p_month, p_year | TABLE(category_id, rollover_amount) | Budget rollover calculation |
-| get_pooled_slack | p_user_id, p_month, p_year | TABLE(parent_category_id, slack_amount) | Pooled budget surplus per parent |
-| get_goal_pressure | p_user_id | decimal(5,4) | Ratio of monthly goal contributions to income |
-| get_networth_sensitivity | p_user_id | decimal(8,4) | 90-day net worth change ratio |
+| calculate_rollover | p_user_id, p_month, p_year | TABLE(category_id, rollover_amount) | createBudget(), applyRollover() |
+| get_pooled_slack | p_user_id, p_month, p_year | TABLE(parent_category_id, slack_amount) | getPooledSlack() → getHierarchicalBudget(), getRebalanceSuggestions() |
+| get_goal_pressure | p_user_id | decimal(5,4) | getRebalanceSuggestions() |
+| get_networth_sensitivity | p_user_id | decimal(8,4) | getRebalanceSuggestions() |
 
 Notes:
 - `get_category_spending` filters `category_id IS NOT NULL` AND `c.type != 'transfer'`

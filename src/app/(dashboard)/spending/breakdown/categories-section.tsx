@@ -9,12 +9,21 @@ import type { CategoryWithHierarchy } from "./expandable-categories";
 import { ExpensesTab } from "./expenses-tab";
 import { BudgetTab } from "./budget-tab";
 import { IncomeTab } from "./income-tab";
+import type { BudgetPaceData, BudgetComparisonData } from "@/app/(dashboard)/budgets/actions";
+import type { BudgetMode } from "@/types/database";
 
 interface CategoriesSectionProps {
   expenseCategories: CategoryWithHierarchy[];
   incomeCategories: CategoryWithHierarchy[];
   month: number;
   year: number;
+  budgetId?: string;
+  budgetMode?: BudgetMode;
+  paceData?: BudgetPaceData;
+  totalBudgetLimit?: number | null;
+  tagsByCategory?: Record<string, string[]>;
+  allTags?: string[];
+  comparisonData?: BudgetComparisonData;
 }
 
 export function CategoriesSection({
@@ -22,6 +31,13 @@ export function CategoriesSection({
   incomeCategories,
   month,
   year,
+  budgetId,
+  budgetMode,
+  paceData,
+  totalBudgetLimit,
+  tagsByCategory,
+  allTags,
+  comparisonData,
 }: CategoriesSectionProps) {
   return (
     <Card className="border-slate-200/60">
@@ -53,12 +69,14 @@ export function CategoriesSection({
           </TabsContent>
 
           <TabsContent value="budget" className="mt-4">
-            <BudgetTab categories={expenseCategories} month={month} year={year} />
+            <BudgetTab categories={expenseCategories} month={month} year={year} budgetId={budgetId} budgetMode={budgetMode} paceData={paceData} totalBudgetLimit={totalBudgetLimit} tagsByCategory={tagsByCategory} allTags={allTags} comparisonData={comparisonData} />
           </TabsContent>
 
           <TabsContent value="income" className="mt-4">
             <IncomeTab categories={incomeCategories} />
           </TabsContent>
+
+
         </Tabs>
       </CardContent>
     </Card>

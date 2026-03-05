@@ -23,12 +23,20 @@
 | Excluded category | A category with `excluded_from_budget = true`. Hidden from budget calculations and shown in its own editor section. |
 | Budget | A monthly spending plan: a container (`budgets` table) with line items (`budget_items` table). |
 | Budget item | A single category's spending limit within a monthly budget. |
+| Budget mode | Controls how sub-budgets interact within a parent group. Three modes: `independent` (each category tracked alone), `pooled` (underspend in one child offsets overspend in sibling), `strict_pooled` (pooled but overspend is penalized). Stored as `app_budget_mode` enum. |
+| Budget period | Time span for a budget: `weekly`, `monthly`, or `annual`. Stored as `app_budget_period` enum. |
+| BudgetAllocation | Engine type representing a single category's budget data (categoryId, categoryName, limitAmount, parentCategoryId, isOverride). Defined in `src/lib/rebalance/engine.ts`. |
 | Rebalance | Adjusting budget allocations based on actual spending patterns. Uses 50/30/20 as fallback. Only expense categories are rebalanced; income is used as the target total, transfers are excluded. |
+| Rollover | Unspent budget from a prior month carried forward to the current month. Stored as `rollover_amount` on `budget_items`. Calculated via `calculate_rollover` RPC. |
 | 50/30/20 | Budget framework: 50% essentials, 30% lifestyle, 20% savings. |
 | Drift | The difference between budgeted amount and actual spending for a category. |
+| Drift alert | Mid-month warning when a category's projected month-end spending exceeds its budget. Severity: `warning` (on pace to exceed) or `critical` (already exceeded). Generated when day >= 15. |
 | Net worth | Total assets minus total liabilities. Tracked via `net_worth_snapshots`. |
+| Net worth sensitivity | 90-day net worth change ratio. Negative values indicate decline, tightening drift thresholds during rebalance. Fetched via `get_networth_sensitivity` RPC. |
 | Forecast | Projected future net worth based on historical income/expense trends. |
+| Goal pressure | Ratio of monthly savings goal contributions to income (0.0–1.0). Higher values squeeze discretionary budget categories. Fetched via `get_goal_pressure` RPC. |
 | Scenario | Forecast variant: conservative (pessimistic), realistic (neutral), optimistic. |
+| Slack | In pooled budget modes, the surplus amount available in a parent category group when some children underspend. Fetched via `get_pooled_slack` RPC. |
 | SimpleFin | Third-party API for read-only bank account aggregation. |
 | Setup token | One-time SimpleFin token exchanged for a permanent access URL. |
 | Access URL | Permanent SimpleFin credential (encrypted in DB) used to fetch account data. |

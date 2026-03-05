@@ -139,3 +139,21 @@ export const ruleConditionInputSchema = z.object({
 });
 
 export const categoryTypeEnum = z.enum(["expense", "income", "transfer"]);
+
+/* ─── AI Budget Response ─── */
+
+export const aiBudgetItemSchema = z.object({
+  categoryId: z.string().min(1),
+  categoryName: z.string().min(1).default("Unknown"),
+  recommendedLimit: z.number().min(0).max(1_000_000),
+  reasoning: z.string().default(""),
+});
+
+export const aiBudgetResponseSchema = z.object({
+  items: z.array(aiBudgetItemSchema).min(1, "AI returned no budget items"),
+  totalBudget: z.number().min(0).optional(),
+  savingsTarget: z.number().min(0).default(0),
+  summary: z.string().default("AI-generated budget recommendation based on your spending history."),
+});
+
+export type AIBudgetResponse = z.infer<typeof aiBudgetResponseSchema>;

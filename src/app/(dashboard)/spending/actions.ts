@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { resolveCategory, excludeTransfersByCategory } from "@/lib/transfer-filter";
+import { resolveCanonicalMerchant, merchantGroupKey } from "@/lib/merchant-utils";
 import { monthsRangeSchema, limitSchema } from "@/lib/validation";
 import { z } from "zod";
 
@@ -174,7 +175,9 @@ export async function getTopMerchants(
   const byMerchant = new Map<string, { total: number; count: number }>();
 
   for (const tx of transactions) {
-    const name = tx.merchant_name ?? "Unknown";
+    const name = tx.merchant_name
+      ? resolveCanonicalMerchant(tx.merchant_name)
+      : "Unknown";
     const existing = byMerchant.get(name) ?? { total: 0, count: 0 };
     existing.total += Math.abs(tx.amount);
     existing.count += 1;
@@ -267,12 +270,16 @@ export async function getDetectedRecurringPatterns(
   if (!patterns || patterns.length === 0) return [];
 
   const reviewedPatterns = new Set(
-    (existingRules ?? []).map((r) => r.merchant_pattern.toLowerCase())
+    (existingRules ?? []).map((r) => merchantGroupKey(r.merchant_pattern))
   );
 
   const unreviewedPatterns = patterns.filter(
-    (p: { merchant_name: string }) =>
-      !reviewedPatterns.has(p.merchant_name.toLowerCase())
+    (p: { merchant_name: string; normalized_name?: string }) => {
+      const key = p.normalized_name
+        ? p.normalized_name.toLowerCase()
+        : merchantGroupKey(p.merchant_name);
+      return !reviewedPatterns.has(key);
+    }
   );
 
   if (unreviewedPatterns.length === 0) return [];
@@ -296,28 +303,37 @@ export async function getDetectedRecurringPatterns(
       "id, merchant_name, description, amount, date, category_id, account_id, accounts!account_id(id, name, account_type, institution_name), categories(type)"
     )
     .in("account_id", accountIds)
-    .in("merchant_name", merchantNames)
     .eq("is_recurring", false)
     .order("date", { ascending: false });
 
   if (!transactions || transactions.length === 0) return [];
 
-  const latestByMerchant = new Map<
+  const normalizedMerchantKeys = new Set(
+    merchantNames.map((n: string) => merchantGroupKey(n))
+  );
+
+  const latestByNormalized = new Map<
     string,
     (typeof transactions)[number]
   >();
   for (const tx of transactions) {
     const name = tx.merchant_name as string;
+    if (!name) continue;
+    const key = merchantGroupKey(name);
+    if (!normalizedMerchantKeys.has(key)) continue;
     const catType = (tx.categories as unknown as { type: string } | null)?.type;
     if (catType === "transfer") continue;
-    if (!latestByMerchant.has(name)) {
-      latestByMerchant.set(name, tx);
+    if (!latestByNormalized.has(key)) {
+      latestByNormalized.set(key, tx);
     }
   }
 
   const results: DetectedRecurringPattern[] = [];
   for (const p of unreviewedPatterns) {
-    const tx = latestByMerchant.get(p.merchant_name as string);
+    const key = p.normalized_name
+      ? (p.normalized_name as string).toLowerCase()
+      : merchantGroupKey(p.merchant_name as string);
+    const tx = latestByNormalized.get(key);
     if (!tx) continue;
 
     const acct = tx.accounts as
@@ -326,9 +342,13 @@ export async function getDetectedRecurringPatterns(
       | null;
     const resolvedAccount = Array.isArray(acct) ? acct[0] ?? null : acct;
 
+    const displayName = p.normalized_name
+      ? (p.normalized_name as string)
+      : resolveCanonicalMerchant(p.merchant_name as string);
+
     results.push({
       id: tx.id as string,
-      merchant_name: tx.merchant_name as string | null,
+      merchant_name: displayName,
       description: tx.description as string,
       amount: tx.amount as number,
       date: tx.date as string,

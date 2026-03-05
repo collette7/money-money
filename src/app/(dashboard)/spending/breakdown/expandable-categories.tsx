@@ -1,9 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ChevronRight, ChevronDown, Eye, EyeOff } from "lucide-react";
+import { ChevronRight, ChevronDown, Eye, EyeOff, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toggleCategoryExclusion } from "@/app/(dashboard)/budgets/actions";
+import { toggleCategoryExclusion, toggleCategoryRollover } from "@/app/(dashboard)/budgets/category-actions";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type CategoryWithHierarchy = {
   id: string;
@@ -12,6 +18,7 @@ export type CategoryWithHierarchy = {
   color: string | null;
   parent_id: string | null;
   excluded_from_budget: boolean;
+  enable_rollover: boolean;
   sort_order: number;
   type: "income" | "expense" | "transfer";
   spent_amount: number;
@@ -75,10 +82,18 @@ function CategoryRow({
   const childCount = hasChildren ? category.children!.length : 0;
   const hasRollover = category.rollover_amount !== 0;
   const isExcluded = category.excluded_from_budget;
+  const showRolloverToggle =
+    category.type === "expense" && category.budget_amount > 0;
 
   function handleToggleExclusion() {
     startTransition(async () => {
       await toggleCategoryExclusion(category.id, !isExcluded);
+    });
+  }
+
+  function handleToggleRollover() {
+    startTransition(async () => {
+      await toggleCategoryRollover(category.id, !category.enable_rollover);
     });
   }
 
@@ -159,6 +174,40 @@ function CategoryRow({
           ${limit.toLocaleString("en-US", { maximumFractionDigits: 0 })}
         </span>
 
+        {showRolloverToggle && (
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleToggleRollover}
+                  disabled={isPending}
+                  className={cn(
+                    "flex-shrink-0 w-6 h-6 flex items-center justify-center rounded transition-colors",
+                    "hover:bg-slate-100 dark:hover:bg-slate-800",
+                    isPending && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <RotateCcw
+                    className={cn(
+                      "w-4 h-4 transition-opacity",
+                      category.enable_rollover
+                        ? "text-emerald-500"
+                        : "text-slate-400 opacity-40 line-through"
+                    )}
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p className="text-xs">
+                  {category.enable_rollover
+                    ? "Disable budget rollover for this category"
+                    : "Enable budget rollover for this category"}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
         <button
           onClick={handleToggleExclusion}
           disabled={isPending}
@@ -232,6 +281,7 @@ export function ExpandableCategories({ categories, title }: ExpandableCategories
             <div className="w-24 text-right">SPENT</div>
             <div className="w-32" /> {/* Progress bar space - no label */}
             <div className="w-24 text-right">BUDGET</div>
+            <div className="w-6" /> {/* Rollover toggle space */}
             <div className="w-6" /> {/* Eye toggle space */}
           </div>
 

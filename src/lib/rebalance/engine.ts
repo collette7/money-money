@@ -4,7 +4,8 @@ export interface CategorySpending {
   totalSpent: number;
 }
 
-export interface BudgetItem {
+/** A category's budget allocation used by the rebalance engine (distinct from DB BudgetItem). */
+export interface BudgetAllocation {
   categoryId: string;
   categoryName: string;
   limitAmount: number;
@@ -227,7 +228,7 @@ export function computeTargetWeights(
 }
 
 export function detectDrift(
-  currentBudget: BudgetItem[],
+  currentBudget: BudgetAllocation[],
   targetWeights: TargetWeight[],
   threshold: number = 0.15
 ): DriftResult[] {
@@ -320,7 +321,7 @@ function resolveWithinParent(
 
 export function generateSuggestions(
   driftResults: DriftResult[],
-  currentBudget: BudgetItem[],
+  currentBudget: BudgetAllocation[],
   _targetWeights: TargetWeight[],
   avgMonthlyIncome: number,
   monthlyIncomes: number[],
@@ -403,7 +404,7 @@ function computeCV(values: number[]): number {
 }
 
 export function computeDriftAlerts(
-  currentBudget: BudgetItem[],
+  currentBudget: BudgetAllocation[],
   midMonthSpending: CategorySpending[],
   dayOfMonth: number
 ): DriftAlert[] {
@@ -452,7 +453,7 @@ export interface RebalanceInput {
   monthlySpending: CategorySpending[][];
   monthlyIncomes: number[];
   avgMonthlyIncome: number;
-  currentBudget: BudgetItem[];
+  currentBudget: BudgetAllocation[];
   driftThreshold?: number;
   goalPressure?: number;
   networthSensitivity?: number;
@@ -460,6 +461,7 @@ export interface RebalanceInput {
   midMonthSpending?: CategorySpending[];
   dayOfMonth?: number;
   slackByParent?: SlackInfo[];
+  totalBudgetCeiling?: number;
 }
 
 export function computeRebalance(input: RebalanceInput): RebalanceResult {
@@ -475,6 +477,7 @@ export function computeRebalance(input: RebalanceInput): RebalanceResult {
     midMonthSpending,
     dayOfMonth,
     slackByParent = [],
+    totalBudgetCeiling,
   } = input;
 
   const sensitivityAdjustment = networthSensitivity < -0.05
@@ -490,6 +493,17 @@ export function computeRebalance(input: RebalanceInput): RebalanceResult {
     goalPressure,
     categoryParents
   );
+
+  if (totalBudgetCeiling && totalBudgetCeiling > 0) {
+    const totalSuggested = weights.reduce((s, w) => s + w.suggestedAmount, 0);
+    if (totalSuggested > totalBudgetCeiling) {
+      const scale = totalBudgetCeiling / totalSuggested;
+      for (const w of weights) {
+        w.suggestedAmount = Math.round(w.suggestedAmount * scale);
+        w.weight = avgMonthlyIncome > 0 ? w.suggestedAmount / avgMonthlyIncome : 0;
+      }
+    }
+  }
 
   const driftAlerts = (midMonthSpending && dayOfMonth)
     ? computeDriftAlerts(currentBudget, midMonthSpending, dayOfMonth)

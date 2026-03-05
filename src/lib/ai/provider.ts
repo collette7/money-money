@@ -64,26 +64,59 @@ export async function getAISettings(userId: string): Promise<AISettings | null> 
 
 export async function chatCompletion(
   settings: AISettings,
-  messages: AIMessage[]
+  messages: AIMessage[],
+  options?: { retries?: number; timeoutMs?: number }
 ): Promise<string> {
-  switch (settings.provider) {
-    case "openai":
-    case "gemini":
-    case "minimax":
-    case "moonshot":
-      return openaiChat(settings, messages);
-    case "anthropic":
-      return anthropicChat(settings, messages);
-    case "ollama":
-      return ollamaChat(settings, messages);
-    default:
-      throw new Error(`Unsupported provider: ${settings.provider}`);
+  const maxRetries = options?.retries ?? 0;
+  const timeoutMs = options?.timeoutMs ?? 60_000;
+
+  async function attempt(): Promise<string> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      switch (settings.provider) {
+        case "openai":
+        case "gemini":
+        case "minimax":
+        case "moonshot":
+          return await openaiChat(settings, messages, controller.signal);
+        case "anthropic":
+          return await anthropicChat(settings, messages, controller.signal);
+        case "ollama":
+          return await ollamaChat(settings, messages, controller.signal);
+        default:
+          throw new Error(`Unsupported provider: ${settings.provider}`);
+      }
+    } finally {
+      clearTimeout(timer);
+    }
   }
+
+  let lastError: Error | undefined;
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      return await attempt();
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      const isRetryable =
+        lastError.name === "AbortError" ||
+        lastError.message.includes("429") ||
+        lastError.message.includes("500") ||
+        lastError.message.includes("502") ||
+        lastError.message.includes("503") ||
+        lastError.message.includes("529");
+      if (!isRetryable || i === maxRetries) throw lastError;
+      const delay = Math.min(1000 * Math.pow(2, i), 8000);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw lastError!;
 }
 
 async function openaiChat(
   settings: AISettings,
-  messages: AIMessage[]
+  messages: AIMessage[],
+  signal?: AbortSignal
 ): Promise<string> {
   const defaultBaseUrls: Record<string, string> = {
     openai: "https://api.openai.com/v1",
@@ -114,6 +147,7 @@ async function openaiChat(
       Authorization: authHeader,
     },
     body: JSON.stringify(requestBody),
+    signal,
   });
 
   if (!response.ok) {
@@ -127,7 +161,8 @@ async function openaiChat(
 
 async function anthropicChat(
   settings: AISettings,
-  messages: AIMessage[]
+  messages: AIMessage[],
+  signal?: AbortSignal
 ): Promise<string> {
   const baseUrl = settings.baseUrl ?? "https://api.anthropic.com";
   const systemMsg = messages.find((m) => m.role === "system");
@@ -149,6 +184,7 @@ async function anthropicChat(
         content: m.content,
       })),
     }),
+    signal,
   });
 
   if (!response.ok) {
@@ -162,7 +198,8 @@ async function anthropicChat(
 
 async function ollamaChat(
   settings: AISettings,
-  messages: AIMessage[]
+  messages: AIMessage[],
+  signal?: AbortSignal
 ): Promise<string> {
   const baseUrl = settings.baseUrl ?? "http://localhost:11434";
 
@@ -174,6 +211,7 @@ async function ollamaChat(
       messages,
       stream: false,
     }),
+    signal,
   });
 
   if (!response.ok) {

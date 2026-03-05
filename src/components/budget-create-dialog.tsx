@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { createBudget, getHierarchicalBudget } from "@/app/(dashboard)/budgets/actions"
-import type { BudgetMode } from "@/types/database"
+import { BUDGET_MODES, type BudgetMode } from "@/types/database"
 import { cn } from "@/lib/utils"
 
 interface BudgetCreateDialogProps {
@@ -39,23 +39,7 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December"
 ]
 
-const BUDGET_MODES = [
-  {
-    value: "independent" as BudgetMode,
-    label: "Independent",
-    description: "Each category has its own fixed limit. Simple and predictable.",
-  },
-  {
-    value: "pooled" as BudgetMode,
-    label: "Flexible Pooled",
-    description: "Parent categories share unused budget with their children. More flexibility.",
-  },
-  {
-    value: "strict_pooled" as BudgetMode,
-    label: "Strict Pooled",
-    description: "Like flexible, but children cannot exceed parent limits. Maximum control.",
-  },
-]
+
 
 export function BudgetCreateDialog({
   open,

@@ -8,10 +8,8 @@ import { getAISettings, chatCompletion, type AIMessage } from "@/lib/ai/provider
 import {
   FINANCIAL_ADVISOR_SYSTEM,
   CATEGORIZE_SYSTEM,
-  BUDGET_SYSTEM,
   buildFinancialContext,
   buildCategorizationPrompt,
-  buildBudgetPrompt,
 } from "@/lib/ai/prompts";
 import { chatMessageSchema } from "@/lib/validation";
 
@@ -228,77 +226,6 @@ export async function aiCategorize() {
 
   revalidatePath("/transactions");
   return { categorized: totalCategorized, total: totalUncategorized };
-}
-
-export async function aiBudgetRecommendation() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
-
-  const settings = await requireAI(user.id);
-
-  const threeMonthsAgo = new Date();
-  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-  const startDate = threeMonthsAgo.toISOString().split("T")[0];
-
-  const { data: txns } = await supabase
-    .from("transactions")
-    .select("amount, category_id, date, categories ( name, type ), accounts!account_id!inner ( user_id )")
-    .eq("accounts.user_id", user.id)
-    .gte("date", startDate)
-    .lt("amount", 0);
-
-  const income = await supabase
-    .from("transactions")
-    .select("amount, categories ( type ), accounts!account_id!inner ( user_id )")
-    .eq("accounts.user_id", user.id)
-    .gte("date", startDate)
-    .gt("amount", 0);
-
-  const nonTransferIncome = (income.data ?? []).filter((t) => {
-    const cat = resolveCategory(t.categories as unknown as { type: string } | { type: string }[] | null);
-    return cat?.type !== "transfer";
-  });
-  const monthlyIncome = nonTransferIncome.reduce((s, t) => s + t.amount, 0) / 3;
-
-  const catSpending = new Map<string, { id: string; name: string; total: number; months: Set<string> }>();
-  for (const t of txns ?? []) {
-    if (!t.category_id) continue;
-    const cat = t.categories as unknown as { name: string; type: string } | null;
-    if (!cat || cat.type !== "expense") continue;
-    const month = t.date.substring(0, 7);
-    const existing = catSpending.get(t.category_id) ?? { id: t.category_id, name: cat.name, total: 0, months: new Set<string>() };
-    existing.total += Math.abs(t.amount);
-    existing.months.add(month);
-    catSpending.set(t.category_id, existing);
-  }
-
-  const categoryAverages = Array.from(catSpending.values()).map((c) => ({
-    categoryId: c.id,
-    name: c.name,
-    avgMonthly: c.total / Math.max(c.months.size, 1),
-    months: c.months.size,
-  }));
-
-  const { data: categories } = await supabase
-    .from("categories")
-    .select("id, name, type")
-    .or(`user_id.eq.${user.id},user_id.is.null`);
-
-  const prompt = buildBudgetPrompt(monthlyIncome, categoryAverages, categories ?? []);
-  const messages: AIMessage[] = [
-    { role: "system", content: BUDGET_SYSTEM },
-    { role: "user", content: prompt },
-  ];
-
-  const response = await chatCompletion(settings, messages);
-
-  try {
-    const cleaned = response.replace(/```json?\n?/g, "").replace(/```/g, "").trim();
-    return JSON.parse(cleaned);
-  } catch {
-    throw new Error("AI returned invalid budget format. Try again.");
-  }
 }
 
 export async function getConversations() {

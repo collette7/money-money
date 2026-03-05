@@ -3,49 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { resolveCategory } from "@/lib/transfer-filter";
-import {
-  computeRebalance,
-  type CategorySpending,
-  type BudgetItem,
-  type RebalanceResult,
-  type SlackInfo,
-} from "@/lib/rebalance/engine";
-import type { BudgetMode, BudgetPeriod } from "@/types/database";
+import { resolveCategory, excludeTransfersByCategory } from "@/lib/transfer-filter";
+import { BUDGET_MODES, type BudgetMode, type BudgetPeriod } from "@/types/database";
 import { monthYearSchema } from "@/lib/validation";
-
-function getMonthDateRange(month: number, year: number): { startDate: string; endDate: string } {
-  const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-  const endDate =
-    month === 12
-      ? `${year + 1}-01-01`
-      : `${year}-${String(month + 1).padStart(2, "0")}-01`;
-  return { startDate, endDate };
-}
-
-function getPeriodDateRange(
-  month: number,
-  year: number,
-  period: BudgetPeriod = "monthly"
-): { startDate: string; endDate: string } {
-  if (period === "annual") {
-    return { startDate: `${year}-01-01`, endDate: `${year + 1}-01-01` };
-  }
-
-  if (period === "weekly") {
-    const d = new Date(year, month - 1, 1);
-    const dayOfWeek = d.getDay();
-    const monday = new Date(d);
-    monday.setDate(d.getDate() - ((dayOfWeek + 6) % 7));
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 7);
-    const fmt = (dt: Date) =>
-      `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
-    return { startDate: fmt(monday), endDate: fmt(sunday) };
-  }
-
-  return getMonthDateRange(month, year);
-}
+import { getMonthDateRange, getPeriodDateRange } from "./date-utils";
 
 import type { CategoryWithHierarchy } from "@/app/(dashboard)/spending/breakdown/expandable-categories";
 
@@ -64,7 +25,7 @@ export async function getBudget(month: number, year: number) {
     .from("budgets")
     .select(
       `
-      id, month, year, mode, period,
+      id, month, year, mode, period, total_budget_limit,
       budget_items (
         id, category_id, limit_amount, spent_amount, rollover_amount, is_override,
         categories ( id, name, icon, color, type )
@@ -112,7 +73,8 @@ export async function createBudget(
 ) {
   const validatedMY = monthYearSchema.safeParse({ month, year });
   if (!validatedMY.success) throw new Error("Invalid month/year");
-  if (!["independent", "pooled", "strict_pooled"].includes(mode)) {
+  const validModes = BUDGET_MODES.map(m => m.value);
+  if (!validModes.includes(mode)) {
     throw new Error("Invalid budget mode");
   }
 
@@ -207,7 +169,8 @@ export async function deleteBudget(budgetId: string) {
 }
 
 export async function updateBudgetMode(budgetId: string, mode: BudgetMode) {
-  if (!["independent", "pooled", "strict_pooled"].includes(mode)) {
+  const validModes = BUDGET_MODES.map(m => m.value);
+  if (!validModes.includes(mode)) {
     throw new Error("Invalid budget mode");
   }
 
@@ -218,6 +181,20 @@ export async function updateBudgetMode(budgetId: string, mode: BudgetMode) {
   await supabase
     .from("budgets")
     .update({ mode })
+    .eq("id", budgetId)
+    .eq("user_id", user.id);
+
+  revalidatePath("/spending/breakdown");
+}
+
+export async function updateTotalBudgetLimit(budgetId: string, limit: number | null) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  await supabase
+    .from("budgets")
+    .update({ total_budget_limit: limit })
     .eq("id", budgetId)
     .eq("user_id", user.id);
 
@@ -334,55 +311,118 @@ export async function getSpendingSummary(month: number, year: number, period: Bu
   };
 }
 
-export async function applyBudgetRecommendations(
-  items: Array<{ categoryId: string; recommendedLimit: number }>,
-  month: number,
-  year: number
-) {
+export async function getMonthlyIncomeEstimate() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  const startDate = threeMonthsAgo.toISOString().split("T")[0];
+
+  const { data: transactions } = await supabase
+    .from("transactions")
+    .select(
+      "amount, date, categories ( type ), accounts!account_id!inner ( user_id )"
+    )
+    .eq("accounts.user_id", user.id)
+    .gt("amount", 0)
+    .gte("date", startDate);
+
+  type CatShape = { type: string };
+  const incomeTxns = (transactions ?? []).filter((t) => {
+    const cat = resolveCategory(
+      t.categories as unknown as CatShape | CatShape[] | null
+    );
+    return cat?.type === "income";
+  });
+
+  const byMonth = new Map<string, number>();
+  for (const t of incomeTxns) {
+    const mk = t.date.substring(0, 7);
+    byMonth.set(mk, (byMonth.get(mk) ?? 0) + t.amount);
+  }
+
+  const values = Array.from(byMonth.values());
+  const months = values.length;
+  const average =
+    months > 0 ? values.reduce((s, v) => s + v, 0) / months : 0;
+
+  return { average, months };
+}
+
+export async function getTagsForMonth(month: number, year: number) {
   const validatedMY = monthYearSchema.safeParse({ month, year });
   if (!validatedMY.success) throw new Error("Invalid month/year");
-  for (const item of items) {
-    if (!Number.isFinite(item.recommendedLimit) || item.recommendedLimit < 0 || item.recommendedLimit > 1_000_000_000) {
-      throw new Error("Invalid recommended limit");
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/auth/login");
+
+  const { startDate, endDate } = getMonthDateRange(month, year);
+
+  const { data: transactions } = await supabase
+    .from("transactions")
+    .select("category_id, tags, accounts!account_id!inner(user_id)")
+    .eq("accounts.user_id", user.id)
+    .gte("date", startDate)
+    .lt("date", endDate)
+    .not("tags", "is", null);
+
+  const tagsByCategory: Record<string, string[]> = {};
+  const allTagsSet = new Set<string>();
+
+  for (const tx of transactions ?? []) {
+    const tags = tx.tags as string[] | null;
+    if (!tags || tags.length === 0) continue;
+    const catId = tx.category_id as string | null;
+    if (!catId) continue;
+
+    if (!tagsByCategory[catId]) {
+      tagsByCategory[catId] = [];
+    }
+
+    for (const tag of tags) {
+      allTagsSet.add(tag);
+      if (!tagsByCategory[catId].includes(tag)) {
+        tagsByCategory[catId].push(tag);
+      }
     }
   }
 
+  return {
+    tagsByCategory,
+    allTags: Array.from(allTagsSet).sort(),
+  };
+}
+
+export async function getActiveSavingsGoalsSummary() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  let { data: budget } = await supabase
-    .from("budgets")
-    .select("id")
+  const { data: goals } = await supabase
+    .from("savings_goals")
+    .select("monthly_contribution")
     .eq("user_id", user.id)
-    .eq("month", month)
-    .eq("year", year)
-    .single();
+    .eq("status", "active");
 
-  if (!budget) {
-    const { data: newBudget } = await supabase
-      .from("budgets")
-      .insert({ user_id: user.id, month, year })
-      .select("id")
-      .single();
-    budget = newBudget;
-  }
+  const activeGoals = goals ?? [];
+  const totalMonthlyContribution = activeGoals.reduce(
+    (sum, g) =>
+      sum +
+      ((g as { monthly_contribution?: number }).monthly_contribution ?? 0),
+    0
+  );
 
-  if (!budget) throw new Error("Failed to create budget");
-
-  for (const item of items) {
-    await supabase.from("budget_items").upsert(
-      {
-        budget_id: budget.id,
-        category_id: item.categoryId,
-        limit_amount: item.recommendedLimit,
-      },
-      { onConflict: "budget_id,category_id" }
-    );
-  }
-
-  revalidatePath("/spending/breakdown");
-  return { applied: items.length };
+  return { count: activeGoals.length, totalMonthlyContribution };
 }
 
 export async function getHierarchicalBudget(month: number, year: number) {
@@ -400,13 +440,14 @@ export async function getHierarchicalBudget(month: number, year: number) {
     color: string | null;
     parent_id: string | null;
     excluded_from_budget: boolean;
+    enable_rollover: boolean;
     sort_order: number;
     type: string;
   }> | null = null;
 
   const { data: extendedData, error: extendedError } = await supabase
     .from("categories")
-    .select("id, name, emoji, color, parent_id, excluded_from_budget, sort_order, type")
+    .select("id, name, emoji, color, parent_id, excluded_from_budget, enable_rollover, sort_order, type")
     .or(`user_id.eq.${user.id},user_id.is.null`)
     .order("sort_order")
     .order("name");
@@ -423,12 +464,14 @@ export async function getHierarchicalBudget(month: number, year: number) {
       emoji: null,
       color: null,
       excluded_from_budget: false,
+      enable_rollover: true,
       sort_order: 0,
       type: (cat as { type?: string }).type ?? "expense",
     }));
   } else {
     categories = (extendedData || []).map((cat) => ({
       ...cat,
+      enable_rollover: (cat as { enable_rollover?: boolean }).enable_rollover ?? true,
       type: (cat as { type?: string }).type ?? "expense",
     }));
   }
@@ -493,6 +536,7 @@ export async function getHierarchicalBudget(month: number, year: number) {
       color: cat.color,
       parent_id: cat.parent_id,
       excluded_from_budget: cat.excluded_from_budget,
+      enable_rollover: cat.enable_rollover,
       sort_order: cat.sort_order ?? 0,
       type: (cat.type as "income" | "expense" | "transfer") ?? "expense",
       spent_amount: spendingMap.get(cat.id) || 0,
@@ -553,307 +597,228 @@ export async function getHierarchicalBudget(month: number, year: number) {
   return rootCategories;
 }
 
-export async function getRebalanceSuggestions(
+// ---------------------------------------------------------------------------
+// Budget Comparison (month-over-month)
+// ---------------------------------------------------------------------------
+
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+export type BudgetComparisonData = {
+  categories: Array<{
+    name: string;
+    color: string | null;
+    currentMonth: number;
+    previousMonth: number;
+    change: number;
+    changePercent: number | null;
+  }>;
+  currentMonthLabel: string;
+  previousMonthLabel: string;
+  currentTotal: number;
+  previousTotal: number;
+};
+
+export async function getBudgetComparison(
   month: number,
   year: number
-): Promise<RebalanceResult> {
+): Promise<BudgetComparisonData> {
+  const validatedMY = monthYearSchema.safeParse({ month, year });
+  if (!validatedMY.success) throw new Error("Invalid month/year");
+
+  const prevMonth = month === 1 ? 12 : month - 1;
+  const prevYear = month === 1 ? year - 1 : year;
+
+  const [currentSummary, previousSummary] = await Promise.all([
+    getSpendingSummary(month, year),
+    getSpendingSummary(prevMonth, prevYear),
+  ]);
+
+  const merged = new Map<
+    string,
+    { name: string; color: string | null; currentMonth: number; previousMonth: number }
+  >();
+
+  for (const cat of currentSummary.byCategory) {
+    merged.set(cat.name, {
+      name: cat.name,
+      color: cat.color,
+      currentMonth: cat.total,
+      previousMonth: 0,
+    });
+  }
+
+  for (const cat of previousSummary.byCategory) {
+    const existing = merged.get(cat.name);
+    if (existing) {
+      existing.previousMonth = cat.total;
+      if (!existing.color) existing.color = cat.color;
+    } else {
+      merged.set(cat.name, {
+        name: cat.name,
+        color: cat.color,
+        currentMonth: 0,
+        previousMonth: cat.total,
+      });
+    }
+  }
+
+  const categories = Array.from(merged.values())
+    .map((cat) => {
+      const change = cat.currentMonth - cat.previousMonth;
+      const changePercent =
+        cat.previousMonth > 0
+          ? ((cat.currentMonth - cat.previousMonth) / cat.previousMonth) * 100
+          : null;
+      return { ...cat, change, changePercent };
+    })
+    .sort((a, b) => b.currentMonth - a.currentMonth);
+
+  return {
+    categories,
+    currentMonthLabel: MONTH_LABELS[month - 1],
+    previousMonthLabel: MONTH_LABELS[prevMonth - 1],
+    currentTotal: currentSummary.expenses,
+    previousTotal: previousSummary.expenses,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Spending Pace
+// ---------------------------------------------------------------------------
+
+export type PaceDataPoint = {
+  day: number;
+  date: string;
+  ideal: number;
+  actual: number | null;
+  projected: number | null;
+};
+
+export type BudgetPaceData = {
+  points: PaceDataPoint[];
+  totalBudget: number;
+  totalSpent: number;
+  daysInMonth: number;
+  currentDay: number;
+  projectedMonthEnd: number;
+  freeToSpend: number;
+  status: "on_track" | "slightly_ahead" | "significantly_ahead" | "over_budget";
+};
+
+export async function getDailyBudgetPace(
+  month: number,
+  year: number
+): Promise<BudgetPaceData> {
+  const validatedMY = monthYearSchema.safeParse({ month, year });
+  if (!validatedMY.success) throw new Error("Invalid month/year");
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
 
-  if (!user) throw new Error("Not authenticated");
+  const budget = await getBudget(month, year);
+  const totalBudget =
+    budget?.budget_items?.reduce(
+      (sum, item) => sum + item.limit_amount,
+      0
+    ) ?? 0;
 
-  const LOOKBACK_MONTHS = 12;
+  const empty: BudgetPaceData = {
+    points: [],
+    totalBudget: 0,
+    totalSpent: 0,
+    daysInMonth: new Date(year, month, 0).getDate(),
+    currentDay: 1,
+    projectedMonthEnd: 0,
+    freeToSpend: 0,
+    status: "on_track",
+  };
 
-  let startM = month - (LOOKBACK_MONTHS - 1);
-  let startY = year;
-  while (startM <= 0) {
-    startM += 12;
-    startY -= 1;
-  }
-  const rangeStart = `${startY}-${String(startM).padStart(2, "0")}-01`;
+  if (totalBudget === 0) return empty;
 
-  const { endDate: rangeEnd } = getMonthDateRange(month, year);
+  const { startDate, endDate } = getMonthDateRange(month, year);
 
-  const [{ data: allTransactions }, { data: allSpending }, budget] =
-    await Promise.all([
-      supabase
-        .from("transactions")
-        .select(
-          "amount, date, category_id, categories ( id, name, type ), accounts!account_id!inner ( user_id )"
-        )
-        .eq("accounts.user_id", user.id)
-        .eq("category_confirmed", true)
-        .gte("date", rangeStart)
-        .lt("date", rangeEnd),
-      supabase.rpc("get_category_spending", {
-        p_user_id: user.id,
-        p_start_date: rangeStart,
-        p_end_date: rangeEnd,
-      }),
-      getBudget(month, year),
-    ]);
+  const { data: rawTx } = await supabase
+    .from("transactions")
+    .select(
+      "amount, date, categories ( type ), accounts!account_id!inner ( user_id )"
+    )
+    .eq("accounts.user_id", user.id)
+    .gte("date", startDate)
+    .lt("date", endDate)
+    .lt("amount", 0)
+    .eq("ignored", false)
+    .eq("status", "cleared")
+    .order("date", { ascending: true })
+    .limit(10000);
 
-  type TxCat = { id: string; name: string; type: string };
-  const txns = (allTransactions ?? []).filter((t) => {
-    const cat = resolveCategory(
-      t.categories as unknown as TxCat | TxCat[] | null
-    );
-    return cat?.type !== "transfer";
-  });
+  const transactions = excludeTransfersByCategory(rawTx ?? []);
 
-  const categoryNameCache = new Map<string, string>();
-  for (const s of allSpending ?? []) {
-    if (!categoryNameCache.has(s.category_id)) {
-      const tx = txns.find((t) => t.category_id === s.category_id);
-      const cat = tx
-        ? resolveCategory(
-            tx.categories as unknown as TxCat | TxCat[] | null
-          )
-        : null;
-      categoryNameCache.set(s.category_id, cat?.name ?? "Unknown");
-    }
+  const byDate = new Map<string, number>();
+  for (const tx of transactions) {
+    byDate.set(tx.date, (byDate.get(tx.date) ?? 0) + Math.abs(tx.amount));
   }
 
-  const monthlySpendingMap = new Map<
-    string,
-    Map<string, { total: number; name: string }>
-  >();
-  const monthlyIncomeMap = new Map<string, number>();
-
-  for (const tx of txns) {
-    const monthKey = tx.date.substring(0, 7);
-
-    const txCat = resolveCategory(
-      tx.categories as unknown as TxCat | TxCat[] | null
-    );
-    if (tx.amount > 0 && txCat?.type === "income") {
-      monthlyIncomeMap.set(
-        monthKey,
-        (monthlyIncomeMap.get(monthKey) ?? 0) + tx.amount
-      );
-    }
-
-    if (tx.amount < 0 && tx.category_id) {
-      if (!monthlySpendingMap.has(monthKey)) {
-        monthlySpendingMap.set(monthKey, new Map());
-      }
-      const catMap = monthlySpendingMap.get(monthKey)!;
-      const existing = catMap.get(tx.category_id);
-      const catObj = resolveCategory(
-        tx.categories as unknown as TxCat | TxCat[] | null
-      );
-      if (existing) {
-        existing.total += Math.abs(tx.amount);
-      } else {
-        catMap.set(tx.category_id, {
-          total: Math.abs(tx.amount),
-          name: catObj?.name ?? categoryNameCache.get(tx.category_id) ?? "Unknown",
-        });
-      }
-    }
-  }
-
-  const monthlySpending: CategorySpending[][] = [];
-  for (const [, catMap] of monthlySpendingMap) {
-    monthlySpending.push(
-      Array.from(catMap.entries()).map(
-        ([catId, data]): CategorySpending => ({
-          categoryId: catId,
-          categoryName: data.name,
-          totalSpent: data.total,
-        })
-      )
-    );
-  }
-
-  const monthlyIncomes = Array.from(monthlyIncomeMap.values());
-
-  const { data: categories } = await supabase
-    .from("categories")
-    .select("id, parent_id")
-    .or(`user_id.eq.${user.id},user_id.is.null`);
-
-  const categoryParents = new Map<string, string | null>();
-  for (const cat of categories ?? []) {
-    categoryParents.set(cat.id, cat.parent_id);
-  }
-
-  const currentBudget: BudgetItem[] = (budget?.budget_items ?? []).map(
-    (item) => {
-      const catData = item.categories as unknown as {
-        id: string;
-        name: string;
-      } | null;
-      return {
-        categoryId: item.category_id,
-        categoryName: catData?.name ?? "Unknown",
-        limitAmount: item.limit_amount,
-        parentCategoryId: categoryParents.get(item.category_id) ?? null,
-        isOverride: (item as { is_override?: boolean }).is_override ?? false,
-      };
-    }
-  );
-
-  const validIncomes = monthlyIncomes.filter((v) => v > 0);
-  const avgMonthlyIncome =
-    validIncomes.length > 0
-      ? validIncomes.reduce((s, v) => s + v, 0) / validIncomes.length
-      : 0;
-
-  const [{ data: goalPressureData }, { data: nwSensitivityData }] = await Promise.all([
-    supabase.rpc("get_goal_pressure", { p_user_id: user.id }),
-    supabase.rpc("get_networth_sensitivity", { p_user_id: user.id }),
-  ]);
-
-  const goalPressure = Number(goalPressureData ?? 0);
-  const networthSensitivity = Number(nwSensitivityData ?? 0);
-
+  const daysInMonth = new Date(year, month, 0).getDate();
   const now = new Date();
-  const dayOfMonth = now.getDate();
-  const { startDate: currentMonthStart, endDate: currentMonthEnd } = getMonthDateRange(month, year);
+  const isCurrentMonth =
+    now.getMonth() + 1 === month && now.getFullYear() === year;
+  const currentDay = isCurrentMonth
+    ? Math.min(now.getDate(), daysInMonth)
+    : daysInMonth;
 
-  const { data: midMonthSpendingData } = await supabase.rpc("get_category_spending", {
-    p_user_id: user.id,
-    p_start_date: currentMonthStart,
-    p_end_date: currentMonthEnd,
-  });
-
-  const midMonthSpending: CategorySpending[] = (midMonthSpendingData ?? []).map(
-    (s: { category_id: string; total: number }) => ({
-      categoryId: s.category_id,
-      categoryName: categoryNameCache.get(s.category_id) ?? "Unknown",
-      totalSpent: Math.abs(s.total),
-    })
-  );
-
-  const slackMap = await getPooledSlack(month, year);
-  const slackByParent: SlackInfo[] = Array.from(slackMap.entries()).map(
-    ([parentCategoryId, slackAmount]) => ({ parentCategoryId, slackAmount })
-  );
-
-  return computeRebalance({
-    monthlySpending,
-    monthlyIncomes: validIncomes,
-    avgMonthlyIncome,
-    currentBudget,
-    goalPressure,
-    networthSensitivity,
-    categoryParents,
-    midMonthSpending,
-    dayOfMonth,
-    slackByParent,
-  });
-}
-
-export async function updateCategories(
-  updates: Array<{
-    id: string;
-    name: string;
-    emoji: string | null;
-    color: string | null;
-    parent_id: string | null;
-    excluded_from_budget: boolean;
-    sort_order: number;
-  }>
-) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
-
-  for (const update of updates) {
-    const { error } = await supabase
-      .from("categories")
-      .update({
-        name: update.name,
-        emoji: update.emoji,
-        color: update.color,
-        parent_id: update.parent_id,
-        excluded_from_budget: update.excluded_from_budget,
-        sort_order: update.sort_order,
-      })
-      .eq("id", update.id)
-      .or(`user_id.eq.${user.id},user_id.is.null`);
-
-    if (error) throw new Error(`Failed to update category ${update.id}: ${error.message}`);
+  let cumulativeActual = 0;
+  const cumulativeByDay = new Map<number, number>();
+  for (let d = 1; d <= currentDay; d++) {
+    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    cumulativeActual += byDate.get(dateStr) ?? 0;
+    cumulativeByDay.set(d, cumulativeActual);
   }
 
-  revalidatePath("/spending/breakdown");
-  return { updated: updates.length };
-}
+  const totalSpent = cumulativeActual;
+  const dailyAverage = currentDay > 0 ? totalSpent / currentDay : 0;
+  const projectedMonthEnd = dailyAverage * daysInMonth;
+  const freeToSpend = totalBudget - totalSpent;
 
-export async function deleteCategory(categoryId: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const idealAtToday = (currentDay / daysInMonth) * totalBudget;
+  const overage = (totalSpent - idealAtToday) / totalBudget;
 
-  await supabase
-    .from("categories")
-    .update({ parent_id: null })
-    .eq("parent_id", categoryId)
-    .or(`user_id.eq.${user.id},user_id.is.null`);
-
-  const { data: userAccounts } = await supabase
-    .from("accounts")
-    .select("id")
-    .eq("user_id", user.id);
-
-  if (userAccounts && userAccounts.length > 0) {
-    const accountIds = userAccounts.map((a) => a.id);
-    await supabase
-      .from("transactions")
-      .update({ category_id: null })
-      .eq("category_id", categoryId)
-      .in("account_id", accountIds);
+  let status: BudgetPaceData["status"];
+  if (totalSpent > totalBudget) {
+    status = "over_budget";
+  } else if (overage >= 0.2) {
+    status = "significantly_ahead";
+  } else if (overage > 0) {
+    status = "slightly_ahead";
+  } else {
+    status = "on_track";
   }
 
-  await supabase
-    .from("budget_items")
-    .delete()
-    .eq("category_id", categoryId);
+  const points: PaceDataPoint[] = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const ideal = (d / daysInMonth) * totalBudget;
+    const actual = d <= currentDay ? (cumulativeByDay.get(d) ?? 0) : null;
 
-   const { error } = await supabase
-     .from("categories")
-     .delete()
-     .eq("id", categoryId)
-     .or(`user_id.eq.${user.id},user_id.is.null`);
+    let projected: number | null = null;
+    if (currentDay >= 5 && d >= currentDay) {
+      projected = dailyAverage * d;
+    }
 
-   if (error) {
-     console.error("[deleteCategory]", error.message);
-     throw new Error("Failed to delete record");
-   }
+    points.push({ day: d, date: dateStr, ideal, actual, projected });
+  }
 
-   revalidatePath("/spending/breakdown");
-   return { deleted: true };
+  return {
+    points,
+    totalBudget,
+    totalSpent,
+    daysInMonth,
+    currentDay,
+    projectedMonthEnd,
+    freeToSpend,
+    status,
+  };
 }
 
-export async function toggleCategoryExclusion(categoryId: string, excluded: boolean) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
-
-   const { error } = await supabase
-     .from("categories")
-     .update({ excluded_from_budget: excluded })
-     .eq("id", categoryId)
-     .or(`user_id.eq.${user.id},user_id.is.null`);
-
-   if (error) {
-     console.error("[toggleCategoryExclusion]", error.message);
-     throw new Error("Failed to update record");
-   }
-
-   const { error: childrenError } = await supabase
-     .from("categories")
-     .update({ excluded_from_budget: excluded })
-     .eq("parent_id", categoryId)
-     .or(`user_id.eq.${user.id},user_id.is.null`);
-
-   if (childrenError) {
-     console.error("[toggleCategoryExclusion]", childrenError.message);
-     throw new Error("Failed to update record");
-   }
-
-   revalidatePath("/spending/breakdown");
-}
