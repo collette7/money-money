@@ -36,16 +36,23 @@ export async function getForecast(
     .gte("date", sixMonthsAgo.toISOString().split('T')[0])
     .order("date", { ascending: true });
 
+  const resolveCatType = (c: unknown): string | undefined => {
+    if (!c) return undefined;
+    if (Array.isArray(c)) return (c[0] as { type?: string })?.type;
+    return (c as { type?: string })?.type;
+  };
+  const resolveAcctType = (a: unknown): string | undefined => {
+    if (!a) return undefined;
+    if (Array.isArray(a)) return (a[0] as { account_type?: string })?.account_type;
+    return (a as { account_type?: string })?.account_type;
+  };
+
   const transactions = (rawTransactions || [])
     .filter(tx => {
-      const catType = Array.isArray(tx.categories)
-        ? tx.categories[0]?.type
-        : (tx.categories as any)?.type;
+      const catType = resolveCatType(tx.categories);
       if (catType === "transfer") return false;
 
-      const acctType = Array.isArray(tx.accounts)
-        ? tx.accounts[0]?.account_type
-        : (tx.accounts as any)?.account_type;
+      const acctType = resolveAcctType(tx.accounts);
 
       if (acctType === "credit" && tx.amount > 0) return false;
 
@@ -56,9 +63,7 @@ export async function getForecast(
       return true;
     })
     .map(tx => {
-      const catType = Array.isArray(tx.categories)
-        ? tx.categories[0]?.type
-        : (tx.categories as any)?.type;
+      const catType = resolveCatType(tx.categories);
       return {
         date: tx.date,
         amount: tx.amount,

@@ -156,7 +156,9 @@ async function openaiChat(
   }
 
   const data = await response.json();
-  return data.choices[0].message.content;
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error(`${settings.provider.toUpperCase()} returned empty response`);
+  return content;
 }
 
 async function anthropicChat(
@@ -193,7 +195,9 @@ async function anthropicChat(
   }
 
   const data = await response.json();
-  return data.content[0].text;
+  const text = data.content?.[0]?.text;
+  if (!text) throw new Error("Anthropic returned empty response");
+  return text;
 }
 
 async function ollamaChat(
@@ -220,5 +224,7 @@ async function ollamaChat(
   }
 
   const data = await response.json();
-  return data.message.content;
+  const content = data.message?.content;
+  if (!content) throw new Error("Ollama returned empty response");
+  return content;
 }

@@ -158,7 +158,7 @@ export function CategoryReportView() {
           <CardContent className={isPending ? "opacity-50" : ""}>
             <div className="space-y-4">
               {pieData.map((item, index) => {
-                const percentage = (item.value / totalSpending) * 100;
+                const percentage = totalSpending > 0 ? (item.value / totalSpending) * 100 : 0;
                 return (
                   <div key={item.name} className="space-y-2">
                     <div className="flex items-center justify-between text-sm">

@@ -51,7 +51,7 @@ export async function getTransactions(filters?: {
       category_id, account_id, ignored, review_flagged, review_flagged_reason,
       category_confirmed, category_confidence, recurring_id,
       categories ( id, name, icon, color, type ),
-      accounts!account_id!inner ( id, name, institution_name, user_id, account_type ),
+      accounts!account_id!inner ( id, name, institution_name, institution_domain, user_id, account_type ),
       recurring_rules ( frequency )
     `,
       { count: "exact" }
@@ -269,7 +269,7 @@ export async function getAccounts() {
 
   const { data } = await supabase
     .from("accounts")
-    .select("id, name, institution_name, account_type")
+    .select("id, name, institution_name, institution_domain, account_type")
     .eq("user_id", user.id)
     .order("name");
 
@@ -405,13 +405,15 @@ export async function setTransactionRecurring(
     return { success: true, recurringId: tx.recurring_id };
   }
 
-  const { data: existingRule } = await supabase
+  const { data: existingRules } = await supabase
     .from("recurring_rules")
     .select("id")
     .eq("user_id", user.id)
     .ilike("merchant_pattern", merchantPattern)
     .eq("is_active", true)
-    .single();
+    .limit(1);
+
+  const existingRule = existingRules?.[0] ?? null;
 
   let ruleId: string;
 

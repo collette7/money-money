@@ -87,6 +87,7 @@ import {
   type Category,
   type Account,
 } from "./use-transaction-list"
+import { resolveInstitutionDomain } from "@/lib/account-utils"
 
 export function TransactionList({
   transactions: initialTransactions,
@@ -620,7 +621,11 @@ export function TransactionList({
                 {transactions.map((tx) => {
                   const isIncome = tx.amount > 0
                   const isPending = tx.status === "pending"
-                  const isTransfer = (tx.categories as { type?: string } | null)?.type === "transfer"
+                  const isTransfer = resolveCategory(tx.categories)?.type === "transfer"
+                  const account = resolveAccount(tx.accounts)
+                  const logoDomain = isTransfer && account.institution_name
+                    ? resolveInstitutionDomain(account.institution_name, account.institution_domain)
+                    : tx.cached_logo_domain
                   const displayName = tx.merchant_name || tx.description
                   const hasOriginal =
                     tx.original_description &&
@@ -660,7 +665,7 @@ export function TransactionList({
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2.5">
-                          <MerchantLogo merchantName={tx.merchant_name || tx.description} cachedDomain={tx.cached_logo_domain} size="sm" />
+                          <MerchantLogo merchantName={tx.merchant_name || tx.description} cachedDomain={logoDomain} size="sm" />
                           <div className="flex flex-col min-w-0">
                             {hasOriginal ? (
                               <Tooltip>
@@ -723,9 +728,9 @@ export function TransactionList({
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         <AccountIcon 
-                          accountNumber={resolveAccount(tx.accounts)?.name}
-                          accountType={resolveAccount(tx.accounts)?.account_type || "default"}
-                          institutionName={resolveAccount(tx.accounts)?.institution_name}
+                          accountNumber={account?.name}
+                          accountType={account?.account_type || "default"}
+                          institutionName={account?.institution_name}
                           size="sm"
                         />
                       </TableCell>

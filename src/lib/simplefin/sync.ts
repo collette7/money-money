@@ -583,7 +583,7 @@ async function createNetWorthSnapshot(
   let holdingsValue = 0;
   for (const h of holdings ?? []) {
     if (h.is_manual) {
-      holdingsValue += (h.current_value as number) ?? (h.purchase_value as number) ?? 0;
+      holdingsValue += Number(h.current_value ?? h.purchase_value ?? 0);
     } else if (h.symbol && h.shares) {
       const price = priceMap.get(h.symbol) ?? 0;
       holdingsValue += (h.shares as number) * price;

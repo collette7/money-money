@@ -163,7 +163,7 @@ export class ForecastEngine {
     if (values.length < 2) return 0;
 
     const avg = values.reduce((sum, val) => sum + val, 0) / values.length;
-    const variance = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / values.length;
+    const variance = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / (values.length - 1);
     
     return Math.sqrt(variance);
   }
@@ -228,9 +228,16 @@ export class ForecastEngine {
 
       projectedNetWorth = (projectedNetWorth + netCashFlow) * growthFactor;
       
-      const avgLiabilityRatio = this.currentLiabilities / (this.currentAssets || 1);
-      projectedAssets = projectedNetWorth / (1 - avgLiabilityRatio);
-      projectedLiabilities = projectedAssets - projectedNetWorth;
+      const avgLiabilityRatio = this.currentAssets > 0
+        ? this.currentLiabilities / this.currentAssets
+        : 0;
+      if (avgLiabilityRatio >= 1) {
+        projectedAssets = Math.max(projectedNetWorth, 0);
+        projectedLiabilities = projectedAssets - projectedNetWorth;
+      } else {
+        projectedAssets = projectedNetWorth / (1 - avgLiabilityRatio);
+        projectedLiabilities = projectedAssets - projectedNetWorth;
+      }
 
       const confidence = this.calculateConfidence(month, historicalStats.volatility);
       const spreadFactor = (1 - confidence) * Math.abs(projectedNetWorth) * 0.5;

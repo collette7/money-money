@@ -80,6 +80,7 @@ export async function connectSimpleFin(formData: FormData) {
 
     if (error) {
       console.error("Failed to insert account:", error);
+      redirect(`/accounts/connect?error=${encodeURIComponent(`Failed to connect account "${sfAccount.name}": ${error.message}`)}`);
     }
   }
 

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createBudget, getBudget, updateBudgetItem } from "@/app/(dashboard)/budgets/actions"
+import type { BudgetMode } from "@/types/database"
 
 interface BudgetEditPopoverProps {
   categoryId: string
@@ -49,7 +50,7 @@ export function BudgetEditPopover({
           if (budgetItem?.id) {
             await updateBudgetItem(budgetItem.id, newAmount)
           } else {
-            await createBudget(month, year, [{ categoryId, limitAmount: newAmount }], budget.mode as any)
+            await createBudget(month, year, [{ categoryId, limitAmount: newAmount }], budget.mode as BudgetMode)
           }
         }
         

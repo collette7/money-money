@@ -109,10 +109,11 @@ export async function createBudget(
     }
   }
 
-  await supabase.from("budget_items").delete().eq("budget_id", budget.id);
+  const { error: deleteError } = await supabase.from("budget_items").delete().eq("budget_id", budget.id);
+  if (deleteError) throw new Error(`Failed to clear budget items: ${deleteError.message}`);
 
   if (items.length > 0) {
-    await supabase.from("budget_items").insert(
+    const { error: insertError } = await supabase.from("budget_items").insert(
       items.map((item) => ({
         budget_id: budget.id,
         category_id: item.categoryId,
@@ -122,6 +123,7 @@ export async function createBudget(
         is_override: true,
       }))
     );
+    if (insertError) throw new Error(`Failed to save budget items: ${insertError.message}`);
   }
 
   revalidatePath("/spending/breakdown");
@@ -847,7 +849,7 @@ export async function getDailyBudgetPace(
   const freeToSpend = totalBudget - totalSpent;
 
   const idealAtToday = (currentDay / daysInMonth) * totalBudget;
-  const overage = (totalSpent - idealAtToday) / totalBudget;
+  const overage = totalBudget > 0 ? (totalSpent - idealAtToday) / totalBudget : 0;
 
   let status: BudgetPaceData["status"];
   if (totalSpent > totalBudget) {

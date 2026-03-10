@@ -182,7 +182,7 @@ export async function refreshStaleQuotes(
   const serviceClient = createServiceClient();
 
   for (const [symbol, quote] of quotes) {
-    await serviceClient.from("price_cache").upsert(
+    const { error } = await serviceClient.from("price_cache").upsert(
       {
         symbol,
         price: quote.price,
@@ -192,6 +192,7 @@ export async function refreshStaleQuotes(
       },
       { onConflict: "symbol" }
     );
+    if (error) console.error(`Failed to upsert price_cache for ${symbol}:`, error);
   }
 
   return { refreshed: quotes.size, cached };

@@ -123,7 +123,7 @@ const BANK_DOMAIN_MAP: Record<string, string> = {
 }
 
 // Fuzzy-matches institution name → domain: exact → longest prefix → reverse prefix → guess
-function resolveInstitutionDomain(institutionName: string, institutionDomain?: string | null): string {
+export function resolveInstitutionDomain(institutionName: string, institutionDomain?: string | null): string {
   if (institutionDomain) {
     const domain = institutionDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '')
     if (domain.includes('.')) return domain

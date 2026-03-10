@@ -135,6 +135,9 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
   const incomeCategories = hierarchicalData.filter(c => c.type === "income" && !c.excluded_from_budget)
 
   // Calculate total spending from direct query, excluding transfers
+  if (allExpenses.error) {
+    console.error("Error fetching expenses:", allExpenses.error)
+  }
   let spent = 0
   if (allExpenses.data) {
     spent = (allExpenses.data ?? []).reduce((sum: number, tx: any) => {
@@ -201,16 +204,20 @@ async function BreakdownContent({ month, year }: { month: number; year: number }
   const changeData = computeNetWorthChange(snapshots)
 
   const today = new Date().toISOString().split("T")[0]
-  supabase.from("net_worth_snapshots").upsert(
-    {
-      user_id: user.id,
-      date: today,
-      total_assets: totalAssets,
-      total_liabilities: totalDebt,
-      net_worth: netWorth,
-    },
-    { onConflict: "user_id,date" }
-  ).then(() => {})
+  void Promise.resolve(
+    supabase.from("net_worth_snapshots").upsert(
+      {
+        user_id: user.id,
+        date: today,
+        total_assets: totalAssets,
+        total_liabilities: totalDebt,
+        net_worth: netWorth,
+      },
+      { onConflict: "user_id,date" }
+    )
+  ).then(({ error }) => {
+    if (error) console.error("Failed to upsert net worth snapshot:", error)
+  }).catch((err: unknown) => console.error("Net worth snapshot upsert failed:", err))
 
   return (
     <div className="space-y-6">

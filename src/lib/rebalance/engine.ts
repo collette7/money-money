@@ -224,6 +224,14 @@ export function computeTargetWeights(
     }
   }
 
+  // Distribute rounding remainder to the largest category
+  const totalRounded = weights.reduce((sum, w) => sum + w.suggestedAmount, 0);
+  const roundingError = Math.round(avgMonthlyIncome) - totalRounded;
+  if (roundingError !== 0 && weights.length > 0) {
+    const largest = weights.reduce((a, b) => a.suggestedAmount >= b.suggestedAmount ? a : b);
+    largest.suggestedAmount += roundingError;
+  }
+
   return { weights, usingFallback: false };
 }
 

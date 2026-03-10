@@ -19,6 +19,7 @@ export type Account = {
   id: string
   name: string
   institution_name: string | null
+  institution_domain: string | null
   account_type?: string | null
 }
 
@@ -141,8 +142,8 @@ export function useTransactionList(initial?: {
             endDate,
             page: pageParam,
             view,
-            sortBy: (searchParams.get("sortBy") as any) || undefined,
-            sortDir: (searchParams.get("sortDir") as any) || undefined,
+            sortBy: (["date", "description", "category", "amount", "account"] as const).find(v => v === searchParams.get("sortBy")),
+            sortDir: (["asc", "desc"] as const).find(v => v === searchParams.get("sortDir")),
           });
           
           setTransactions(transactionData.transactions);

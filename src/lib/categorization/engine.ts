@@ -153,9 +153,14 @@ function matchUserRuleCached(
   if (!rules.length) return null;
 
   for (const rule of rules) {
-    const rawConditions = typeof rule.conditions === "string"
-      ? JSON.parse(rule.conditions)
-      : rule.conditions;
+    let rawConditions: unknown;
+    try {
+      rawConditions = typeof rule.conditions === "string"
+        ? JSON.parse(rule.conditions)
+        : rule.conditions;
+    } catch {
+      continue; // skip rule with malformed JSON conditions
+    }
     const conditions: RuleCondition[] =
       Array.isArray(rawConditions) && rawConditions.length > 0
         ? rawConditions

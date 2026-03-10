@@ -142,8 +142,9 @@ export class TimeSeriesForecastEngine {
     const sumXY = x.reduce((total, xi, i) => total + xi * y[i], 0);
     const sumXX = x.reduce((total, xi) => total + xi * xi, 0);
     
-    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
+    const denom = n * sumXX - sumX * sumX;
+    const slope = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
+    const intercept = n !== 0 ? (sumY - slope * sumX) / n : 0;
     
     const yMean = sumY / n;
     const totalSS = y.reduce((total, yi) => total + Math.pow(yi - yMean, 2), 0);
