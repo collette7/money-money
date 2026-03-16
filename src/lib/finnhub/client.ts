@@ -192,7 +192,7 @@ export async function refreshStaleQuotes(
       },
       { onConflict: "symbol" }
     );
-    if (error) console.error(`Failed to upsert price_cache for ${symbol}:`, error);
+    if (error) console.error(`Failed to upsert price_cache for ${symbol}: ${error.message} [${error.code}]`);
   }
 
   return { refreshed: quotes.size, cached };

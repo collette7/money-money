@@ -97,6 +97,8 @@ const MERCHANT_DOMAINS: Record<string, string> = {
   // Fitness & health
   peloton: "onepeloton.com",
   "planet fitness": "planetfitness.com",
+  // Hotels
+  "ace hotel": "acehotel.com",
   // Gas
   shell: "shell.com",
   chevron: "chevron.com",
@@ -141,7 +143,7 @@ const US_STATES = new Set([
 export function normalizeMerchantName(rawName: string): string {
   let name = rawName.trim()
 
-  // Strip known POS/payment processor prefixes
+  // Strip known POS/payment processor prefixes (loop until stable for stacked prefixes like "AplPay TST*")
   const prefixes = [
     /^SQ \*/i,
     /^SP /i,
@@ -154,8 +156,14 @@ export function normalizeMerchantName(rawName: string): string {
     /^DEBIT /i,
     /^PURCHASE /i,
   ]
-  for (const prefix of prefixes) {
-    name = name.replace(prefix, "")
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const prefix of prefixes) {
+      const before = name
+      name = name.replace(prefix, "")
+      if (name !== before) changed = true
+    }
   }
 
   // Strip embedded HTTPS:// URLs
@@ -170,16 +178,18 @@ export function normalizeMerchantName(rawName: string): string {
   // Strip domain-like patterns embedded in name (e.g. IHERB.COM)
   name = name.replace(/\s+\S+\.COM\b/gi, "")
 
-  // Strip trailing location info: city + state, or just " -- XX" or " XX"
-  // Match patterns like " DALLAS TX", " -- CA", " IRVINE CA", " SHERIDAN WY"
+  // Strip trailing location: "CITY STATE" or "CITY CITY STATE" (max 2 words before state code)
   name = name.replace(/\s+--\s+[A-Z]{2}\s*$/i, "")
-  name = name.replace(/\s+[A-Z][A-Za-z]*(?:\s+[A-Z][A-Za-z]*)*\s+([A-Z]{2})\s*$/i, (match, state) => {
+  name = name.replace(/\s+[A-Z][A-Za-z]*(?:\s+[A-Z][A-Za-z]*)?\s+([A-Z]{2})\s*$/i, (match, state) => {
     return US_STATES.has(state.toUpperCase()) ? "" : match
   })
   // Standalone trailing state code (" CA", " TX")
   name = name.replace(/\s+([A-Z]{2})\s*$/i, (match, state) => {
     return US_STATES.has(state.toUpperCase()) ? "" : match
   })
+
+  // Strip trailing punctuation artifacts left by previous cleaning steps
+  name = name.replace(/[\s\-*#/]+$/, "")
 
   return name.trim()
 }
@@ -248,6 +258,7 @@ export function getMerchantLogoUrl(merchantName: string): string | null {
 // Sorted longest-first so "uber eats" matches before "uber", "amazon prime" before "amazon", etc.
 // Must stay in sync with merchant_aliases seed data in the SQL migration.
 const CANONICAL_MERCHANTS: [string, string][] = [
+  ["ace hotel", "Ace Hotel"],
   ["amazon prime", "Amazon Prime"],
   ["amazon web services", "AWS"],
   ["apple music", "Apple Music"],
