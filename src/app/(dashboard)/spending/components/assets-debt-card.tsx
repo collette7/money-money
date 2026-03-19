@@ -197,7 +197,7 @@ export function AssetsDebtCard({
               key={period}
               onClick={() => setActivePeriod(period)}
               className={cn(
-                "px-2.5 py-1 text-xs font-medium rounded-full transition-colors",
+                "px-2.5 py-1.5 text-xs font-medium rounded-full transition-colors min-w-[36px] min-h-[32px]",
                 activePeriod === period
                   ? "bg-foreground text-background"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"

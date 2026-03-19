@@ -223,8 +223,8 @@ export function HomeNetWorthChart({
               onClick={() => setActivePeriod(p)}
               className={
                 activePeriod === p
-                  ? "rounded-full bg-foreground text-background px-3 py-1 text-xs font-medium"
-                  : "rounded-full px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  ? "rounded-full bg-foreground text-background px-3 py-1.5 text-xs font-medium min-h-[32px]"
+                  : "rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[32px]"
               }
             >
               {p}

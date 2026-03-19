@@ -131,7 +131,7 @@ export function HomeSpendingHeatmap({
                       key={ci}
                       onMouseEnter={() => setHoveredCell(cell)}
                       className={cn(
-                        "aspect-square rounded-[4px] flex items-center justify-center text-[10px] tabular-nums cursor-default relative transition-all",
+                        "aspect-square rounded-[4px] flex items-center justify-center text-[11px] sm:text-[10px] tabular-nums cursor-default relative transition-all",
                         INTENSITY_COLORS[idx],
                         idx >= 3 ? "text-white" : "text-foreground/70",
                         isToday && "ring-2 ring-foreground/40 ring-offset-1 ring-offset-background",

@@ -41,7 +41,7 @@ function Tabs() {
 
   return (
     <div className="border-b">
-      <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto">
+      <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto scrollbar-none" style={{ WebkitOverflowScrolling: "touch" }}>
         <Link
           href="/spending/breakdown"
           className={cn(

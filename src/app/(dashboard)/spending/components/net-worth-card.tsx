@@ -88,8 +88,8 @@ export function NetWorthCard({
               onClick={() => setPeriod(p)}
               className={
                 period === p
-                  ? "rounded-full bg-foreground text-background px-2 py-0.5 text-[11px] font-medium"
-                  : "rounded-full px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  ? "rounded-full bg-foreground text-background px-2.5 py-1.5 text-[11px] font-medium min-w-[36px] min-h-[32px]"
+                  : "rounded-full px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors min-w-[36px] min-h-[32px]"
               }
             >
               {p}

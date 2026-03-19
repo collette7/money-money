@@ -504,7 +504,7 @@ export function TransactionList({
 
       <div
         className={cn(
-          "rounded-lg border transition-opacity overflow-x-auto",
+          "rounded-lg border transition-opacity overflow-x-auto sm:overflow-x-auto overflow-x-hidden",
           isPending && "opacity-60"
         )}
       >
@@ -553,7 +553,7 @@ export function TransactionList({
                       aria-label="Select all"
                     />
                   </TableHead>
-                  <TableHead className="w-20 sm:w-24">
+                  <TableHead className="hidden sm:table-cell w-20 sm:w-24">
                     <button
                       type="button"
                       className="flex items-center gap-1 text-xs font-medium hover:text-foreground transition-colors"
@@ -595,7 +595,7 @@ export function TransactionList({
                       )}
                     </button>
                   </TableHead>
-                  <TableHead className="w-24 sm:w-32 pl-4 sm:pl-8 text-right">
+                  <TableHead className="w-[90px] sm:w-32 pl-2 sm:pl-8 text-right">
                     <button
                       type="button"
                       className="flex items-center gap-1 text-xs font-medium hover:text-foreground transition-colors ml-auto"
@@ -674,7 +674,7 @@ export function TransactionList({
                           aria-label={`Select ${displayName}`}
                         />
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-xs tabular-nums">
+                      <TableCell className="hidden sm:table-cell text-muted-foreground text-xs tabular-nums">
                         <div className="flex items-center gap-1.5">
                           {dateFormatter.format(new Date(tx.date + "T00:00:00"))}
                           {isPending && (
@@ -684,28 +684,35 @@ export function TransactionList({
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2.5">
+                      <TableCell className="max-w-0 sm:max-w-none">
+                        <div className="flex items-center gap-2.5 min-h-[44px]">
                           <MerchantLogo merchantName={tx.merchant_name || tx.description} cachedDomain={logoDomain} size="sm" />
-                          <div className="flex flex-col min-w-0">
-                            {hasOriginal ? (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="truncate max-w-[280px] text-sm font-medium cursor-default">
-                                    {displayName}
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                  <span className="text-xs">{tx.original_description}</span>
-                                </TooltipContent>
-                              </Tooltip>
-                            ) : (
-                              <span className="truncate max-w-[280px] text-sm font-medium">
-                                {displayName}
-                              </span>
-                            )}
+                          <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+                            <div className="flex items-center gap-1.5">
+                              {hasOriginal ? (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="truncate text-sm font-medium cursor-default">
+                                      {displayName}
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    <span className="text-xs">{tx.original_description}</span>
+                                  </TooltipContent>
+                                </Tooltip>
+                              ) : (
+                                <span className="truncate text-sm font-medium">
+                                  {displayName}
+                                </span>
+                              )}
+                              {isPending && (
+                                <span className="sm:hidden inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium leading-none text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 shrink-0">
+                                  Pending
+                                </span>
+                              )}
+                            </div>
                             {tx.merchant_name && tx.merchant_name !== tx.description && (
-                              <span className="truncate max-w-[280px] text-xs text-muted-foreground">
+                              <span className="truncate text-xs text-muted-foreground">
                                 {tx.description}
                               </span>
                             )}
@@ -725,7 +732,7 @@ export function TransactionList({
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="pl-4 sm:pl-8 text-right tabular-nums">
+                      <TableCell className="pl-2 sm:pl-8 text-right tabular-nums whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
                           {tx.is_recurring && (
                             <Repeat2 className="size-3.5 text-muted-foreground/60 shrink-0" />

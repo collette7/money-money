@@ -67,7 +67,7 @@ function ExpenseRow({
           )}>
             {category.name}
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[13px] sm:text-xs text-muted-foreground">
             {pct.toFixed(1)}% of expenses
           </span>
         </div>

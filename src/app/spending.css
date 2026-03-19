@@ -1113,8 +1113,8 @@
 .debt-card__detail { flex: 1; padding: 10px 0; display: flex; flex-direction: column; gap: 2px; align-items: center; text-align: center; position: relative; }
 .debt-card__detail:not(:last-child)::after { content: ''; position: absolute; right: 0; top: 10px; bottom: 10px; width: 1px; background: var(--border); }
 .debt-card__detail svg { color: var(--muted-foreground); }
-.debt-card__detail-label { font-size: 10px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.05em; }
-.debt-card__detail-value { font-size: var(--text-detail); font-weight: var(--font-medium); color: var(--foreground); }
+.debt-card__detail-label { font-size: 11px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.05em; }
+.debt-card__detail-value { font-size: var(--text-body); font-weight: var(--font-medium); color: var(--foreground); }
 
 .debt-card__payment { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .debt-card__payment-label { font-size: var(--text-label); color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.04em; }
