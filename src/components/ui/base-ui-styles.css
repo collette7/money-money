@@ -2,11 +2,13 @@
 
 /* Button Component Styles */
 .button {
-  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all;
+  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium;
   @apply disabled:pointer-events-none disabled:opacity-50;
   @apply outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50;
   @apply aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.12s ease-out, box-shadow 0.15s ease;
 }
+.button:active:not(:disabled) { transform: scale(0.97); }
 
 .button--primary {
   @apply bg-primary text-primary-foreground hover:bg-primary/90;
@@ -122,10 +124,11 @@
 .dialog__content {
   @apply fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%];
   @apply gap-4 rounded-lg border bg-background p-6 shadow-lg duration-200 outline-none sm:max-w-lg;
-  @apply data-[starting-style]:scale-90 data-[starting-style]:opacity-0;
-  @apply data-[ending-style]:scale-90 data-[ending-style]:opacity-0;
-  transition: transform 150ms, opacity 150ms;
+  @apply data-[starting-style]:opacity-0 data-[ending-style]:opacity-0;
+  transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1), opacity 150ms ease-out;
 }
+.dialog__content[data-starting-style],
+.dialog__content[data-ending-style] { transform: translate(-50%, -50%) scale(0.96); }
 
 .dialog__header {
   @apply flex flex-col gap-2 text-center sm:text-left;
@@ -419,10 +422,11 @@
   inset: 0;
   z-index: 50;
   background: oklch(0 0 0 / 0.5);
-  transition: opacity 150ms;
+  transition: opacity 200ms ease-out;
 }
 .drawer__overlay[data-starting-style],
 .drawer__overlay[data-ending-style] { opacity: 0; }
+.drawer__overlay[data-ending-style] { transition-duration: 150ms; }
 
 .drawer__content {
   position: fixed;
@@ -433,6 +437,7 @@
   box-shadow: 0 10px 15px -3px oklch(0 0 0 / 0.1), 0 4px 6px -4px oklch(0 0 0 / 0.1);
   transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
 }
+.drawer__content[data-ending-style] { transition-duration: 200ms; }
 
 .drawer__content--right {
   top: 0; right: 0; bottom: 0;
@@ -493,11 +498,12 @@
 /* Popover Component Styles */
 .popover__content {
   @apply z-50 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none;
-  @apply data-[starting-style]:opacity-0 data-[starting-style]:scale-90;
-  @apply data-[ending-style]:opacity-0 data-[ending-style]:scale-90;
-  transition: opacity 150ms, transform 150ms;
+  @apply data-[starting-style]:opacity-0 data-[ending-style]:opacity-0;
+  transition: opacity 150ms ease-out, transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
   transform-origin: var(--transform-origin);
 }
+.popover__content[data-starting-style],
+.popover__content[data-ending-style] { transform: scale(0.96); }
 
 /* Tooltip Component Styles */
 .tooltip-wrapper {
@@ -506,15 +512,19 @@
 
 .tooltip__content {
   @apply absolute z-50 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-md;
-  @apply invisible opacity-0 scale-95;
-  transition: all 150ms ease-in-out;
+  visibility: hidden;
+  opacity: 0;
+  transform: scale(0.97);
+  transition: opacity 125ms ease-out, transform 125ms cubic-bezier(0.23, 1, 0.32, 1), visibility 125ms;
   pointer-events: none;
   white-space: nowrap;
 }
 
 .tooltip-wrapper:hover .tooltip__content,
 .tooltip-trigger:focus + .tooltip__content {
-  @apply visible opacity-100 scale-100;
+  visibility: visible;
+  opacity: 1;
+  transform: scale(1);
 }
 
 .tooltip__content--top {
@@ -547,32 +557,33 @@
 
 .tooltip-wrapper:hover .tooltip__content--top,
 .tooltip-trigger:focus + .tooltip__content--top {
-  transform: translateX(-50%) translateY(-0.5rem) scale(1);
+  transform: translateX(-50%) translateY(-0.5rem);
 }
 
 .tooltip-wrapper:hover .tooltip__content--bottom,
 .tooltip-trigger:focus + .tooltip__content--bottom {
-  transform: translateX(-50%) translateY(0.5rem) scale(1);
+  transform: translateX(-50%) translateY(0.5rem);
 }
 
 .tooltip-wrapper:hover .tooltip__content--left,
 .tooltip-trigger:focus + .tooltip__content--left {
-  transform: translateY(-50%) translateX(-0.5rem) scale(1);
+  transform: translateY(-50%) translateX(-0.5rem);
 }
 
 .tooltip-wrapper:hover .tooltip__content--right,
 .tooltip-trigger:focus + .tooltip__content--right {
-  transform: translateY(-50%) translateX(0.5rem) scale(1);
+  transform: translateY(-50%) translateX(0.5rem);
 }
 
 /* Dropdown Menu Component Styles */
 .dropdown-menu__content {
   @apply z-50 min-w-[12rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-lg;
-  @apply data-[starting-style]:opacity-0 data-[starting-style]:scale-90;
-  @apply data-[ending-style]:opacity-0 data-[ending-style]:scale-90;
-  transition: opacity 150ms, transform 150ms;
+  @apply data-[starting-style]:opacity-0 data-[ending-style]:opacity-0;
+  transition: opacity 125ms ease-out, transform 125ms cubic-bezier(0.23, 1, 0.32, 1);
   transform-origin: var(--transform-origin);
 }
+.dropdown-menu__content[data-starting-style],
+.dropdown-menu__content[data-ending-style] { transform: scale(0.96); }
 
 .dropdown-menu__item {
   @apply relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors;
@@ -604,10 +615,11 @@
 
 .dropdown-menu__sub-content {
   @apply z-50 min-w-[12rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-lg;
-  @apply data-[starting-style]:opacity-0 data-[starting-style]:scale-90;
-  @apply data-[ending-style]:opacity-0 data-[ending-style]:scale-90;
-  transition: opacity 150ms, transform 150ms;
+  @apply data-[starting-style]:opacity-0 data-[ending-style]:opacity-0;
+  transition: opacity 125ms ease-out, transform 125ms cubic-bezier(0.23, 1, 0.32, 1);
 }
+.dropdown-menu__sub-content[data-starting-style],
+.dropdown-menu__sub-content[data-ending-style] { transform: scale(0.96); }
 
 /* Tabs Component Styles */
 .tabs {
@@ -712,7 +724,8 @@
 }
 
 .progress__indicator {
-  @apply h-full w-full flex-1 bg-primary transition-all;
+  @apply h-full w-full flex-1 bg-primary;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Alert Component Styles */
@@ -1024,4 +1037,18 @@
 
 .select__group {
   @apply p-1 text-sm;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .button--outline:hover { background-color: var(--accent); }
+  .button--ghost:hover { background-color: var(--accent); }
+  .table__row:hover { background-color: color-mix(in oklch, var(--muted) 50%, transparent); }
 }
