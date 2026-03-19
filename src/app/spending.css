@@ -1127,6 +1127,18 @@
 .debt-card__payment-input[type=number] { -moz-appearance: textfield; }
 .debt-card__payment-info { font-size: var(--text-label); color: var(--muted-foreground); display: flex; gap: 6px; margin-left: auto; }
 
+.debt-card__edit { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+.debt-card__edit-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.debt-card__edit-label { font-size: var(--text-label); color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+.debt-card__edit-actions { display: flex; gap: 8px; justify-content: flex-end; padding-top: 4px; }
+.debt-card__edit-save { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; background: var(--primary); color: var(--primary-foreground); border: none; border-radius: var(--radius); font-size: var(--text-detail); font-weight: var(--font-medium); font-family: inherit; cursor: pointer; transition: opacity 0.15s; }
+.debt-card__edit-save:hover { opacity: 0.85; }
+.debt-card__edit-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.debt-card__edit-cancel { padding: 6px 14px; background: none; color: var(--muted-foreground); border: 1px solid var(--border); border-radius: var(--radius); font-size: var(--text-detail); font-family: inherit; cursor: pointer; transition: border-color 0.15s; }
+.debt-card__edit-cancel:hover { border-color: var(--ring); }
+.debt-card__edit-toggle { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 0; background: none; border: none; color: var(--muted-foreground); font-size: var(--text-label); font-family: inherit; cursor: pointer; transition: color 0.15s; }
+.debt-card__edit-toggle:hover { color: var(--foreground); }
+
 @keyframes debt-fade-in {
   from {
     opacity: 0;

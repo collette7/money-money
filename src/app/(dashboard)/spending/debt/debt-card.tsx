@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react"
 import { Sensitive } from "@/components/sensitive"
 import { cn } from "@/lib/utils"
-import { updateMonthlyPayment } from "../actions-debt"
-import { CreditCard, Building2, TrendingUp, Calendar, DollarSign } from "lucide-react"
+import { updateMonthlyPayment, updateDebtDetails } from "../actions-debt"
+import { CreditCard, Building2, TrendingUp, Calendar, DollarSign, Pencil, Check } from "lucide-react"
 import type { DebtAccount } from "../actions-debt"
 
 type DebtCardProps = {
@@ -40,6 +40,11 @@ function formatPayoffDate(months: number): string {
 export function DebtCard({ debt, onPaymentUpdate }: DebtCardProps) {
   const [payment, setPayment] = useState(debt.monthlyPayment)
   const [isPending, startTransition] = useTransition()
+  const [editing, setEditing] = useState(false)
+  const [editValues, setEditValues] = useState({
+    creditLimit: debt.creditLimit || debt.originalBalance,
+    interestRate: debt.interestRate,
+  })
 
   const paidOff = debt.originalBalance - debt.currentBalance
   const paidPct = debt.originalBalance > 0
@@ -58,6 +63,21 @@ export function DebtCard({ debt, onPaymentUpdate }: DebtCardProps) {
     startTransition(async () => {
       try { await updateMonthlyPayment(debt.id, next) }
       catch (e) { console.error("Failed to update payment:", e) }
+    })
+  }
+
+  const handleSaveDetails = () => {
+    startTransition(async () => {
+      try {
+        await updateDebtDetails(debt.id, {
+          credit_limit: editValues.creditLimit,
+          original_balance: editValues.creditLimit,
+          interest_rate: editValues.interestRate,
+        })
+        setEditing(false)
+      } catch (e) {
+        console.error("Failed to update details:", e)
+      }
     })
   }
 
@@ -138,6 +158,58 @@ export function DebtCard({ debt, onPaymentUpdate }: DebtCardProps) {
           </span>
         )}
       </div>
+
+      {editing ? (
+        <div className="debt-card__edit">
+          <div className="debt-card__edit-row">
+            <label className="debt-card__edit-label">
+              {debt.type === "credit" ? "Credit Limit" : "Original Balance"}
+            </label>
+            <div className="debt-card__payment-input-wrapper">
+              <span className="debt-card__payment-currency">$</span>
+              <input
+                type="number"
+                min="0"
+                step="100"
+                value={editValues.creditLimit || ""}
+                onChange={(e) => setEditValues(v => ({ ...v, creditLimit: parseFloat(e.target.value) || 0 }))}
+                className="debt-card__payment-input"
+                placeholder="0"
+              />
+            </div>
+          </div>
+          <div className="debt-card__edit-row">
+            <label className="debt-card__edit-label">Interest Rate</label>
+            <div className="debt-card__payment-input-wrapper">
+              <input
+                type="number"
+                min="0"
+                max="99"
+                step="0.01"
+                value={editValues.interestRate || ""}
+                onChange={(e) => setEditValues(v => ({ ...v, interestRate: parseFloat(e.target.value) || 0 }))}
+                className="debt-card__payment-input"
+                placeholder="0"
+              />
+              <span className="debt-card__payment-currency">%</span>
+            </div>
+          </div>
+          <div className="debt-card__edit-actions">
+            <button className="debt-card__edit-save" onClick={handleSaveDetails} disabled={isPending}>
+              <Check style={{ width: 14, height: 14 }} />
+              Save
+            </button>
+            <button className="debt-card__edit-cancel" onClick={() => setEditing(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button className="debt-card__edit-toggle" onClick={() => setEditing(true)}>
+          <Pencil style={{ width: 12, height: 12 }} />
+          Edit details
+        </button>
+      )}
     </div>
   )
 }

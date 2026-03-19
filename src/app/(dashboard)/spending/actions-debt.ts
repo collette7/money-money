@@ -97,15 +97,22 @@ export async function updateDebtDetails(
   accountId: string, 
   updates: {
     original_balance?: number
+    credit_limit?: number
     interest_rate?: number
     monthly_payment?: number
   }
 ) {
   const supabase = await createClient()
-  
+
+  const payload: Record<string, number> = {}
+  if (updates.original_balance != null) payload.original_balance = updates.original_balance
+  if (updates.credit_limit != null) payload.credit_limit = updates.credit_limit
+  if (updates.interest_rate != null) payload.interest_rate = updates.interest_rate
+  if (updates.monthly_payment != null) payload.monthly_payment = updates.monthly_payment
+
   const { error } = await supabase
     .from("accounts")
-    .update(updates)
+    .update(payload)
     .eq("id", accountId)
     
   if (error) throw error
