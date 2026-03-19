@@ -348,17 +348,34 @@
 
 /* Switch Component Styles */
 .switch {
-  @apply relative inline-flex size-5 items-center rounded-full;
-  @apply bg-input transition-colors;
-  @apply data-[checked]:bg-primary;
-  @apply disabled:cursor-not-allowed disabled:opacity-50;
-  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 36px;
+  height: 20px;
+  border-radius: 9999px;
+  background: var(--input);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  flex-shrink: 0;
 }
+.switch[data-checked] { background: var(--primary); }
+.switch:disabled { cursor: not-allowed; opacity: 0.5; }
+.switch:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 
 .switch__thumb {
-  @apply absolute size-3 rounded-full bg-white transition-transform;
-  @apply translate-x-0.5 data-[checked]:translate-x-[calc(100%+0.25rem)];
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: white;
+  box-shadow: 0 1px 3px oklch(0 0 0 / 0.15);
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateX(2px);
 }
+.switch[data-checked] .switch__thumb { transform: translateX(18px); }
 
 /* Checkbox Component Styles */
 .checkbox {
