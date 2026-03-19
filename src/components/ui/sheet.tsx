@@ -2,32 +2,32 @@
 
 import * as React from "react"
 import { XIcon } from "lucide-react"
-import { Drawer as BaseDrawer } from "@base-ui/react/drawer"
+import { Dialog as BaseDialog } from "@base-ui/react/dialog"
 
 import { cn } from "@/lib/utils"
 
-function Sheet(props: React.ComponentProps<typeof BaseDrawer.Root>) {
-  return <BaseDrawer.Root {...props} />
+function Sheet(props: React.ComponentProps<typeof BaseDialog.Root>) {
+  return <BaseDialog.Root {...props} />
 }
 
-function SheetTrigger(props: React.ComponentProps<typeof BaseDrawer.Trigger>) {
-  return <BaseDrawer.Trigger {...props} />
+function SheetTrigger(props: React.ComponentProps<typeof BaseDialog.Trigger>) {
+  return <BaseDialog.Trigger {...props} />
 }
 
-function SheetClose(props: React.ComponentProps<typeof BaseDrawer.Close>) {
-  return <BaseDrawer.Close {...props} />
+function SheetClose(props: React.ComponentProps<typeof BaseDialog.Close>) {
+  return <BaseDialog.Close {...props} />
 }
 
-function SheetPortal(props: React.ComponentProps<typeof BaseDrawer.Portal>) {
-  return <BaseDrawer.Portal {...props} />
+function SheetPortal(props: React.ComponentProps<typeof BaseDialog.Portal>) {
+  return <BaseDialog.Portal {...props} />
 }
 
 function SheetOverlay({
   className,
   ...props
-}: React.ComponentProps<typeof BaseDrawer.Backdrop>) {
+}: React.ComponentProps<typeof BaseDialog.Backdrop>) {
   return (
-    <BaseDrawer.Backdrop
+    <BaseDialog.Backdrop
       className={cn("drawer__overlay", className)}
       {...props}
     />
@@ -40,71 +40,49 @@ function SheetContent({
   side = "right",
   showCloseButton = true,
   ...props
-}: React.ComponentProps<typeof BaseDrawer.Popup> & {
+}: React.ComponentProps<typeof BaseDialog.Popup> & {
   side?: "top" | "right" | "bottom" | "left"
   showCloseButton?: boolean
 }) {
-  const sideClass = `drawer__content--${side}`
-  
   return (
     <SheetPortal>
       <SheetOverlay />
-      <BaseDrawer.Popup
-        className={cn("drawer__content", sideClass, className)}
+      <BaseDialog.Popup
+        className={cn("drawer__content", `drawer__content--${side}`, className)}
         {...props}
       >
         {children}
         {showCloseButton && (
-          <BaseDrawer.Close className="drawer__close">
+          <BaseDialog.Close className="drawer__close">
             <XIcon className="size-4" />
             <span className="sr-only">Close</span>
-          </BaseDrawer.Close>
+          </BaseDialog.Close>
         )}
-      </BaseDrawer.Popup>
+      </BaseDialog.Popup>
     </SheetPortal>
   )
 }
 
 function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      className={cn("drawer__header", className)}
-      {...props}
-    />
-  )
+  return <div className={cn("drawer__header", className)} {...props} />
 }
 
 function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      className={cn("drawer__footer", className)}
-      {...props}
-    />
-  )
+  return <div className={cn("drawer__footer", className)} {...props} />
 }
 
 function SheetTitle({
   className,
   ...props
-}: React.ComponentProps<typeof BaseDrawer.Title>) {
-  return (
-    <BaseDrawer.Title
-      className={cn("drawer__title", className)}
-      {...props}
-    />
-  )
+}: React.ComponentProps<typeof BaseDialog.Title>) {
+  return <BaseDialog.Title className={cn("drawer__title", className)} {...props} />
 }
 
 function SheetDescription({
   className,
   ...props
-}: React.ComponentProps<typeof BaseDrawer.Description>) {
-  return (
-    <BaseDrawer.Description
-      className={cn("drawer__description", className)}
-      {...props}
-    />
-  )
+}: React.ComponentProps<typeof BaseDialog.Description>) {
+  return <BaseDialog.Description className={cn("drawer__description", className)} {...props} />
 }
 
 export {

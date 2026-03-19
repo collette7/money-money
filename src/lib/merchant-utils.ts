@@ -178,13 +178,10 @@ export function normalizeMerchantName(rawName: string): string {
   // Strip domain-like patterns embedded in name (e.g. IHERB.COM)
   name = name.replace(/\s+\S+\.COM\b/gi, "")
 
-  // Strip trailing location: "CITY STATE" or "CITY CITY STATE" (max 2 words before state code)
+  // Strip trailing location when separated by dash/double-space
   name = name.replace(/\s+--\s+[A-Z]{2}\s*$/i, "")
-  name = name.replace(/\s+[A-Z][A-Za-z]*(?:\s+[A-Z][A-Za-z]*)?\s+([A-Z]{2})\s*$/i, (match, state) => {
-    return US_STATES.has(state.toUpperCase()) ? "" : match
-  })
-  // Standalone trailing state code (" CA", " TX")
-  name = name.replace(/\s+([A-Z]{2})\s*$/i, (match, state) => {
+  // "MERCHANT CITY ST" — only strip single-word city + 2-letter state at end
+  name = name.replace(/\s+([A-Z][A-Za-z]+)\s+([A-Z]{2})\s*$/i, (match, _city, state) => {
     return US_STATES.has(state.toUpperCase()) ? "" : match
   })
 

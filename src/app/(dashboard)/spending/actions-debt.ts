@@ -8,6 +8,7 @@ export type DebtAccount = {
   type: 'credit' | 'loan'
   originalBalance: number
   currentBalance: number
+  creditLimit: number
   interestRate: number
   monthlyPayment: number
   institution: string
@@ -20,7 +21,7 @@ export async function getDebtAccounts(userId: string): Promise<DebtAccount[]> {
   const { data: explicitDebts } = await supabase
     .from("accounts")
     .select(`
-      id, name, account_type, balance, opening_balance,
+      id, name, account_type, balance, opening_balance, credit_limit,
       institution_name, last_synced,
       original_balance, interest_rate, monthly_payment
     `)
@@ -31,7 +32,7 @@ export async function getDebtAccounts(userId: string): Promise<DebtAccount[]> {
   const { data: mistyped } = await supabase
     .from("accounts")
     .select(`
-      id, name, account_type, balance, opening_balance,
+      id, name, account_type, balance, opening_balance, credit_limit,
       institution_name, last_synced,
       original_balance, interest_rate, monthly_payment
     `)
@@ -54,7 +55,10 @@ export async function getDebtAccounts(userId: string): Promise<DebtAccount[]> {
   return allAccounts.map(account => {
     const balance = Math.abs(account.balance || 0)
     const openingBalance = Math.abs(account.opening_balance || 0)
-    const originalBalance = account.original_balance || Math.max(openingBalance, balance)
+    const creditLimit = account.credit_limit || 0
+    const originalBalance = account.original_balance
+      || (creditLimit > 0 ? creditLimit : null)
+      || Math.max(openingBalance, balance)
     const effectiveType = (account.balance < 0 && account.account_type === "checking")
       ? "credit"
       : account.account_type
@@ -69,6 +73,7 @@ export async function getDebtAccounts(userId: string): Promise<DebtAccount[]> {
       currentBalance: balance,
       interestRate,
       monthlyPayment,
+      creditLimit: creditLimit,
       institution: account.institution_name || '',
       lastUpdated: account.last_synced || new Date().toISOString(),
     }

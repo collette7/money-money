@@ -168,6 +168,14 @@ export async function syncSimpleFinAccounts(userId: string, initialLookbackDays?
           balance: parseFloat(sfAccount.balance),
           last_synced: new Date().toISOString(),
         };
+        if (sfAccount["available-balance"] != null) {
+          const available = parseFloat(sfAccount["available-balance"]);
+          const bal = Math.abs(parseFloat(sfAccount.balance));
+          updatePayload.available_balance = available;
+          if (parseFloat(sfAccount.balance) < 0 && available >= 0) {
+            updatePayload.credit_limit = bal + available;
+          }
+        }
         if (sfAccount.org.domain || sfAccount.org.url) {
           updatePayload.institution_domain = sfAccount.org.domain || sfAccount.org.url
         }
