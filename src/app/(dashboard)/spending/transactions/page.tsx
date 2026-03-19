@@ -75,7 +75,7 @@ export default async function TransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-1 rounded-lg border px-4 py-2.5 text-[13px]">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-y-1 gap-x-6 rounded-lg border px-4 py-2.5 text-[13px]">
         <span className="text-muted-foreground">Total transactions <span className="font-semibold text-foreground">{stats.totalCount.toLocaleString()}</span></span>
         <span className="text-muted-foreground">Date range{" "}
           <span className="font-semibold text-foreground">
@@ -84,7 +84,7 @@ export default async function TransactionsPage() {
               : "—"}
           </span>
         </span>
-        <span className="ml-auto text-muted-foreground">Total expenses{" "}
+        <span className="sm:ml-auto text-muted-foreground">Total expenses{" "}
           <span className="font-semibold text-orange-600 dark:text-orange-400">
             <Sensitive>−{formatCurrency(stats.totalExpenses)}</Sensitive>
           </span>

@@ -89,6 +89,7 @@ import {
 } from "./use-transaction-list"
 import { resolveInstitutionDomain } from "@/lib/account-utils"
 import { resolveCanonicalMerchant } from "@/lib/merchant-utils"
+import { MobileFilterMenu } from "./mobile-filter-menu"
 
 const dateGroupFormatter = new Intl.DateTimeFormat("en-US", {
   weekday: "long",
@@ -301,7 +302,24 @@ export function TransactionList({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      {hasMounted && (
+        <MobileFilterMenu
+          accounts={accounts}
+          categories={grouped}
+          currentAccountId={currentAccountId}
+          currentCategoryId={currentCategoryId}
+          currentStartDate={currentStartDate}
+          currentEndDate={currentEndDate}
+          hasFilters={hasFilters}
+          onAccountChange={(val) => updateParams({ accountId: val === "all" ? "" : val, page: "" })}
+          onCategoryChange={(val) => updateParams({ categoryId: val === "all" ? "" : val, page: "" })}
+          onStartDateChange={(val) => updateParams({ startDate: val, page: "" })}
+          onEndDateChange={(val) => updateParams({ endDate: val, page: "" })}
+          onClearFilters={clearFilters}
+        />
+      )}
+
+      <div className="hidden sm:flex flex-wrap items-center gap-2">
         <Filter className="size-3.5 text-muted-foreground" />
         {hasMounted ? (
           <>
@@ -500,6 +518,24 @@ export function TransactionList({
             </button>
           )}
         </div>
+      </div>
+
+      <div className="sm:hidden relative">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Search transactions..."
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          className="h-9 pl-9 text-sm"
+        />
+        {searchValue && (
+          <button
+            onClick={() => setSearchValue("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="size-3.5" />
+          </button>
+        )}
       </div>
 
       <div
