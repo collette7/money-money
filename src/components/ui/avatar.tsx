@@ -1,103 +1,101 @@
 "use client"
 
 import * as React from "react"
-import { Avatar as AvatarPrimitive } from "radix-ui"
-
 import { cn } from "@/lib/utils"
 
-function Avatar({
-  className,
-  size = "default",
-  ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root> & {
-  size?: "default" | "sm" | "lg"
-}) {
+const Avatar = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<"div"> & {
+    size?: "default" | "sm" | "lg"
+  }
+>(({ className, size = "default", ...props }, ref) => {
   return (
-    <AvatarPrimitive.Root
+    <div
+      ref={ref}
       data-slot="avatar"
       data-size={size}
-      className={cn(
-        "group/avatar relative flex size-8 shrink-0 overflow-hidden rounded-full select-none data-[size=lg]:size-10 data-[size=sm]:size-6",
-        className
-      )}
+      className={cn("avatar", `avatar--${size}`, className)}
       {...props}
     />
   )
-}
+})
+Avatar.displayName = "Avatar"
 
-function AvatarImage({
-  className,
-  ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+const AvatarImage = React.forwardRef<
+  HTMLImageElement,
+  React.ComponentPropsWithoutRef<"img">
+>(({ className, alt, ...props }, ref) => {
   return (
-    <AvatarPrimitive.Image
+    <img
+      ref={ref}
+      alt={alt}
       data-slot="avatar-image"
-      className={cn("aspect-square size-full", className)}
+      className={cn("avatar__image", className)}
       {...props}
     />
   )
-}
+})
+AvatarImage.displayName = "AvatarImage"
 
-function AvatarFallback({
-  className,
-  ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
+const AvatarFallback = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<"div">
+>(({ className, ...props }, ref) => {
   return (
-    <AvatarPrimitive.Fallback
+    <div
+      ref={ref}
       data-slot="avatar-fallback"
-      className={cn(
-        "bg-muted text-muted-foreground flex size-full items-center justify-center rounded-full text-sm group-data-[size=sm]/avatar:text-xs",
-        className
-      )}
+      className={cn("avatar__fallback", className)}
       {...props}
     />
   )
-}
+})
+AvatarFallback.displayName = "AvatarFallback"
 
-function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
+const AvatarBadge = React.forwardRef<
+  HTMLSpanElement,
+  React.ComponentPropsWithoutRef<"span">
+>(({ className, ...props }, ref) => {
   return (
     <span
+      ref={ref}
       data-slot="avatar-badge"
-      className={cn(
-        "bg-primary text-primary-foreground ring-background absolute right-0 bottom-0 z-10 inline-flex items-center justify-center rounded-full ring-2 select-none",
-        "group-data-[size=sm]/avatar:size-2 group-data-[size=sm]/avatar:[&>svg]:hidden",
-        "group-data-[size=default]/avatar:size-2.5 group-data-[size=default]/avatar:[&>svg]:size-2",
-        "group-data-[size=lg]/avatar:size-3 group-data-[size=lg]/avatar:[&>svg]:size-2",
-        className
-      )}
+      className={cn("avatar__badge", className)}
       {...props}
     />
   )
-}
+})
+AvatarBadge.displayName = "AvatarBadge"
 
-function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
+const AvatarGroup = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<"div">
+>(({ className, ...props }, ref) => {
   return (
     <div
+      ref={ref}
       data-slot="avatar-group"
-      className={cn(
-        "*:data-[slot=avatar]:ring-background group/avatar-group flex -space-x-2 *:data-[slot=avatar]:ring-2",
-        className
-      )}
+      className={cn("avatar-group", className)}
       {...props}
     />
   )
-}
+})
+AvatarGroup.displayName = "AvatarGroup"
 
-function AvatarGroupCount({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+const AvatarGroupCount = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<"div">
+>(({ className, ...props }, ref) => {
   return (
     <div
+      ref={ref}
       data-slot="avatar-group-count"
-      className={cn(
-        "bg-muted text-muted-foreground ring-background relative flex size-8 shrink-0 items-center justify-center rounded-full text-sm ring-2 group-has-data-[size=lg]/avatar-group:size-10 group-has-data-[size=sm]/avatar-group:size-6 [&>svg]:size-4 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3",
-        className
-      )}
+      className={cn("avatar-group__count", className)}
       {...props}
     />
   )
-}
+})
+AvatarGroupCount.displayName = "AvatarGroupCount"
 
 export {
   Avatar,

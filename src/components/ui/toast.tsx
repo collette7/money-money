@@ -2,108 +2,117 @@
 
 import * as React from "react"
 import { XIcon } from "lucide-react"
-import { Toast as ToastPrimitive } from "radix-ui"
+import { Toast as BaseToast } from "@base-ui/react/toast"
 
 import { cn } from "@/lib/utils"
 
-function ToastProvider({
-  ...props
-}: React.ComponentProps<typeof ToastPrimitive.Provider>) {
-  return <ToastPrimitive.Provider data-slot="toast-provider" {...props} />
+function ToastProvider(props: React.ComponentProps<typeof BaseToast.Provider>) {
+  return <BaseToast.Provider {...props} />
 }
 
 function ToastViewport({
   className,
   ...props
-}: React.ComponentProps<typeof ToastPrimitive.Viewport>) {
+}: React.ComponentProps<typeof BaseToast.Viewport>) {
   return (
-    <ToastPrimitive.Viewport
-      data-slot="toast-viewport"
-      className={cn(
-        "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
-        className
-      )}
+    <BaseToast.Viewport
+      className={cn("toast__viewport", className)}
       {...props}
     />
   )
 }
 
-function Toast({
-  className,
-  ...props
-}: React.ComponentProps<typeof ToastPrimitive.Root>) {
+const Toast = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<"div"> & {
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
+  }
+>(({ className, open = true, onOpenChange, ...props }, ref) => {
+  if (!open) return null
+  
   return (
-    <ToastPrimitive.Root
-      data-slot="toast"
-      className={cn(
-        "group pointer-events-auto relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl border bg-background p-4 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function ToastAction({
-  className,
-  ...props
-}: React.ComponentProps<typeof ToastPrimitive.Action>) {
-  return (
-    <ToastPrimitive.Action
-      data-slot="toast-action"
-      className={cn(
-        "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium transition-colors hover:bg-secondary focus:outline-none focus:ring-1 focus:ring-ring disabled:pointer-events-none disabled:opacity-50",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function ToastClose({
-  className,
-  ...props
-}: React.ComponentProps<typeof ToastPrimitive.Close>) {
-  return (
-    <ToastPrimitive.Close
-      data-slot="toast-close"
-      className={cn(
-        "absolute right-1 top-1 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none group-hover:opacity-100",
-        className
-      )}
-      toast-close=""
+    <div
+      ref={ref}
+      className={cn("toast", className)}
+      role="status"
+      aria-live="polite"
       {...props}
     >
-      <XIcon className="size-4" />
-    </ToastPrimitive.Close>
+      {props.children}
+    </div>
   )
-}
+})
+Toast.displayName = "Toast"
 
-function ToastTitle({
-  className,
-  ...props
-}: React.ComponentProps<typeof ToastPrimitive.Title>) {
+const ToastAction = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentPropsWithoutRef<"button">
+>(({ className, ...props }, ref) => {
   return (
-    <ToastPrimitive.Title
-      data-slot="toast-title"
-      className={cn("text-sm font-semibold [&+div]:text-xs", className)}
+    <button
+      ref={ref}
+      type="button"
+      className={cn("toast__action", className)}
       {...props}
     />
   )
-}
+})
+ToastAction.displayName = "ToastAction"
 
-function ToastDescription({
-  className,
-  ...props
-}: React.ComponentProps<typeof ToastPrimitive.Description>) {
+const ToastTitle = React.forwardRef<
+  HTMLHeadingElement,
+  React.ComponentPropsWithoutRef<"h3">
+>(({ className, ...props }, ref) => {
   return (
-    <ToastPrimitive.Description
-      data-slot="toast-description"
-      className={cn("text-sm opacity-90", className)}
+    <h3
+      ref={ref}
+      className={cn("toast__title", className)}
       {...props}
     />
   )
-}
+})
+ToastTitle.displayName = "ToastTitle"
+
+const ToastDescription = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<"div">
+>(({ className, ...props }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={cn("toast__description", className)}
+      {...props}
+    />
+  )
+})
+ToastDescription.displayName = "ToastDescription"
+
+const ToastClose = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentPropsWithoutRef<"button">
+>(({ className, children, onClick, ...props }, ref) => {
+  const handleClick = React.useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    onClick?.(e)
+    const toastElement = e.currentTarget.closest('.toast')
+    if (toastElement) {
+      toastElement.remove()
+    }
+  }, [onClick])
+  
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className={cn("toast__close", className)}
+      onClick={handleClick}
+      {...props}
+    >
+      {children || <XIcon className="toast__close-icon" />}
+    </button>
+  )
+})
+ToastClose.displayName = "ToastClose"
 
 export {
   ToastProvider,

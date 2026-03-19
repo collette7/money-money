@@ -61,7 +61,7 @@ function formatCurrency(amount: number, currency: string = "USD") {
 }
 
 function relativeTime(dateStr: string | null): string {
-  if (!dateStr) return "Never"
+  if (!dateStr) return "Manual entry"
   const now = Date.now()
   const then = new Date(dateStr).getTime()
   const diffMs = now - then

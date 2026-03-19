@@ -37,6 +37,7 @@ function Tabs() {
   const isTransactions = pathname.includes("/spending/transactions")
   const isRecurring = pathname.includes("/spending/recurring")
   const isReports = pathname.includes("/spending/reports")
+  const isDebt = pathname.includes("/spending/debt")
 
   return (
     <div className="border-b">
@@ -46,7 +47,7 @@ function Tabs() {
           className={cn(
             "whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium transition-colors hover:text-foreground",
             isBreakdown
-              ? "border-primary text-foreground"
+              ? "border-foreground text-foreground"
               : "border-transparent text-muted-foreground"
           )}
         >
@@ -57,7 +58,7 @@ function Tabs() {
           className={cn(
             "whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium transition-colors hover:text-foreground",
             isTransactions
-              ? "border-primary text-foreground"
+              ? "border-foreground text-foreground"
               : "border-transparent text-muted-foreground"
           )}
         >
@@ -68,7 +69,7 @@ function Tabs() {
           className={cn(
             "whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium transition-colors hover:text-foreground",
             isRecurring
-              ? "border-primary text-foreground"
+              ? "border-foreground text-foreground"
               : "border-transparent text-muted-foreground"
           )}
         >
@@ -79,11 +80,22 @@ function Tabs() {
           className={cn(
             "whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium transition-colors hover:text-foreground",
             isReports
-              ? "border-primary text-foreground"
+              ? "border-foreground text-foreground"
               : "border-transparent text-muted-foreground"
           )}
         >
           Reports
+        </Link>
+        <Link
+          href="/spending/debt"
+          className={cn(
+            "whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium transition-colors hover:text-foreground",
+            isDebt
+              ? "border-foreground text-foreground"
+              : "border-transparent text-muted-foreground"
+          )}
+        >
+          Debt
         </Link>
       </nav>
     </div>

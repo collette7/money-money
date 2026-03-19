@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import "../components/ui/base-ui-styles.css";
+@import "./spending.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -45,6 +46,33 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  --color-income: var(--color-income);
+  --color-expense: var(--color-expense);
+  --color-transfer: var(--color-transfer);
+  --color-budget-safe: var(--color-budget-safe);
+  --color-budget-warning: var(--color-budget-warning);
+  --color-budget-over: var(--color-budget-over);
+  --color-positive: var(--color-positive);
+  --color-negative: var(--color-negative);
+  --color-neutral: var(--color-neutral);
+  --color-achievement: var(--color-achievement);
+  --color-highlight: var(--color-highlight);
+  --text-display: var(--text-display);
+  --text-title: var(--text-title);
+  --text-heading: var(--text-heading);
+  --text-body: var(--text-body);
+  --text-detail: var(--text-detail);
+  --text-label: var(--text-label);
+  --font-weight-black: var(--font-black);
+  --font-weight-bold: var(--font-bold);
+  --font-weight-medium: var(--font-medium);
+  --font-weight-regular: var(--font-regular);
+  --spacing-xs: var(--space-xs);
+  --spacing-sm: var(--space-sm);
+  --spacing-md: var(--space-md);
+  --spacing-lg: var(--space-lg);
+  --spacing-xl: var(--space-xl);
+  --spacing-2xl: var(--space-2xl);
 }
 
 :root {
@@ -53,6 +81,12 @@
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f5f4f0;
+  --color-text-primary: #1a1a18;
+  --color-text-secondary: #6b6a65;
+  --color-border-tertiary: rgba(0, 0, 0, 0.12);
+  --color-border-secondary: rgba(0, 0, 0, 0.22);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);
@@ -72,6 +106,36 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+  /* Semantic Financial Colors */
+  --color-income: oklch(0.72 0.16 142);
+  --color-expense: oklch(0.65 0.24 29);
+  --color-transfer: oklch(0.68 0.13 236);
+  --color-budget-safe: oklch(0.72 0.16 142);
+  --color-budget-warning: oklch(0.78 0.17 90);
+  --color-budget-over: oklch(0.65 0.24 29);
+  --color-positive: var(--color-income);
+  --color-negative: var(--color-expense);
+  --color-neutral: var(--color-transfer);
+  --color-achievement: oklch(0.76 0.18 286);
+  --color-highlight: oklch(0.89 0.16 90);
+  /* Typography Scale */
+  --text-display: 2.5rem;
+  --text-title: 1.75rem;
+  --text-heading: 1.25rem;
+  --text-body: 1rem;
+  --text-detail: 0.875rem;
+  --text-label: 0.75rem;
+  --font-black: 900;
+  --font-bold: 700;
+  --font-medium: 500;
+  --font-regular: 400;
+  /* Spacing System */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -87,6 +151,12 @@
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
+  --color-background-primary: #1e1e1c;
+  --color-background-secondary: #2a2a27;
+  --color-text-primary: #f0ede8;
+  --color-text-secondary: #9a9890;
+  --color-border-tertiary: rgba(255, 255, 255, 0.10);
+  --color-border-secondary: rgba(255, 255, 255, 0.18);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
@@ -106,14 +176,26 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+  /* Semantic Financial Colors - Dark Theme */
+  --color-income: oklch(0.74 0.18 142);
+  --color-expense: oklch(0.67 0.22 29);
+  --color-transfer: oklch(0.72 0.15 236);
+  --color-budget-safe: oklch(0.74 0.18 142);
+  --color-budget-warning: oklch(0.8 0.19 90);
+  --color-budget-over: oklch(0.67 0.22 29);
+  --color-positive: var(--color-income);
+  --color-negative: var(--color-expense);
+  --color-neutral: var(--color-transfer);
+  --color-achievement: oklch(0.78 0.20 286);
+  --color-highlight: oklch(0.91 0.18 90);
   --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #F97316;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #1F2328;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #2A2E33;
+  --sidebar-ring: #F97316;
 }
 
 @layer base {

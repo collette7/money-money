@@ -75,12 +75,6 @@ export default async function TransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase">
-          Transactions
-        </h1>
-      </div>
-
       <div className="flex flex-wrap items-center gap-x-6 gap-y-1 rounded-lg border px-4 py-2.5 text-[13px]">
         <span className="text-muted-foreground">Total transactions <span className="font-semibold text-foreground">{stats.totalCount.toLocaleString()}</span></span>
         <span className="text-muted-foreground">Date range{" "}

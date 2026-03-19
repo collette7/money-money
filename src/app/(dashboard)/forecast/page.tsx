@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react"
+import { cn } from "@/lib/utils"
 import {
   LineChart,
   Line,
@@ -144,7 +145,7 @@ export default function ForecastPage() {
             <CardDescription className="text-xs">Average projection</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold tabular-nums">
+            <p className={cn("text-2xl font-bold tabular-nums", (forecastData.assumptions.avgMonthlyIncome - forecastData.assumptions.avgMonthlyExpenses) >= 0 ? "text-emerald-600" : "text-orange-500")}>
               <Sensitive>{compactCurrency(
                 forecastData.assumptions.avgMonthlyIncome - 
                 forecastData.assumptions.avgMonthlyExpenses
@@ -212,6 +213,7 @@ export default function ForecastPage() {
                   fontSize={12}
                 />
                 <YAxis
+                  tickCount={6}
                   tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                   stroke="#737373"
                   fontSize={12}

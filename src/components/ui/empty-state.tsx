@@ -1,13 +1,17 @@
 import React from "react"
 import { cn } from "@/lib/utils"
-import { Button, buttonVariants } from "@/components/ui/button"
-import { type VariantProps } from "class-variance-authority"
+import { Button } from "@/components/ui/button"
+import { Slot } from "@/lib/utils/slot"
 
-type EmptyStateAction = React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    label: string
-    asChild?: boolean
-  }
+type EmptyStateAction = {
+  label: string
+  asChild?: boolean
+  children?: React.ReactNode
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
+  size?: "sm" | "default" | "lg" | "icon-xs" | "icon"
+  onClick?: () => void
+  href?: string
+}
 
 interface EmptyStateProps {
   icon: React.ReactNode
@@ -40,11 +44,17 @@ export function EmptyState({
       )}
       {actions && actions.length > 0 && (
         <div className="flex flex-wrap gap-3 mt-4">
-          {actions.map(({ label, children, ...buttonProps }, index) => (
-            <Button key={index} {...buttonProps}>
-              {children ?? label}
-            </Button>
-          ))}
+          {actions.map(({ label, children, asChild, ...buttonProps }, index) => {
+            if (asChild && React.isValidElement(children)) {
+              return React.cloneElement(children as any, { key: index })
+            }
+            
+            return (
+              <Button key={index} {...buttonProps}>
+                {children ?? label}
+              </Button>
+            )
+          })}
         </div>
       )}
     </div>

@@ -65,7 +65,6 @@ function ExpenseRow({
             "text-sm truncate block",
             depth === 0 ? "font-medium" : "text-slate-600 dark:text-slate-400"
           )}>
-            {category.emoji && <span className="mr-1.5">{category.emoji}</span>}
             {category.name}
           </span>
           <span className="text-xs text-muted-foreground">

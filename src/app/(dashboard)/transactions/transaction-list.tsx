@@ -88,6 +88,14 @@ import {
   type Account,
 } from "./use-transaction-list"
 import { resolveInstitutionDomain } from "@/lib/account-utils"
+import { resolveCanonicalMerchant } from "@/lib/merchant-utils"
+
+const dateGroupFormatter = new Intl.DateTimeFormat("en-US", {
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+})
 
 export function TransactionList({
   transactions: initialTransactions,
@@ -618,7 +626,8 @@ export function TransactionList({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactions.map((tx) => {
+                {transactions.map((tx, idx) => {
+                  const showDateHeader = idx === 0 || tx.date !== transactions[idx - 1].date
                   const isIncome = tx.amount > 0
                   const isPending = tx.status === "pending"
                   const isTransfer = resolveCategory(tx.categories)?.type === "transfer"
@@ -626,14 +635,26 @@ export function TransactionList({
                   const logoDomain = isTransfer && account.institution_name
                     ? resolveInstitutionDomain(account.institution_name, account.institution_domain)
                     : tx.cached_logo_domain
-                  const displayName = tx.merchant_name || tx.description
+                  const displayName = resolveCanonicalMerchant(tx.merchant_name || tx.description)
                   const hasOriginal =
                     tx.original_description &&
                     tx.original_description !== tx.description &&
                     tx.original_description !== tx.merchant_name
                   return (
+                    <React.Fragment key={tx.id}>
+                    {showDateHeader && (
+                      <TableRow className="hover:bg-transparent bg-muted/30 border-b-0">
+                        <TableCell
+                          colSpan={6}
+                          className="py-2 px-3 sm:px-4"
+                        >
+                          <span className="text-xs font-semibold tracking-wide text-muted-foreground/80">
+                            {dateGroupFormatter.format(new Date(tx.date + "T00:00:00"))}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    )}
                     <TableRow
-                      key={tx.id}
                       data-state={selected.has(tx.id) ? "selected" : undefined}
                       className={cn("cursor-pointer", isPending && "opacity-60")}
                       onClick={(e) => {
@@ -735,6 +756,7 @@ export function TransactionList({
                         />
                       </TableCell>
                     </TableRow>
+                    </React.Fragment>
                   )
                 })}
               </TableBody>

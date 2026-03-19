@@ -405,7 +405,7 @@ export function BudgetTab({ categories = [], month, year, budgetId, budgetMode, 
                     className="w-32 h-8 text-sm pl-5 tabular-nums"
                   />
                 </div>
-                <TooltipProvider delayDuration={300}>
+                <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Info className="size-3.5 text-muted-foreground cursor-help flex-shrink-0" />

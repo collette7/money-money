@@ -227,7 +227,6 @@ export function TransactionDetailSheet({
                   align="center"
                   side="bottom"
                   sideOffset={4}
-                  onOpenAutoFocus={(e) => e.preventDefault()}
                 >
                   <CategoryPicker
                     categories={categories}

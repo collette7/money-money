@@ -196,7 +196,7 @@ export function RecurringConfirmation({ potentialRecurring }: RecurringConfirmat
                     <div className="flex gap-3">
                       <button
                         type="button"
-                        className="flex-1 py-2 rounded-lg border border-[#EF4444] text-[#EF4444] text-sm font-medium transition-colors hover:bg-[#EF4444]/5 disabled:opacity-50"
+                        className="flex-1 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 disabled:opacity-50"
                         onClick={() => handleDismiss(pattern)}
                         disabled={isPending}
                       >
@@ -204,7 +204,7 @@ export function RecurringConfirmation({ potentialRecurring }: RecurringConfirmat
                       </button>
                       <button
                         type="button"
-                        className="flex-1 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 disabled:opacity-50"
+                        className="flex-1 py-2 rounded-lg bg-foreground text-background text-sm font-medium transition-colors hover:bg-foreground/90 disabled:opacity-50"
                         onClick={() => handleConfirm(pattern)}
                         disabled={isPending}
                       >

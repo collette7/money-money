@@ -1,0 +1,987 @@
+/* Base UI Component Styles with Descriptive Class Names */
+
+/* Button Component Styles */
+.button {
+  @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all;
+  @apply disabled:pointer-events-none disabled:opacity-50;
+  @apply outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50;
+  @apply aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive;
+}
+
+.button--primary {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+.button--destructive {
+  @apply bg-destructive text-white hover:bg-destructive/90;
+  @apply focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60;
+}
+
+.button--outline {
+  @apply border bg-background shadow-sm hover:bg-accent hover:text-accent-foreground;
+  @apply dark:bg-input/30 dark:border-input dark:hover:bg-input/50;
+}
+
+.button--secondary {
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+}
+
+.button--ghost {
+  @apply hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50;
+}
+
+.button--link {
+  @apply text-primary underline-offset-4 hover:underline;
+}
+
+/* Button Sizes */
+.button--size-default {
+  @apply h-9 px-4 py-2;
+}
+
+.button--size-xs {
+  @apply h-6 gap-1 rounded-md px-2 text-xs;
+}
+
+.button--size-sm {
+  @apply h-8 rounded-md gap-1.5 px-3;
+}
+
+.button--size-lg {
+  @apply h-10 rounded-md px-6;
+}
+
+.button--size-icon {
+  @apply size-9;
+}
+
+.button--size-icon-xs {
+  @apply size-6 rounded-md;
+}
+
+.button--size-icon-sm {
+  @apply size-8;
+}
+
+.button--size-icon-lg {
+  @apply size-10;
+}
+
+/* Input Component Styles */
+.input {
+  @apply h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-sm transition-[color,box-shadow] outline-none;
+  @apply placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground;
+  @apply dark:bg-input/30 border-input;
+  @apply disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm;
+  @apply focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50;
+  @apply aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive;
+}
+
+.input__file {
+  @apply file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground;
+}
+
+/* Card Component Styles */
+.card {
+  @apply flex flex-col gap-6 rounded-xl border bg-card text-card-foreground py-6 shadow-sm;
+}
+
+.card__header {
+  @apply grid auto-rows-min grid-rows-[auto_auto] items-start gap-2 px-6;
+  @apply has-[.card__action]:grid-cols-[1fr_auto];
+  @apply [.border-b]:pb-6;
+}
+
+.card__title {
+  @apply font-semibold leading-none;
+}
+
+.card__description {
+  @apply text-sm text-muted-foreground;
+}
+
+.card__action {
+  @apply col-start-2 row-span-2 row-start-1 self-start justify-self-end;
+}
+
+.card__content {
+  @apply px-6;
+}
+
+.card__footer {
+  @apply flex items-center px-6 [.border-t]:pt-6;
+}
+
+/* Dialog Component Styles */
+.dialog__overlay {
+  @apply fixed inset-0 z-50 bg-black/50;
+  @apply data-[state=open]:animate-in data-[state=closed]:animate-out;
+  @apply data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0;
+}
+
+.dialog__content {
+  @apply fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%];
+  @apply gap-4 rounded-lg border bg-background p-6 shadow-lg duration-200 outline-none sm:max-w-lg;
+  @apply data-[starting-style]:scale-90 data-[starting-style]:opacity-0;
+  @apply data-[ending-style]:scale-90 data-[ending-style]:opacity-0;
+  transition: transform 150ms, opacity 150ms;
+}
+
+.dialog__header {
+  @apply flex flex-col gap-2 text-center sm:text-left;
+}
+
+.dialog__footer {
+  @apply flex flex-col-reverse gap-2 sm:flex-row sm:justify-end;
+}
+
+.dialog__title {
+  @apply text-lg font-semibold leading-none;
+}
+
+.dialog__description {
+  @apply text-sm text-muted-foreground;
+}
+
+.dialog__close {
+  @apply absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100;
+  @apply ring-offset-background focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-hidden;
+  @apply disabled:pointer-events-none;
+}
+
+.dialog__close-icon {
+  @apply size-4;
+}
+
+/* Label Component Styles */
+.label {
+  @apply text-sm font-medium leading-none cursor-default;
+  @apply peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+  @apply data-[disabled]:cursor-not-allowed data-[disabled]:opacity-70;
+}
+
+/* Avatar Component Styles */
+.avatar {
+  @apply relative flex shrink-0 overflow-hidden rounded-full select-none;
+  @apply size-8;
+}
+
+.avatar--sm {
+  @apply size-6;
+}
+
+.avatar--lg {
+  @apply size-10;
+}
+
+.avatar__image {
+  @apply aspect-square size-full object-cover;
+}
+
+.avatar__fallback {
+  @apply bg-muted text-muted-foreground flex size-full items-center justify-center rounded-full text-sm;
+}
+
+.avatar--sm .avatar__fallback {
+  @apply text-xs;
+}
+
+.avatar:has(.avatar__image:not([style*="display: none"])) .avatar__fallback {
+  display: none;
+}
+
+.avatar__badge {
+  @apply bg-primary text-primary-foreground ring-background absolute right-0 bottom-0 z-10 inline-flex items-center justify-center rounded-full ring-2 select-none;
+  @apply size-2.5;
+}
+
+.avatar--sm .avatar__badge {
+  @apply size-2;
+}
+
+.avatar--sm .avatar__badge svg {
+  @apply hidden;
+}
+
+.avatar--default .avatar__badge svg {
+  @apply size-2;
+}
+
+.avatar--lg .avatar__badge {
+  @apply size-3;
+}
+
+.avatar--lg .avatar__badge svg {
+  @apply size-2;
+}
+
+.avatar-group {
+  @apply flex -space-x-2;
+}
+
+.avatar-group .avatar {
+  @apply ring-background ring-2;
+}
+
+.avatar-group__count {
+  @apply bg-muted text-muted-foreground ring-background relative flex size-8 shrink-0 items-center justify-center rounded-full text-sm ring-2;
+}
+
+.avatar-group__count svg {
+  @apply size-4;
+}
+
+.avatar-group:has(.avatar--sm) .avatar-group__count {
+  @apply size-6;
+}
+
+.avatar-group:has(.avatar--sm) .avatar-group__count svg {
+  @apply size-3;
+}
+
+.avatar-group:has(.avatar--lg) .avatar-group__count {
+  @apply size-10;
+}
+
+.avatar-group:has(.avatar--lg) .avatar-group__count svg {
+  @apply size-5;
+}
+
+/* Progress Component Styles */
+.progress {
+  @apply bg-primary/20 relative h-2 w-full overflow-hidden rounded-full;
+}
+
+.progress__indicator {
+  @apply bg-primary h-full w-full flex-1 transition-all;
+}
+
+/* Badge Component Styles */
+.badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors;
+}
+
+.badge--default {
+  @apply border-transparent bg-primary text-primary-foreground hover:bg-primary/80;
+}
+
+.badge--secondary {
+  @apply border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80;
+}
+
+.badge--destructive {
+  @apply border-transparent bg-destructive text-white hover:bg-destructive/80;
+}
+
+.badge--outline {
+  @apply border;
+}
+
+/* Separator Component Styles */
+.separator {
+  @apply shrink-0 bg-border;
+}
+
+.separator--horizontal {
+  @apply h-px w-full;
+}
+
+.separator--vertical {
+  @apply h-full w-px;
+}
+
+/* Select Component Styles */
+.select__trigger {
+  @apply flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm transition-[color,box-shadow] outline-none;
+  @apply border-input data-[placeholder]:text-muted-foreground;
+  @apply focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px];
+  @apply aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive;
+  @apply dark:bg-input/30 dark:hover:bg-input/50;
+  @apply disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.select__trigger--size-default {
+  @apply h-9;
+}
+
+.select__trigger--size-sm {
+  @apply h-8;
+}
+
+.select__icon {
+  @apply size-4 opacity-50 pointer-events-none shrink-0;
+}
+
+.select__popup {
+  @apply relative z-50 max-h-[--radix-select-content-available-height] min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md;
+  @apply data-[starting-style]:scale-90 data-[starting-style]:opacity-0;
+  @apply data-[ending-style]:scale-90 data-[ending-style]:opacity-0;
+  transition: transform 150ms, opacity 150ms;
+  transform-origin: var(--transform-origin);
+}
+
+.select__viewport {
+  @apply p-1;
+}
+
+.select__label {
+  @apply px-2 py-1.5 text-xs text-muted-foreground;
+}
+
+.select__item {
+  @apply relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none select-none;
+  @apply focus:bg-accent focus:text-accent-foreground;
+  @apply data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
+}
+
+.select__item-indicator {
+  @apply absolute right-2 flex size-3.5 items-center justify-center;
+}
+
+.select__separator {
+  @apply -mx-1 my-1 h-px bg-border pointer-events-none;
+}
+
+.select__scroll-button {
+  @apply flex cursor-default items-center justify-center py-1;
+}
+
+/* Switch Component Styles */
+.switch {
+  @apply relative inline-flex size-5 items-center rounded-full;
+  @apply bg-input transition-colors;
+  @apply data-[checked]:bg-primary;
+  @apply disabled:cursor-not-allowed disabled:opacity-50;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+}
+
+.switch__thumb {
+  @apply absolute size-3 rounded-full bg-white transition-transform;
+  @apply translate-x-0.5 data-[checked]:translate-x-[calc(100%+0.25rem)];
+}
+
+/* Checkbox Component Styles */
+.checkbox {
+  @apply size-4 shrink-0 rounded-sm border border-input ring-offset-background;
+  @apply disabled:cursor-not-allowed disabled:opacity-50;
+  @apply data-[checked]:bg-primary data-[checked]:text-primary-foreground;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+}
+
+.checkbox__indicator {
+  @apply flex items-center justify-center text-current;
+}
+
+/* Textarea Component Styles */
+.textarea {
+  @apply min-h-[80px] w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm;
+  @apply placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground;
+  @apply dark:bg-input/30 border-input;
+  @apply disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50;
+  @apply focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none;
+  @apply aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive;
+  @apply resize-none;
+}
+
+/* Additional utility classes for icons in buttons */
+.button__icon {
+  @apply pointer-events-none shrink-0;
+}
+
+.button__icon:not([class*='size-']) {
+  @apply size-4;
+}
+
+.button--size-xs .button__icon:not([class*='size-']) {
+  @apply size-3;
+}
+
+/* Sheet/Drawer Component Styles */
+.drawer__overlay {
+  @apply fixed inset-0 z-50 bg-black/50;
+  @apply data-[starting-style]:opacity-0 data-[ending-style]:opacity-0;
+  transition: opacity 150ms;
+}
+
+.drawer__content {
+  @apply fixed z-50 flex flex-col gap-4 bg-background shadow-lg transition ease-in-out;
+  @apply data-[starting-style]:translate-x-full data-[ending-style]:translate-x-full;
+  transition: transform 300ms;
+}
+
+.drawer__content--right {
+  @apply inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm;
+}
+
+.drawer__content--left {
+  @apply inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm;
+  @apply data-[starting-style]:-translate-x-full data-[ending-style]:-translate-x-full;
+}
+
+.drawer__content--top {
+  @apply inset-x-0 top-0 h-auto border-b;
+  @apply data-[starting-style]:-translate-y-full data-[ending-style]:-translate-y-full;
+}
+
+.drawer__content--bottom {
+  @apply inset-x-0 bottom-0 h-auto border-t;
+  @apply data-[starting-style]:translate-y-full data-[ending-style]:translate-y-full;
+}
+
+.drawer__header {
+  @apply flex flex-col gap-1.5 p-4;
+}
+
+.drawer__footer {
+  @apply mt-auto flex flex-col gap-2 p-4;
+}
+
+.drawer__title {
+  @apply font-semibold text-foreground;
+}
+
+.drawer__description {
+  @apply text-sm text-muted-foreground;
+}
+
+.drawer__close {
+  @apply absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100;
+  @apply ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none;
+  @apply disabled:pointer-events-none;
+}
+
+/* Popover Component Styles */
+.popover__content {
+  @apply z-50 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none;
+  @apply data-[starting-style]:opacity-0 data-[starting-style]:scale-90;
+  @apply data-[ending-style]:opacity-0 data-[ending-style]:scale-90;
+  transition: opacity 150ms, transform 150ms;
+  transform-origin: var(--transform-origin);
+}
+
+/* Tooltip Component Styles */
+.tooltip-wrapper {
+  @apply relative inline-flex;
+}
+
+.tooltip__content {
+  @apply absolute z-50 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-md;
+  @apply invisible opacity-0 scale-95;
+  transition: all 150ms ease-in-out;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.tooltip-wrapper:hover .tooltip__content,
+.tooltip-trigger:focus + .tooltip__content {
+  @apply visible opacity-100 scale-100;
+}
+
+.tooltip__content--top {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-0.5rem);
+  margin-bottom: 0.25rem;
+}
+
+.tooltip__content--bottom {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(0.5rem);
+  margin-top: 0.25rem;
+}
+
+.tooltip__content--left {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%) translateX(-0.5rem);
+  margin-right: 0.25rem;
+}
+
+.tooltip__content--right {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%) translateX(0.5rem);
+  margin-left: 0.25rem;
+}
+
+.tooltip-wrapper:hover .tooltip__content--top,
+.tooltip-trigger:focus + .tooltip__content--top {
+  transform: translateX(-50%) translateY(-0.5rem) scale(1);
+}
+
+.tooltip-wrapper:hover .tooltip__content--bottom,
+.tooltip-trigger:focus + .tooltip__content--bottom {
+  transform: translateX(-50%) translateY(0.5rem) scale(1);
+}
+
+.tooltip-wrapper:hover .tooltip__content--left,
+.tooltip-trigger:focus + .tooltip__content--left {
+  transform: translateY(-50%) translateX(-0.5rem) scale(1);
+}
+
+.tooltip-wrapper:hover .tooltip__content--right,
+.tooltip-trigger:focus + .tooltip__content--right {
+  transform: translateY(-50%) translateX(0.5rem) scale(1);
+}
+
+/* Dropdown Menu Component Styles */
+.dropdown-menu__content {
+  @apply z-50 min-w-[12rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-lg;
+  @apply data-[starting-style]:opacity-0 data-[starting-style]:scale-90;
+  @apply data-[ending-style]:opacity-0 data-[ending-style]:scale-90;
+  transition: opacity 150ms, transform 150ms;
+  transform-origin: var(--transform-origin);
+}
+
+.dropdown-menu__item {
+  @apply relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors;
+  @apply focus:bg-accent focus:text-accent-foreground;
+  @apply data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
+}
+
+.dropdown-menu__label {
+  @apply px-2 py-1.5 text-sm font-semibold;
+}
+
+.dropdown-menu__separator {
+  @apply -mx-1 my-1 h-px bg-muted;
+}
+
+.dropdown-menu__shortcut {
+  @apply ml-auto text-xs tracking-widest text-muted-foreground;
+}
+
+.dropdown-menu__group {
+  @apply overflow-hidden;
+}
+
+.dropdown-menu__sub-trigger {
+  @apply flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm;
+  @apply focus:bg-accent;
+  @apply data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
+}
+
+.dropdown-menu__sub-content {
+  @apply z-50 min-w-[12rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-lg;
+  @apply data-[starting-style]:opacity-0 data-[starting-style]:scale-90;
+  @apply data-[ending-style]:opacity-0 data-[ending-style]:scale-90;
+  transition: opacity 150ms, transform 150ms;
+}
+
+/* Tabs Component Styles */
+.tabs {
+  @apply flex gap-2 data-[orientation=horizontal]:flex-col;
+}
+
+.tabs__list {
+  @apply inline-flex h-9 w-fit items-center justify-center rounded-lg text-muted-foreground;
+  @apply data-[orientation=vertical]:h-fit data-[orientation=vertical]:flex-col;
+}
+
+.tabs__list--default {
+  @apply bg-muted p-[3px];
+}
+
+.tabs__list--line {
+  @apply gap-1 bg-transparent;
+}
+
+.tabs__trigger {
+  @apply relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-all;
+  @apply text-foreground/60 hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground;
+  @apply focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-ring focus-visible:outline-1;
+  @apply disabled:pointer-events-none disabled:opacity-50;
+  @apply data-[orientation=vertical]:w-full data-[orientation=vertical]:justify-start;
+  @apply data-[state=active]:text-foreground dark:data-[state=active]:text-foreground;
+}
+
+.tabs__list--default .tabs__trigger {
+  @apply data-[state=active]:bg-background dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 data-[state=active]:shadow-sm;
+}
+
+.tabs__list--line .tabs__trigger {
+  @apply bg-transparent data-[state=active]:bg-transparent dark:data-[state=active]:border-transparent dark:data-[state=active]:bg-transparent data-[state=active]:shadow-none;
+  @apply after:absolute after:bg-foreground after:opacity-0 after:transition-opacity;
+  @apply data-[orientation=horizontal]:after:inset-x-0 data-[orientation=horizontal]:after:bottom-[-5px] data-[orientation=horizontal]:after:h-0.5;
+  @apply data-[orientation=vertical]:after:inset-y-0 data-[orientation=vertical]:after:-right-1 data-[orientation=vertical]:after:w-0.5;
+  @apply data-[state=active]:after:opacity-100;
+}
+
+.tabs__content {
+  @apply flex-1 outline-none;
+}
+
+.tabs__indicator {
+  @apply absolute bg-primary transition-all;
+  @apply data-[orientation=horizontal]:bottom-0 data-[orientation=horizontal]:h-0.5;
+  @apply data-[orientation=vertical]:right-0 data-[orientation=vertical]:w-0.5;
+}
+
+/* ScrollArea Component Styles */
+.scroll-area {
+  @apply relative overflow-hidden;
+}
+
+.scroll-area__viewport {
+  @apply size-full rounded-[inherit] transition-[color,box-shadow] outline-none;
+  @apply focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-1;
+}
+
+.scroll-area__scrollbar {
+  @apply flex touch-none p-px transition-colors select-none;
+}
+
+.scroll-area__scrollbar--vertical {
+  @apply h-full w-2.5 border-l border-l-transparent;
+}
+
+.scroll-area__scrollbar--horizontal {
+  @apply h-2.5 flex-col border-t border-t-transparent;
+}
+
+.scroll-area__thumb {
+  @apply relative flex-1 rounded-full bg-border;
+}
+
+.scroll-area__corner {
+  @apply bg-border;
+}
+
+/* Skeleton Component Styles */
+.skeleton {
+  @apply animate-pulse rounded-md bg-muted;
+}
+
+/* Avatar Component Styles */
+.avatar {
+  @apply relative flex size-10 shrink-0 overflow-hidden rounded-full;
+}
+
+.avatar__image {
+  @apply aspect-square size-full;
+}
+
+.avatar__fallback {
+  @apply flex size-full items-center justify-center rounded-full bg-muted;
+}
+
+/* Progress Component Styles */
+.progress {
+  @apply relative h-4 w-full overflow-hidden rounded-full bg-secondary;
+}
+
+.progress__indicator {
+  @apply h-full w-full flex-1 bg-primary transition-all;
+}
+
+/* Alert Component Styles */
+.alert {
+  @apply relative w-full rounded-lg border p-4;
+}
+
+.alert--default {
+  @apply bg-background text-foreground;
+}
+
+.alert--destructive {
+  @apply border-destructive/50 text-destructive dark:border-destructive;
+}
+
+.alert__title {
+  @apply mb-1 font-medium leading-none tracking-tight;
+}
+
+.alert__description {
+  @apply text-sm;
+}
+
+.alert__icon {
+  @apply size-4;
+}
+
+/* Table Component Styles */
+.table {
+  @apply w-full caption-bottom text-sm;
+}
+
+.table__header {
+  @apply [&_tr]:border-b;
+}
+
+.table__body {
+  @apply [&_tr:last-child]:border-0;
+}
+
+.table__footer {
+  @apply border-t bg-muted/50 font-medium [&>tr]:last:border-b-0;
+}
+
+.table__row {
+  @apply border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted;
+}
+
+.table__head {
+  @apply h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0;
+}
+
+.table__cell {
+  @apply p-4 align-middle [&:has([role=checkbox])]:pr-0;
+}
+
+.table__caption {
+  @apply mt-4 text-sm text-muted-foreground;
+}
+
+/* Toast Component Styles */
+.toast__viewport {
+  @apply fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4;
+  @apply sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px];
+}
+
+.toast {
+  @apply pointer-events-auto relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl border bg-background p-4 shadow-lg transition-all;
+  @apply data-[swipe=cancel]:translate-x-0;
+  @apply data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)];
+  @apply data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none;
+  @apply data-[state=open]:animate-in data-[state=closed]:animate-out;
+  @apply data-[swipe=end]:animate-out data-[state=closed]:fade-out-80;
+  @apply data-[state=closed]:slide-out-to-right-full;
+  @apply data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full;
+}
+
+.toast__action {
+  @apply inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium transition-colors;
+  @apply hover:bg-secondary focus:outline-none focus:ring-1 focus:ring-ring;
+  @apply disabled:pointer-events-none disabled:opacity-50;
+}
+
+.toast__close {
+  @apply absolute right-1 top-1 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity;
+  @apply hover:text-foreground focus:opacity-100 focus:outline-none;
+  opacity: 0;
+}
+
+.toast:hover .toast__close {
+  opacity: 1;
+}
+
+.toast__close-icon {
+  @apply size-4;
+}
+
+.toast__title {
+  @apply text-sm font-semibold [&+div]:text-xs;
+}
+
+.toast__description {
+  @apply text-sm opacity-90;
+}
+
+/* Alert Component Styles */
+.alert {
+  @apply relative w-full rounded-lg border px-4 py-3 text-sm;
+  @apply grid grid-cols-[auto_1fr] gap-3 items-start;
+}
+
+.alert svg {
+  @apply size-4 translate-y-0.5 text-current;
+}
+
+.alert--default {
+  @apply bg-card text-card-foreground border-border;
+}
+
+.alert--destructive {
+  @apply border-destructive/50 text-destructive;
+}
+
+.alert--destructive .alert__description {
+  @apply text-destructive/90;
+}
+
+.alert__title {
+  @apply col-start-2 line-clamp-1 font-medium tracking-tight;
+}
+
+.alert__description {
+  @apply text-muted-foreground col-start-2 text-sm;
+}
+
+.alert__description p {
+  @apply leading-relaxed;
+}
+
+/* Table Component Styles */
+.table-wrapper {
+  @apply relative w-full overflow-x-auto;
+}
+
+.table {
+  @apply w-full caption-bottom text-sm;
+}
+
+.table__header tr {
+  @apply border-b;
+}
+
+.table__body tr:last-child {
+  @apply border-0;
+}
+
+.table__footer {
+  @apply bg-muted/50 border-t font-medium;
+}
+
+.table__footer > tr:last-child {
+  @apply border-b-0;
+}
+
+.table__row {
+  @apply hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors;
+}
+
+.table__head {
+  @apply text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap;
+}
+
+.table__head:has([role=checkbox]) {
+  @apply pr-0;
+}
+
+.table__head > [role=checkbox] {
+  @apply translate-y-[2px];
+}
+
+.table__cell {
+  @apply p-2 align-middle whitespace-nowrap;
+}
+
+.table__cell:has([role=checkbox]) {
+  @apply pr-0;
+}
+
+.table__cell > [role=checkbox] {
+  @apply translate-y-[2px];
+}
+
+.table__caption {
+  @apply text-muted-foreground mt-4 text-sm;
+}
+
+/* Breadcrumb Component Styles */
+.breadcrumb {
+  @apply block;
+}
+
+.breadcrumb__list {
+  @apply text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm break-words sm:gap-2.5;
+}
+
+.breadcrumb__item {
+  @apply inline-flex items-center gap-1.5;
+}
+
+.breadcrumb__link {
+  @apply hover:text-foreground transition-colors;
+}
+
+.breadcrumb__page {
+  @apply text-foreground font-normal;
+}
+
+.breadcrumb__separator {
+  @apply text-muted-foreground;
+}
+
+.breadcrumb__separator svg {
+  @apply size-3.5;
+}
+
+.breadcrumb__ellipsis {
+  @apply flex size-9 items-center justify-center;
+}
+
+.breadcrumb__ellipsis-icon {
+  @apply size-4;
+}
+
+/* Select Component Styles (Updated) */
+.select {
+  @apply relative inline-block;
+}
+
+.select[data-disabled="true"] {
+  @apply opacity-50 pointer-events-none;
+}
+
+.select__trigger {
+  @apply inline-flex items-center justify-between rounded-md border border-input bg-background text-sm ring-offset-background;
+  @apply placeholder:text-muted-foreground;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  @apply disabled:cursor-not-allowed disabled:opacity-50;
+  @apply data-[state=open]:ring-2 data-[state=open]:ring-ring data-[state=open]:ring-offset-2;
+}
+
+.select__trigger--default {
+  @apply h-9 px-3 py-1;
+}
+
+.select__trigger--sm {
+  @apply h-8 px-3 text-xs;
+}
+
+.select__trigger-icon {
+  @apply ml-2 size-4 shrink-0 opacity-50;
+}
+
+.select__value {
+  @apply inline-flex items-center;
+}
+
+.select__portal {
+  @apply fixed inset-0 z-50;
+}
+
+.select__content {
+  @apply absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md;
+  @apply data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95;
+  top: 100%;
+  margin-top: 4px;
+}
+
+.select__viewport {
+  @apply p-1;
+}
+
+.select__label {
+  @apply px-2 py-1.5 text-sm font-semibold text-muted-foreground;
+}
+
+.select__item {
+  @apply relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none;
+  @apply hover:bg-accent hover:text-accent-foreground;
+  @apply focus:bg-accent focus:text-accent-foreground;
+  @apply data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
+  cursor: pointer;
+}
+
+.select__item-indicator {
+  @apply absolute right-2 flex size-3.5 items-center justify-center;
+}
+
+.select__item-check {
+  @apply size-4;
+}
+
+.select__item-text {
+  @apply flex-1;
+}
+
+.select__separator {
+  @apply -mx-1 my-1 h-px bg-muted;
+}
+
+.select__group {
+  @apply p-1 text-sm;
+}

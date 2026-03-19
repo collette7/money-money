@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ScrollArea as ScrollAreaPrimitive } from "radix-ui"
+import { ScrollArea as BaseScrollArea } from "@base-ui/react/scroll-area"
 
 import { cn } from "@/lib/utils"
 
@@ -9,22 +9,18 @@ function ScrollArea({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
+}: React.ComponentProps<typeof BaseScrollArea.Root>) {
   return (
-    <ScrollAreaPrimitive.Root
-      data-slot="scroll-area"
-      className={cn("relative", className)}
+    <BaseScrollArea.Root
+      className={cn("scroll-area", className)}
       {...props}
     >
-      <ScrollAreaPrimitive.Viewport
-        data-slot="scroll-area-viewport"
-        className="focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1"
-      >
+      <BaseScrollArea.Viewport className="scroll-area__viewport">
         {children}
-      </ScrollAreaPrimitive.Viewport>
+      </BaseScrollArea.Viewport>
       <ScrollBar />
-      <ScrollAreaPrimitive.Corner />
-    </ScrollAreaPrimitive.Root>
+      <BaseScrollArea.Corner className="scroll-area__corner" />
+    </BaseScrollArea.Root>
   )
 }
 
@@ -32,26 +28,15 @@ function ScrollBar({
   className,
   orientation = "vertical",
   ...props
-}: React.ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>) {
+}: React.ComponentProps<typeof BaseScrollArea.Scrollbar>) {
   return (
-    <ScrollAreaPrimitive.ScrollAreaScrollbar
-      data-slot="scroll-area-scrollbar"
+    <BaseScrollArea.Scrollbar
       orientation={orientation}
-      className={cn(
-        "flex touch-none p-px transition-colors select-none",
-        orientation === "vertical" &&
-          "h-full w-2.5 border-l border-l-transparent",
-        orientation === "horizontal" &&
-          "h-2.5 flex-col border-t border-t-transparent",
-        className
-      )}
+      className={cn("scroll-area__scrollbar", `scroll-area__scrollbar--${orientation}`, className)}
       {...props}
     >
-      <ScrollAreaPrimitive.ScrollAreaThumb
-        data-slot="scroll-area-thumb"
-        className="bg-border relative flex-1 rounded-full"
-      />
-    </ScrollAreaPrimitive.ScrollAreaScrollbar>
+      <BaseScrollArea.Thumb className="scroll-area__thumb" />
+    </BaseScrollArea.Scrollbar>
   )
 }
 

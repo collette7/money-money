@@ -75,7 +75,9 @@ export function NetWorthCard({
             >
               <Sensitive>{netWorthDollarChange >= 0 ? "+" : ""}{compactCurrency(netWorthDollarChange)}</Sensitive>{" "}
               ({netWorthPctChange >= 0 ? "+" : ""}
-              {netWorthPctChange.toFixed(1)}%)
+              {Math.abs(netWorthPctChange) >= 100
+                ? Math.round(netWorthPctChange).toLocaleString()
+                : netWorthPctChange.toFixed(1)}%)
             </span>
           )}
         </div>

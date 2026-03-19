@@ -166,7 +166,7 @@ export function ChatUI({
                         </Button>
                       </div>
                     ) : (
-                      <TooltipProvider delayDuration={300}>
+                      <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button

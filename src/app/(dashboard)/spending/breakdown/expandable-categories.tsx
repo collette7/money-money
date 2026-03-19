@@ -175,7 +175,7 @@ function CategoryRow({
         </span>
 
         {showRolloverToggle && (
-          <TooltipProvider delayDuration={300}>
+          <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button

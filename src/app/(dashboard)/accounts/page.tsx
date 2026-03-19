@@ -18,6 +18,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { InstitutionGroup } from "./institution-group"
 import { SyncButton } from "./sync-button"
+import { Sensitive } from "@/components/sensitive"
+
+function formatCurrency(amount: number, currency: string = "USD") {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+  }).format(amount)
+}
 
 interface Account {
   id: string
@@ -60,9 +68,7 @@ export default async function AccountsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-4">
-          <span className="text-xs font-medium uppercase tracking-[1.2px] text-[#6a7282]">
-            ACCOUNTS
-          </span>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Accounts</h1>
         </div>
         <div className="flex items-center gap-2">
           {hasAccounts && <SyncButton />}
@@ -91,6 +97,43 @@ export default async function AccountsPage() {
           </DropdownMenu>
         </div>
       </div>
+
+      {hasAccounts && (() => {
+        const totalAssets = accounts!.reduce(
+          (sum, acc) => sum + (acc.balance > 0 ? acc.balance : 0),
+          0
+        )
+        const totalLiabilities = accounts!.reduce(
+          (sum, acc) => sum + (acc.balance < 0 ? Math.abs(acc.balance) : 0),
+          0
+        )
+        const netWorth = accounts!.reduce((sum, acc) => sum + acc.balance, 0)
+
+        return (
+          <div className="rounded-lg border border-[#e5e7eb] bg-white dark:bg-card dark:border-border">
+            <div className="grid grid-cols-3 divide-x divide-[#e5e7eb] dark:divide-border">
+              <div className="px-4 sm:px-6 py-4">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Assets</p>
+                <p className="mt-1 text-lg sm:text-xl font-semibold text-emerald-600">
+                  <Sensitive>{formatCurrency(totalAssets)}</Sensitive>
+                </p>
+              </div>
+              <div className="px-4 sm:px-6 py-4">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Liabilities</p>
+                <p className="mt-1 text-lg sm:text-xl font-semibold text-orange-500">
+                  <Sensitive>{formatCurrency(totalLiabilities)}</Sensitive>
+                </p>
+              </div>
+              <div className="px-4 sm:px-6 py-4">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Net Worth</p>
+                <p className={`mt-1 text-lg sm:text-xl font-semibold ${netWorth >= 0 ? "text-emerald-600" : "text-orange-500"}`}>
+                  <Sensitive>{formatCurrency(netWorth)}</Sensitive>
+                </p>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {hasAccounts ? (
         <div className="rounded-lg border border-[#e5e7eb] bg-white dark:bg-card dark:border-border overflow-x-auto">

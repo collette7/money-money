@@ -1,6 +1,6 @@
-import { createServerClient } from "@supabase/ssr";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-let _client: ReturnType<typeof createServerClient> | null = null;
+let _client: SupabaseClient | null = null;
 
 export function createServiceClient() {
   if (_client) return _client;
@@ -12,8 +12,8 @@ export function createServiceClient() {
     throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL");
   }
 
-  _client = createServerClient(url, key, {
-    cookies: { getAll: () => [], setAll: () => {} },
+  _client = createClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
   });
   return _client;
 }

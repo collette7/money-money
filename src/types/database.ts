@@ -48,6 +48,9 @@ export interface Account {
   sync_method: SyncMethod;
   created_at: string;
   updated_at: string;
+  original_balance?: number;
+  interest_rate?: number;
+  monthly_payment?: number;
 }
 
 export interface Category {

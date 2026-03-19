@@ -22,6 +22,16 @@ const currency = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
 })
 
+function getDaysUntilDue(dayOfMonth: number): number {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  let due = new Date(today.getFullYear(), today.getMonth(), dayOfMonth)
+  if (due < today) {
+    due = new Date(today.getFullYear(), today.getMonth() + 1, dayOfMonth)
+  }
+  return Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+}
+
 function getNextDueDate(dayOfMonth: number): string {
   const now = new Date()
   let due = new Date(now.getFullYear(), now.getMonth(), dayOfMonth)
@@ -103,7 +113,12 @@ function CreditCardRow({ account }: { account: CreditAccount }) {
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
-              <span>
+              <span className={account.payment_due_day != null ? (() => {
+                const days = getDaysUntilDue(account.payment_due_day)
+                if (days <= 0) return "text-red-500"
+                if (days <= 7) return "text-orange-500"
+                return ""
+              })() : ""}>
                 {account.payment_due_day
                   ? getNextDueDate(account.payment_due_day)
                   : "Not set"}
